@@ -75,7 +75,7 @@ module ActiveForce
 
     def update_attributes attributes = {}
       update_attributes! attributes
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
     end
 
@@ -94,7 +94,7 @@ module ActiveForce
 
     def create
       create!
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
       self
     end
@@ -123,7 +123,7 @@ module ActiveForce
 
     def save
       save!
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
     end
 
