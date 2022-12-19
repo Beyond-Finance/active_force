@@ -82,7 +82,7 @@ module ActiveForce
 
     def update_attributes attributes = {}
       update_attributes! attributes
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
     end
 
@@ -101,7 +101,7 @@ module ActiveForce
 
     def create
       create!
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
       self
     end
@@ -132,7 +132,7 @@ module ActiveForce
 
     def save
       save!
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
     end
 
@@ -209,7 +209,7 @@ module ActiveForce
     def logger_output action, exception, params = {}
       logger = Logger.new(STDOUT)
       logger.info("[SFDC] [#{self.class.model_name}] [#{self.class.table_name}] Error while #{ action }, params: #{params}, error: #{exception.inspect}")
-      errors[:base] << exception.message
+      errors.add(:base, exception.message)
       false
     end
 
