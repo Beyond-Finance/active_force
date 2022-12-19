@@ -3,17 +3,19 @@
 A ruby gem to interact with [SalesForce][1] as if it were Active Record. It
 uses [Restforce][2] to interact with the API, so it is fast and stable.
 
-### Heroku Fork
+### Beyond Finance Fork
 
 This version is forked from the work done by
-https://github.com/ionia-corporation/active_force with upgrades for Rails 5, as
+https://github.com/heroku/active_force which was in turn forked from
+https://github.com/ionia-corporation/active_force.
+It includes upgrades for Rails 7, as
 well as additional functionality.
 
 ## Installation
 
 Add this line to your application's `Gemfile`:
 
-    gem 'active_force', github: "heroku/active_force"
+    gem 'active_force', github: "Beyond-Finance/active_force"
 
 And then execute:
 
@@ -169,12 +171,12 @@ class Account < ActiveForce::SObject
   def self.decorate account_records
     # Perform other API call once for all account_records ids
     other_things = OtherAPI.find_things_with_ids(account_records.map{ |a| a["Id"] } )
-    account_records.map do |a| 
+    account_records.map do |a|
       # Find other_thing that corresponds to the current account_record
       other_thing_for_account = other_things.detect{ |o| o["Id"] == a["Id"]}
 
       # make updates to each record
-      a.merge_in_other_stuff(other_thing_for_account) 
+      a.merge_in_other_stuff(other_thing_for_account)
     end # the mapped array will be returned
   end
 end
