@@ -209,7 +209,7 @@ module ActiveForce
     def logger_output action, exception, params = {}
       logger = Logger.new(STDOUT)
       logger.info("[SFDC] [#{self.class.model_name}] [#{self.class.table_name}] Error while #{ action }, params: #{params}, error: #{exception.inspect}")
-      errors[:base] << exception.message
+      errors.add(:base, exception.message)
       false
     end
 
