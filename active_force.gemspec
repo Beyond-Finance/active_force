@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'activemodel', '~> 7.0'
   spec.add_dependency 'activesupport', '~> 7.0'
-  spec.add_dependency 'restforce',   '~> 2.5'
+  spec.add_dependency 'restforce',   '>= 2.5'
   spec.add_development_dependency 'rake', '>= 0'
   spec.add_development_dependency 'rspec', '>= 0'
   spec.add_development_dependency 'pry', '>= 0'
