@@ -4,6 +4,16 @@ module ActiveForce
 
     source_root File.expand_path('../templates', __FILE__)
 
+    SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP = {
+      'boolean' => :boolean,
+      'double' => :float,
+      'percentage' => :float,
+      'currency' => :float,
+      'date' => :date,
+      'datetime' => :datetime,
+      'int' => :integer,
+    }
+
     def create_model_file
       @table_name = file_name.capitalize
       @class_name = @table_name.gsub '__c', ''
@@ -12,19 +22,17 @@ module ActiveForce
 
     protected
 
-    Attribute = Struct.new :field, :column
+    Attribute = Struct.new :field, :column, :type
 
-    def attributes 
+    def attributes
       @attributes ||= sfdc_columns.map do |column|
-        Attribute.new column_to_field(column), column
+        Attribute.new column_to_field(column.name), column.name, saleforce_to_active_model_type(column.type)
       end
       @attributes - [:id]
     end
 
     def sfdc_columns
-      @columns ||= ActiveForce::SObject.sfdc_client.describe(@table_name).fields.map do |field|
-        field.name
-      end
+      @columns ||= ActiveForce::SObject.sfdc_client.describe(@table_name).fields
     end
 
     def table_exists?
@@ -38,13 +46,23 @@ module ActiveForce
     end
 
     def attribute_line attribute
-      "field :#{ attribute.field },#{ space_justify attribute.field }  from: '#{ attribute.column }'"
+      "field :#{ attribute.field },#{ space_justify attribute.field }  from: '#{ attribute.column }'#{ add_type(attribute.type) } "
     end
 
     def space_justify field_name
       longest_field = attributes.map { |attr| attr.field.length } .max
       justify_count = longest_field - field_name.length
       " " * justify_count
+    end
+
+    def add_type(type)
+      # String is the default so no need to add it
+      return '' if type == :string
+      ", as: :#{ type }"
+    end
+
+    def saleforce_to_active_model_type type
+      SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP.fetch(type, :string)
     end
 
 
