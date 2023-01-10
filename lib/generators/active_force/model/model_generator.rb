@@ -17,7 +17,7 @@ module ActiveForce
     def create_model_file
       @table_name = file_name.capitalize
       @class_name = @table_name.gsub '__c', ''
-      template "model.rb.erb", "app/models/#{@class_name.downcase}.rb" if table_exists?
+      template "model.rb.erb", "app/models/#{@class_name.underscore}.rb" if table_exists?
     end
 
     protected
@@ -64,17 +64,5 @@ module ActiveForce
     def saleforce_to_active_model_type type
       SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP.fetch(type, :string)
     end
-
-
-    class String
-      def underscore
-        self.gsub(/::/, '/').
-        gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-        gsub(/([a-z\d])([A-Z])/,'\1_\2').
-        tr("-", "_").
-        downcase
-      end
-    end
-
   end
 end
