@@ -3,6 +3,7 @@ module ActiveForce
     desc 'This generator loads the table fields from SFDC and generates the fields for the SObject with a more Ruby name'
 
     source_root File.expand_path('../templates', __FILE__)
+    argument :namespace, type: :string, optional: true, default: ''
     class_option :namespace, type: :string, default: ''
 
 
