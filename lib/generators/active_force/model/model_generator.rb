@@ -1,8 +1,10 @@
 module ActiveForce
   class ModelGenerator < Rails::Generators::NamedBase
-    desc 'This generator loads the table fields from SFDC and generates the fields for the SObject with a more ruby names'
+    desc 'This generator loads the table fields from SFDC and generates the fields for the SObject with a more Ruby name'
 
     source_root File.expand_path('../templates', __FILE__)
+    class_option :namespace, type: :string, default: ''
+
 
     SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP = {
       'boolean' => :boolean,
@@ -15,8 +17,9 @@ module ActiveForce
     }
 
     def create_model_file
+      @namespace = options[:namespace]
       @table_name = file_name.capitalize
-      @class_name = @table_name.gsub '__c', ''
+      @class_name = @namespace + '::' + @table_name.gsub '__c', ''
       template "model.rb.erb", "app/models/#{@class_name.underscore}.rb" if table_exists?
     end
 
