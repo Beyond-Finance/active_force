@@ -102,6 +102,10 @@ Altenative you can try the generator. (requires setting up the connection)
 
     rails generate active_force_model Medication__c
 
+The model generator also supports an optional namespace which will add a namespace to the generated model
+
+    rails generate active_force_model Medication__c SomeNamespace
+
 ### Associations
 
 #### Has Many

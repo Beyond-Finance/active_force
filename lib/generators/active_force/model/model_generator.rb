@@ -1,8 +1,9 @@
 module ActiveForce
   class ModelGenerator < Rails::Generators::NamedBase
-    desc 'This generator loads the table fields from SFDC and generates the fields for the SObject with a more ruby names'
+    desc 'This generator loads the table fields from SFDC and generates the fields for the SObject with a more Ruby name'
 
     source_root File.expand_path('../templates', __FILE__)
+    argument :namespace, type: :string, optional: true, default: ''
 
     SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP = {
       'boolean' => :boolean,
@@ -16,11 +17,15 @@ module ActiveForce
 
     def create_model_file
       @table_name = file_name.capitalize
-      @class_name = @table_name.gsub '__c', ''
-      template "model.rb.erb", "app/models/#{@class_name.downcase}.rb" if table_exists?
+      @class_name = prepare_namespace + @table_name.gsub('__c', '')
+      template "model.rb.erb", "app/models/#{@class_name.underscore}.rb" if table_exists?
     end
 
     protected
+
+    def prepare_namespace
+      @namespace.present? ? @namespace + '::' : @namespace
+    end
 
     Attribute = Struct.new :field, :column, :type
 
@@ -64,17 +69,5 @@ module ActiveForce
     def saleforce_to_active_model_type type
       SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP.fetch(type, :string)
     end
-
-
-    class String
-      def underscore
-        self.gsub(/::/, '/').
-        gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-        gsub(/([a-z\d])([A-Z])/,'\1_\2').
-        tr("-", "_").
-        downcase
-      end
-    end
-
   end
 end
