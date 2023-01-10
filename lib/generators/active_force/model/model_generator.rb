@@ -4,8 +4,6 @@ module ActiveForce
 
     source_root File.expand_path('../templates', __FILE__)
     argument :namespace, type: :string, optional: true, default: ''
-    class_option :namespace, type: :string, default: ''
-
 
     SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP = {
       'boolean' => :boolean,
@@ -18,13 +16,16 @@ module ActiveForce
     }
 
     def create_model_file
-      @namespace = options[:namespace].present? ? options[:namespace] + '::' : options[:namespace]
       @table_name = file_name.capitalize
-      @class_name = @namespace + @table_name.gsub('__c', '')
+      @class_name = prepare_namespace + @table_name.gsub('__c', '')
       template "model.rb.erb", "app/models/#{@class_name.underscore}.rb" if table_exists?
     end
 
     protected
+
+    def prepare_namespace
+      @namespace.present? ? @namespace + '::' : @namespace
+    end
 
     Attribute = Struct.new :field, :column, :type
 
