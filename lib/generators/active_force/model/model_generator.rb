@@ -51,7 +51,7 @@ module ActiveForce
     end
 
     def attribute_line attribute
-      "field :#{ attribute.field },#{ space_justify attribute.field }  from: '#{ attribute.column }'#{ add_type(attribute.type) } "
+      "field :#{ attribute.field },#{ space_justify attribute.field }  from: '#{ attribute.column }'#{ add_type(attribute.type) }"
     end
 
     def space_justify field_name
