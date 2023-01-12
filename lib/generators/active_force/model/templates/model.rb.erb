@@ -1,4 +1,6 @@
 class <%= @class_name.classify %> < ActiveForce::SObject
+  self.table_name = '<%= @table_name %>'
+
 <% attributes.each do |attribute| -%>
   <%= attribute_line attribute %>
 <% end -%>
