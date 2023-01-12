@@ -3,7 +3,7 @@ module ActiveForce
     attr_reader :table
 
     def initialize table
-      @table = table.underscore
+      @table = table
       @conditions = []
       @table_id = 'Id'
       @query_fields = [@table_id]
