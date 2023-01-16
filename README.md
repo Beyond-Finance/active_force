@@ -129,6 +129,14 @@ class Account < ActiveForce::SObject
 end
 ```
 
+#### Has One
+
+```ruby
+class Car < ActiveForce::SObject
+  has_one :engine, model: CarEngine
+end
+```
+
 #### Belongs to
 
 ```ruby
