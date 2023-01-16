@@ -22,7 +22,7 @@ module ActiveForce
       end
 
       def relationship_name
-        options[:relationship_name] || relation_model.table_name
+        options[:relationship_name] || relation_model.to_s.constantize.table_name
       end
 
       ###
