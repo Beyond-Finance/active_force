@@ -354,6 +354,34 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe '#[]' do
+    let(:sobject){ Whizbang.build sobject_hash }
+
+    it 'allows accessing the attribute values as if the Sobject were a Hash' do
+      expect(sobject[:boolean]).to eq sobject.boolean
+      expect(sobject[:checkbox]).to eq sobject.checkbox
+      expect(sobject[:date]).to eq sobject.date
+      expect(sobject[:datetime]).to eq sobject.datetime
+      expect(sobject[:percent]).to eq sobject.percent
+      expect(sobject[:text]).to eq sobject.text
+      expect(sobject[:picklist_multiselect]).to eq sobject.picklist_multiselect
+    end
+  end
+
+  describe '#[]=' do
+    let(:sobject){ Whizbang.new }
+
+    it 'allows modifying the attribute values as if the Sobject were a Hash' do
+      expect(sobject[:boolean]=false).to eq sobject.boolean
+      expect(sobject[:checkbox]=true).to eq sobject.checkbox
+      expect(sobject[:datetime]=Time.now).to eq sobject.datetime
+      expect(sobject[:percent]=50).to eq sobject.percent
+      expect(sobject[:text]='foo-bar').to eq sobject.text
+      sobject[:picklist_multiselect]='a;b'
+      expect(sobject.picklist_multiselect).to eq ['a', 'b']
+    end
+  end
+
   describe ".save" do
     let(:instance){ Whizbang.new }
 
