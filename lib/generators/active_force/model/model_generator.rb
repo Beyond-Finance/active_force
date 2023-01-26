@@ -30,7 +30,7 @@ module ActiveForce
     Attribute = Struct.new :field, :column, :type
 
     def attributes
-      @attributes ||= sfdc_columns.map do |column|
+      @attributes ||= sfdc_columns.sort_by { |col| col[:name].downcase }.map do |column|
         Attribute.new column_to_field(column.name), column.name, saleforce_to_active_model_type(column.type)
       end
       @attributes - [:id]
