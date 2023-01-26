@@ -177,6 +177,14 @@ module ActiveForce
       send "#{field}=", value if field && respond_to?(field)
     end
 
+    def [](name)
+      send(name.to_sym)
+    end
+
+    def []=(name,value)
+      send("#{name.to_sym}=", value)
+    end
+
    private
 
     def validate!
