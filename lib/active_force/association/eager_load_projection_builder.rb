@@ -49,6 +49,14 @@ module ActiveForce
       end
     end
 
+    class HasOneAssociationProjectionBuilder < AbstractProjectionBuilder
+      def projections
+        association.relation_model.fields.map do |field|
+          "#{ association.sfdc_association_field }.#{ field }"
+        end
+      end
+    end
+
     class BelongsToAssociationProjectionBuilder < AbstractProjectionBuilder
       def projections
         association.relation_model.fields.map do |field|
