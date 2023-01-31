@@ -54,7 +54,7 @@ module ActiveForce
 
     class BuildFromNilClass < AbstractBuildFrom
       def call
-        association.is_a?(BelongsToAssociation) ? nil : []
+        association.is_a?(HasOneAssociation) || association.is_a?(BelongsToAssociation) ? nil : []
       end
     end
 
