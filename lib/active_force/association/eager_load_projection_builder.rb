@@ -51,9 +51,9 @@ module ActiveForce
 
     class HasOneAssociationProjectionBuilder < AbstractProjectionBuilder
       def projections
-        association.relation_model.fields.map do |field|
-          "#{ association.sfdc_association_field }.#{ field }"
-        end
+        query = Query.new association.sfdc_association_field
+        query.fields association.relation_model.fields
+        ["(#{query.to_s})"]
       end
     end
 
