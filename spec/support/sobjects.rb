@@ -47,6 +47,17 @@ class EnforcedTableName < ActiveForce::SObject
   self.table_name = 'Forced__c'
 end
 
+class HasOneChild < ActiveForce::SObject
+  field :has_one_parent_id, from: 'has_one_parent_id__c'
+  field :fancy_parent_id, from: 'FancyParentId'
+  belongs_to :has_one_parent, foreign_key: :has_one_parent_id
+end
+
+class HasOneParent < ActiveForce::SObject
+  field :comment
+  has_one :has_one_child, model: HasOneChild
+end
+
 module Foo
   class Bar < ActiveForce::SObject; end
   class Opportunity < ActiveForce::SObject
@@ -57,7 +68,10 @@ module Foo
     has_many :opportunities, model: Foo::Opportunity
     has_many :partner_opportunities, foreign_key: :partner_account_id, model: Foo::Opportunity
   end
-  class Lead < ActiveForce::SObject; end
+  class Lead < ActiveForce::SObject
+    has_one :attachment, model: 'Foo::Attachment'
+    has_one :fancy_attachment, model: 'Foo::Attachment', foreign_key: :fancy_lead_id
+  end
   class Attachment < ActiveForce::SObject
     field :lead_id, from: 'Lead_Id__c'
     field :fancy_lead_id, from: 'LeadId'

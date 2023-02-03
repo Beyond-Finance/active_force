@@ -1,6 +1,5 @@
 require 'active_model'
 require 'active_force/active_query'
-require 'active_force/attributable'
 require 'active_force/association'
 require 'active_force/mapping'
 require 'yaml'
@@ -12,11 +11,12 @@ module ActiveForce
   class RecordInvalid < StandardError;end
 
   class SObject
+    include ActiveModel::API
     include ActiveModel::AttributeMethods
+    include ActiveModel::Attributes
     include ActiveModel::Model
     include ActiveModel::Dirty
     extend ActiveModel::Callbacks
-    include ActiveForce::Attributable
     extend ActiveForce::Association
 
     define_model_callbacks :build, :create, :update, :save, :destroy
@@ -82,7 +82,7 @@ module ActiveForce
 
     def update_attributes attributes = {}
       update_attributes! attributes
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
     end
 
@@ -101,7 +101,7 @@ module ActiveForce
 
     def create
       create!
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
       self
     end
@@ -132,7 +132,7 @@ module ActiveForce
 
     def save
       save!
-    rescue Faraday::Error::ClientError, RecordInvalid => error
+    rescue Faraday::ClientError, RecordInvalid => error
       handle_save_error error
     end
 
@@ -146,23 +146,13 @@ module ActiveForce
 
     def self.field field_name, args = {}
       mapping.field field_name, args
+      cast_type = args.fetch(:as, :string)
+      attribute field_name, cast_type
       define_attribute_methods field_name
-      define_attribute_reader field_name
-      define_attribute_writer field_name, args
     end
 
     def modified_attributes
       attributes.select{ |attr, key| changed.include? attr.to_s }
-    end
-
-    def self.attribute_names
-      mapping.mappings.keys.map(&:to_s)
-    end
-
-    def attributes
-      mappings.keys.each_with_object(Hash.new) do |field, hsh|
-        hsh[field.to_s] = self.send(field)
-      end
     end
 
     def reload
@@ -187,6 +177,14 @@ module ActiveForce
       send "#{field}=", value if field && respond_to?(field)
     end
 
+    def [](name)
+      send(name.to_sym)
+    end
+
+    def []=(name,value)
+      send("#{name.to_sym}=", value)
+    end
+
    private
 
     def validate!
@@ -209,7 +207,7 @@ module ActiveForce
     def logger_output action, exception, params = {}
       logger = Logger.new(STDOUT)
       logger.info("[SFDC] [#{self.class.model_name}] [#{self.class.table_name}] Error while #{ action }, params: #{params}, error: #{exception.inspect}")
-      errors[:base] << exception.message
+      errors.add(:base, exception.message)
       false
     end
 

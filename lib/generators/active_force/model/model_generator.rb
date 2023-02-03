@@ -1,30 +1,43 @@
 module ActiveForce
   class ModelGenerator < Rails::Generators::NamedBase
-    desc 'This generator loads the table fields from SFDC and generates the fields for the SObject with a more ruby names'
+    desc 'This generator loads the table fields from SFDC and generates the fields for the SObject with a more Ruby name'
 
     source_root File.expand_path('../templates', __FILE__)
+    argument :namespace, type: :string, optional: true, default: ''
+
+    SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP = {
+      'boolean' => :boolean,
+      'double' => :float,
+      'percentage' => :float,
+      'currency' => :float,
+      'date' => :date,
+      'datetime' => :datetime,
+      'int' => :integer,
+    }
 
     def create_model_file
       @table_name = file_name.capitalize
-      @class_name = @table_name.gsub '__c', ''
-      template "model.rb.erb", "app/models/#{@class_name.downcase}.rb" if table_exists?
+      @class_name = prepare_namespace + @table_name.gsub('__c', '')
+      template "model.rb.erb", "app/models/#{@class_name.underscore}.rb" if table_exists?
     end
 
     protected
 
-    Attribute = Struct.new :field, :column
+    def prepare_namespace
+      @namespace.present? ? @namespace + '::' : @namespace
+    end
 
-    def attributes 
-      @attributes ||= sfdc_columns.map do |column|
-        Attribute.new column_to_field(column), column
+    Attribute = Struct.new :field, :column, :type
+
+    def attributes
+      @attributes ||= sfdc_columns.sort_by { |col| col[:name].downcase }.map do |column|
+        Attribute.new column_to_field(column.name), column.name, saleforce_to_active_model_type(column.type)
       end
       @attributes - [:id]
     end
 
     def sfdc_columns
-      @columns ||= ActiveForce::SObject.sfdc_client.describe(@table_name).fields.map do |field|
-        field.name
-      end
+      @columns ||= ActiveForce::SObject.sfdc_client.describe(@table_name).fields
     end
 
     def table_exists?
@@ -38,7 +51,7 @@ module ActiveForce
     end
 
     def attribute_line attribute
-      "field :#{ attribute.field },#{ space_justify attribute.field }  from: '#{ attribute.column }'"
+      "field :#{ attribute.field },#{ space_justify attribute.field }  from: '#{ attribute.column }'#{ add_type(attribute.type) }"
     end
 
     def space_justify field_name
@@ -47,16 +60,14 @@ module ActiveForce
       " " * justify_count
     end
 
-
-    class String
-      def underscore
-        self.gsub(/::/, '/').
-        gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
-        gsub(/([a-z\d])([A-Z])/,'\1_\2').
-        tr("-", "_").
-        downcase
-      end
+    def add_type(type)
+      # String is the default so no need to add it
+      return '' if type == :string
+      ", as: :#{ type }"
     end
 
+    def saleforce_to_active_model_type type
+      SALESFORCE_TO_ACTIVEMODEL_TYPE_MAP.fetch(type, :string)
+    end
   end
 end

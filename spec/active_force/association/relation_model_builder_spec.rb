@@ -56,6 +56,28 @@ module ActiveForce
             end
           end
         end
+
+        context 'has_one' do
+          let(:association){ HasOneAssociation.new(HasOneParent, :has_one_child) }
+
+          context 'with a value' do
+            let(:value) do
+              build_restforce_sobject 'Id' => '213'
+            end
+
+            it 'returns a child' do
+              expect(instance.build_relation_model).to be_a HasOneChild
+            end
+          end
+
+          context 'without a value' do
+            let(:value){ nil }
+
+            it 'returns nil' do
+              expect(instance.build_relation_model).to be_nil
+            end
+          end
+        end
       end
     end
   end

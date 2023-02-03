@@ -10,7 +10,7 @@ module ActiveForce
     attr_reader :sobject
 
     def_delegators :sobject, :sfdc_client, :build, :table_name, :mappings
-    def_delegators :to_a, :each, :map, :inspect
+    def_delegators :to_a, :each, :map, :inspect, :pluck, :each_with_object
 
     def initialize sobject
       @sobject = sobject

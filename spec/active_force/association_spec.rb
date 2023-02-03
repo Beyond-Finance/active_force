@@ -9,6 +9,14 @@ describe ActiveForce::SObject do
     Comment.new(id: "1", post_id: "1")
   end
 
+  let :has_one_parent do
+    HasOneParent.new(id: '1', comment: "BAR")
+  end
+
+  let :has_one_child do
+    HasOneChild.new(id: '1', has_one_parent_id: '1')
+  end
+
   let :client do
     double("sfdc_client", query: [Restforce::Mash.new("Id" => 1)])
   end
@@ -87,6 +95,81 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe "has_one_query" do
+    it "should respond to relation method" do
+      expect(has_one_parent).to respond_to(:has_one_child)
+    end
+
+    it "should return a the correct child object" do
+      expect(has_one_parent.has_one_child).to be_a HasOneChild
+    end
+
+    it "should allow to pass a foreign key as options" do
+      HasOneParent.has_one :has_one_child, foreign_key: :fancy_parent_id
+      allow(has_one_parent).to receive(:id).and_return "2"
+      expect(client).to receive(:query).with("SELECT Id, has_one_parent_id__c, FancyParentId FROM HasOneChild__c WHERE (FancyParentId = '2') LIMIT 1")
+      has_one_parent.has_one_child
+      HasOneParent.has_one :has_one_child, foreign_key: :has_one_parent_id # reset association to original value
+    end
+
+    it 'makes only one API call to fetch the associated object' do
+      expect(HasOneChild).to receive(:find_by).once.and_return(has_one_child)
+      has_one_parent.has_one_child.id
+      has_one_parent.has_one_child.id
+    end
+
+    describe "assignments" do
+      let(:has_one) do
+        has_one_parent = HasOneParent.new(id: '1')
+        has_one_parent.has_one_child = HasOneChild.new(id: '1')
+        has_one_parent
+      end
+
+      before do
+        expect(client).to_not receive(:query)
+      end
+
+      it 'accepts assignment of an existing object as an association' do
+        expect(client).to_not receive(:query)
+        other_child = HasOneChild.new(id: "2")
+        has_one.has_one_child = other_child
+        expect(has_one.has_one_child.has_one_parent_id).to eq has_one.id
+        expect(has_one.has_one_child).to eq other_child
+      end
+
+      it 'can desassociate an object by setting it as nil' do
+        old_child = has_one.has_one_child
+        has_one.has_one_child = nil
+        expect(old_child.has_one_parent_id).to eq nil
+        expect(has_one.has_one_child).to eq nil
+      end
+    end
+
+
+    context 'when the SObject is namespaced' do
+      let(:attachment){ Foo::Attachment.new(id: '1', lead_id: '2') }
+      let(:lead){ Foo::Lead.new(id: '2') }
+
+      it 'generates the correct query' do
+        expect(client).to receive(:query).with("SELECT Id, Lead_Id__c, LeadId FROM Attachment WHERE (Lead_Id__c = '2') LIMIT 1")
+        lead.attachment
+      end
+
+      it 'instantiates the correct object' do
+        expect(lead.attachment).to be_instance_of(Foo::Attachment)
+      end
+
+      context 'when given a foreign key' do
+        let(:lead) { Foo::Lead.new(id: '2') }
+
+        it 'generates the correct query' do
+          expect(client).to receive(:query).with("SELECT Id, Lead_Id__c, LeadId FROM Attachment WHERE (LeadId = '2') LIMIT 1")
+          lead.fancy_attachment
+        end
+      end
+    end
+  end
+
   describe "belongs_to" do
     it "should get the resource it belongs to" do
       expect(comment.post).to be_instance_of(Post)
@@ -116,7 +199,7 @@ describe ActiveForce::SObject do
       before do
         expect(client).to_not receive(:query)
       end
-      
+
       it 'accepts assignment of an existing object as an association' do
         expect(client).to_not receive(:query)
         other_post = Post.new(id: "2")

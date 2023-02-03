@@ -140,12 +140,12 @@ describe ActiveForce::SObject do
         end
 
         describe 'and with a ClientError' do
-          let(:faraday_error){ Faraday::Error::ClientError.new('Some String') }
+          let(:faraday_error){ Faraday::ClientError.new('Some String') }
 
           before{ expect(client).to receive(:update!).and_raise(faraday_error) }
 
           it 'raises an error' do
-            expect{ instance.update!( text: 'some text', boolean: false ) }.to raise_error(Faraday::Error::ClientError)
+            expect{ instance.update!( text: 'some text', boolean: false ) }.to raise_error(Faraday::ClientError)
           end
         end
       end
@@ -198,12 +198,12 @@ describe ActiveForce::SObject do
         end
 
         describe 'and with a ClientError' do
-          let(:faraday_error){ Faraday::Error::ClientError.new('Some String') }
+          let(:faraday_error){ Faraday::ClientError.new('Some String') }
 
           before{ expect(client).to receive(:create!).and_raise(faraday_error) }
 
           it 'raises an error' do
-            expect{ instance.create! }.to raise_error(Faraday::Error::ClientError)
+            expect{ instance.create! }.to raise_error(Faraday::ClientError)
           end
         end
       end
@@ -314,7 +314,7 @@ describe ActiveForce::SObject do
     let(:instance){ Whizbang.new }
 
     before do
-      allow(instance).to receive(:create!).and_raise(Faraday::Error::ClientError.new(double))
+      allow(instance).to receive(:create!).and_raise(Faraday::ClientError.new(double))
     end
 
     it 'catches and logs the error' do
@@ -335,12 +335,12 @@ describe ActiveForce::SObject do
       end
 
       describe 'and with a ClientError' do
-        let(:faraday_error){ Faraday::Error::ClientError.new('Some String') }
+        let(:faraday_error){ Faraday::ClientError.new('Some String') }
 
         before{ expect(client).to receive(:create!).and_raise(faraday_error) }
 
         it 'raises an error' do
-          expect{ instance.save! }.to raise_error(Faraday::Error::ClientError)
+          expect{ instance.save! }.to raise_error(Faraday::ClientError)
         end
       end
     end
@@ -351,6 +351,34 @@ describe ActiveForce::SObject do
       it 'raises an error' do
         expect{ instance.save! }.to raise_error(ActiveForce::RecordInvalid)
       end
+    end
+  end
+
+  describe '#[]' do
+    let(:sobject){ Whizbang.build sobject_hash }
+
+    it 'allows accessing the attribute values as if the Sobject were a Hash' do
+      expect(sobject[:boolean]).to eq sobject.boolean
+      expect(sobject[:checkbox]).to eq sobject.checkbox
+      expect(sobject[:date]).to eq sobject.date
+      expect(sobject[:datetime]).to eq sobject.datetime
+      expect(sobject[:percent]).to eq sobject.percent
+      expect(sobject[:text]).to eq sobject.text
+      expect(sobject[:picklist_multiselect]).to eq sobject.picklist_multiselect
+    end
+  end
+
+  describe '#[]=' do
+    let(:sobject){ Whizbang.new }
+
+    it 'allows modifying the attribute values as if the Sobject were a Hash' do
+      expect(sobject[:boolean]=false).to eq sobject.boolean
+      expect(sobject[:checkbox]=true).to eq sobject.checkbox
+      expect(sobject[:datetime]=Time.now).to eq sobject.datetime
+      expect(sobject[:percent]=50).to eq sobject.percent
+      expect(sobject[:text]='foo-bar').to eq sobject.text
+      sobject[:picklist_multiselect]='a;b'
+      expect(sobject.picklist_multiselect).to eq ['a', 'b']
     end
   end
 
@@ -366,7 +394,7 @@ describe ActiveForce::SObject do
       end
 
       describe 'and with a ClientError' do
-        let(:faraday_error){ Faraday::Error::ClientError.new('Some String') }
+        let(:faraday_error){ Faraday::ClientError.new('Some String') }
         before{ expect(client).to receive(:create!).and_raise(faraday_error) }
         it 'returns false' do
           expect(instance.save).to eq(false)
