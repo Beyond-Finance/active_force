@@ -2,6 +2,17 @@
 
 ## Not released
 
+## 0.9.0
+
+* Add support for Rails 7 and update Restforce dependency to newer version. (https://github.com/Beyond-Finance/active_force/pull/3)
+* Add `has_one` association. (https://github.com/Beyond-Finance/active_force/pull/3)
+* Model generator enhancements (https://github.com/Beyond-Finance/active_force/pull/3):
+  * automatically add types to fields
+  * sort fields alphabetically
+  * add `table_name` to class
+  * add optional namespace parameter so generated models can be namespaced
+* Add get/set via `[]` and `[]=` for `SObject` attributes. (https://github.com/Beyond-Finance/active_force/pull/3)
+
 ## 0.7.1
 
 * Allow sfdc_client to be set. ([#92][])
