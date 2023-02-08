@@ -8,6 +8,7 @@ references:
       RAILS_ENV: test
       COVERAGE: true
       TZ: /usr/share/zoneinfo/America/Chicago
+      CC_TEST_REPORTER_ID: bd3425becf01f0b46ac11dd33e1e935d65d89f55051c087bfa035e0f89b290a2
 
 jobs:
   build:
@@ -28,7 +29,6 @@ jobs:
       - save_cache:
           key: active_force-{{ checksum "active_force.gemspec" }}
           paths:
-            - ~/active_force/active_force_index/node_modules
             - ~/active_force/active_force_index/vendor/bundle
 
   rspec-test:
@@ -82,8 +82,6 @@ jobs:
     working_directory: ~/active_force/active_force_index
     docker:
       - *default_docker_ruby_executor
-    environment:
-      CC_TEST_REPORTER_ID: bd3425becf01f0b46ac11dd33e1e935d65d89f55051c087bfa035e0f89b290a2
     steps:
       - attach_workspace:
           at: ~/active_force/active_force_index
