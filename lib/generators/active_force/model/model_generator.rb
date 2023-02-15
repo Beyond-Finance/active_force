@@ -42,7 +42,7 @@ module ActiveForce
 
     def table_exists?
       !! sfdc_columns
-      rescue Faraday::Error::ResourceNotFound
+      rescue Faraday::ResourceNotFound
         puts "The specified table name is not found. Be sure to append __c if it's custom"
     end
 
