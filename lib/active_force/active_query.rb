@@ -4,6 +4,7 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
+  class RecordNotFound < StandardError; end
   class ActiveQuery < Query
     extend Forwardable
 
@@ -52,6 +53,12 @@ module ActiveForce
 
     def find_by conditions
       where(conditions).limit 1
+    end
+
+    def find_by! conditions
+      res = find_by(conditions)
+      raise RecordNotFound if res.nil?
+      res
     end
 
     def includes(*relations)
