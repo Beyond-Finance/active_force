@@ -10,7 +10,14 @@ describe ActiveForce::ActiveQuery do
   end
   let(:mappings){ { id: "Id", field: "Field__c", other_field: "Other_Field" } }
   let(:client){ double("client") }
-  let(:active_query){ ActiveForce::ActiveQuery.new(sobject) }
+  let(:active_query){ described_class.new(sobject) }
+  let(:api_result) do
+    [
+      {"Id" => "0000000000AAAAABBB"},
+      {"Id" => "0000000000CCCCCDDD"}
+    ]
+  end
+
 
   before do
     allow(active_query).to receive(:sfdc_client).and_return client
@@ -22,20 +29,8 @@ describe ActiveForce::ActiveQuery do
       expect(client).to receive(:query).and_return(api_result)
     end
 
-    let(:api_result) {
-      [
-        {"Id" => "0000000000AAAAABBB"},
-        {"Id" => "0000000000CCCCCDDD"}
-      ]
-    }
-
     it "should return an array of objects" do
       result = active_query.where("Text_Label = 'foo'").to_a
-      expect(result).to be_a Array
-    end
-
-    it "should allow to chain query methods" do
-      result = active_query.where("Text_Label = 'foo'").where("Checkbox_Label = true").to_a
       expect(result).to be_a Array
     end
 
@@ -130,6 +125,41 @@ describe ActiveForce::ActiveQuery do
         end
       end
     end
+  end
+
+  describe '#where' do
+    before do
+      allow(client).to receive(:query).with("SELECT Id FROM table_name WHERE (Text_Label = 'foo')").and_return(api_result1)
+      allow(client).to receive(:query).with("SELECT Id FROM table_name WHERE (Text_Label = 'foo') AND (Checkbox_Label = true)").and_return(api_result2)
+    end
+    let(:api_result1) do
+      [
+        {"Id" => "0000000000AAAAABBB"},
+        {"Id" => "0000000000CCCCCDDD"},
+        {"Id" => "0000000000EEEEEFFF"}
+      ]
+    end
+    let(:api_result2) do
+      [
+        {"Id" => "0000000000EEEEEFFF"}
+      ]
+    end
+    it 'allows method chaining' do
+      result = active_query.where("Text_Label = 'foo'").where("Checkbox_Label = true")
+      expect(result).to be_a described_class
+    end
+
+    context 'when calling `where` on an ActiveQuery object that already has records' do
+      it 'returns a new ActiveQuery object' do
+        first_active_query = active_query.where("Text_Label = 'foo'")
+        first_active_query.inspect # so the query is executed
+        second_active_query = first_active_query.where("Checkbox_Label = true")
+        second_active_query.inspect
+        expect(second_active_query).to be_a described_class
+        expect(second_active_query).not_to eq first_active_query
+      end
+    end
+
   end
 
   describe "#find_by" do
