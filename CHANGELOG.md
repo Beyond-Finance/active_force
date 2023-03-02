@@ -1,6 +1,10 @@
 # Changelog
 
 ## Not released
+* Fix `where` chaining on `ActiveQuery` (https://github.com/Beyond-Finance/active_force/pull/7)
+
+## 0.9.1
+* Fix invalid error class (https://github.com/Beyond-Finance/active_force/pull/6)
 
 ## 0.9.0
 
