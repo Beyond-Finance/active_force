@@ -2,6 +2,7 @@
 
 ## Not released
 * Fix `where` chaining on `ActiveQuery` (https://github.com/Beyond-Finance/active_force/pull/7)
+* Add `find_by!` which raises `ActiveForce::RecordNotFound` if nothing is found. (https://github.com/Beyond-Finance/active_force/pull/8)
 
 ## 0.9.1
 * Fix invalid error class (https://github.com/Beyond-Finance/active_force/pull/6)

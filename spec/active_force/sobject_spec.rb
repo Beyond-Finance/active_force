@@ -256,6 +256,17 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe "#find_by!" do
+    it "queries the client, with the SFDC field names and correctly enclosed values" do
+      expect(client).to receive(:query).with("SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c WHERE (Id = 123) AND (Text_Label = 'foo') LIMIT 1").and_return([Restforce::Mash.new(Id: 123, text: 'foo')])
+      Whizbang.find_by! id: 123, text: "foo"
+    end
+    it "raises if nothing found" do
+      expect(client).to receive(:query).with("SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c WHERE (Id = 123) AND (Text_Label = 'foo') LIMIT 1")
+      expect { Whizbang.find_by! id: 123, text: "foo" }.to raise_error(ActiveForce::RecordNotFound)
+    end
+  end
+
   describe '#reload' do
     let(:client) do
       double("sfdc_client", query: [Restforce::Mash.new(Id: 1, Name: 'Jeff')])

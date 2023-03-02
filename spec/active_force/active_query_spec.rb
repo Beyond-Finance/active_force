@@ -170,6 +170,13 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
+  describe "#find_by!" do
+    it "raises if record not found" do
+      allow(client).to receive(:query).and_return(nil)
+      expect { active_query.find_by!(field: 123) }.to raise_error(ActiveForce::RecordNotFound)
+    end
+  end
+
   describe "responding as an enumerable" do
     before do
       expect(active_query).to receive(:to_a).and_return([])
