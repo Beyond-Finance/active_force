@@ -49,23 +49,23 @@ describe ActiveForce::ActiveQuery do
 
   describe "condition mapping" do
     it "maps conditions for a .where" do
-      active_query.where(field: 123)
-      expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123)")
+      new_query = active_query.where(field: 123)
+      expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123)")
     end
 
     it 'transforms an array to a WHERE/IN clause' do
-      active_query.where(field: ['foo', 'bar'])
-      expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c IN ('foo','bar'))")
+      new_query = active_query.where(field: ['foo', 'bar'])
+      expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c IN ('foo','bar'))")
     end
 
     it "encloses the value in quotes if it's a string" do
-      active_query.where field: "hello"
-      expect(active_query.to_s).to end_with("(Field__c = 'hello')")
+      new_query = active_query.where field: "hello"
+      expect(new_query.to_s).to end_with("(Field__c = 'hello')")
     end
 
     it "puts NULL when a field is set as nil" do
-      active_query.where field: nil
-      expect(active_query.to_s).to end_with("(Field__c = NULL)")
+      new_query = active_query.where field: nil
+      expect(new_query.to_s).to end_with("(Field__c = NULL)")
     end
 
     describe 'bind parameters' do
@@ -77,18 +77,18 @@ describe ActiveForce::ActiveQuery do
       end
 
       it 'accepts bind parameters' do
-        active_query.where('Field__c = ?', 123)
-        expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123)")
+        new_query = active_query.where('Field__c = ?', 123)
+        expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123)")
       end
 
       it 'accepts nil bind parameters' do
-        active_query.where('Field__c = ?', nil)
-        expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = NULL)")
+        new_query = active_query.where('Field__c = ?', nil)
+        expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = NULL)")
       end
 
       it 'accepts multiple bind parameters' do
-        active_query.where('Field__c = ? AND Other_Field__c = ? AND Name = ?', 123, 321, 'Bob')
-        expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123 AND Other_Field__c = 321 AND Name = 'Bob')")
+        new_query = active_query.where('Field__c = ? AND Other_Field__c = ? AND Name = ?', 123, 321, 'Bob')
+        expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123 AND Other_Field__c = 321 AND Name = 'Bob')")
       end
 
       it 'complains when there given an incorrect number of bind parameters' do
@@ -99,23 +99,23 @@ describe ActiveForce::ActiveQuery do
 
       context 'named bind parameters' do
         it 'accepts bind parameters' do
-          active_query.where('Field__c = :field', field: 123)
-          expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123)")
+          new_query = active_query.where('Field__c = :field', field: 123)
+          expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123)")
         end
 
         it 'accepts nil bind parameters' do
-          active_query.where('Field__c = :field', field: nil)
-          expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = NULL)")
+          new_query = active_query.where('Field__c = :field', field: nil)
+          expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = NULL)")
         end
 
         it 'accepts multiple bind parameters' do
-          active_query.where('Field__c = :field AND Other_Field__c = :other_field AND Name = :name', field: 123, other_field: 321, name: 'Bob')
-          expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123 AND Other_Field__c = 321 AND Name = 'Bob')")
+          new_query = active_query.where('Field__c = :field AND Other_Field__c = :other_field AND Name = :name', field: 123, other_field: 321, name: 'Bob')
+          expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123 AND Other_Field__c = 321 AND Name = 'Bob')")
         end
 
         it 'accepts multiple bind parameters orderless' do
-          active_query.where('Field__c = :field AND Other_Field__c = :other_field AND Name = :name', name: 'Bob', other_field: 321, field: 123)
-          expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123 AND Other_Field__c = 321 AND Name = 'Bob')")
+          new_query = active_query.where('Field__c = :field AND Other_Field__c = :other_field AND Name = :name', name: 'Bob', other_field: 321, field: 123)
+          expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123 AND Other_Field__c = 321 AND Name = 'Bob')")
         end
 
         it 'complains when there given an incorrect number of bind parameters' do
@@ -147,26 +147,42 @@ describe ActiveForce::ActiveQuery do
     it 'allows method chaining' do
       result = active_query.where("Text_Label = 'foo'").where("Checkbox_Label = true")
       expect(result).to be_a described_class
+      # expect(result.first).to eq(api_result2.first)
     end
 
     context 'when calling `where` on an ActiveQuery object that already has records' do
-      it 'returns a new ActiveQuery object' do
-        first_active_query = active_query.where("Text_Label = 'foo'")
-        first_active_query.inspect # so the query is executed
-        second_active_query = first_active_query.where("Checkbox_Label = true")
-        second_active_query.inspect
-        expect(second_active_query).to be_a described_class
-        expect(second_active_query).not_to eq first_active_query
+      context 'after the query result has been decorated' do
+        it 'returns a new ActiveQuery object' do
+          first_active_query = active_query.where("Text_Label = 'foo'")
+          first_active_query.to_a # decorates the results
+          second_active_query = first_active_query.where("Checkbox_Label = true")
+          second_active_query.to_a
+          expect(second_active_query).to be_a described_class
+          expect(second_active_query).not_to eq first_active_query
+          expect(second_active_query.to_s).not_to eq first_active_query.to_s
+        end
       end
     end
 
+    context 'when calling `where` on an ActiveQuery object that already has records' do
+      context 'without the query result being decorated' do
+
+        it 'returns a new ActiveQuery object' do
+          first_active_query = active_query.where("Text_Label = 'foo'")
+          second_active_query = first_active_query.where("Checkbox_Label = true")
+          expect(second_active_query).to be_a described_class
+          expect(second_active_query).not_to eq first_active_query
+          expect(second_active_query.to_s).not_to eq first_active_query.to_s
+        end
+      end
+    end
   end
 
   describe "#find_by" do
     it "should query the client, with the SFDC field names and correctly enclosed values" do
-      expect(client).to receive :query
-      active_query.find_by field: 123
-      expect(active_query.to_s).to eq "SELECT Id FROM table_name WHERE (Field__c = 123) LIMIT 1"
+      expect(client).to receive(:query).with("SELECT Id FROM table_name WHERE (Field__c = 123) LIMIT 1")
+      new_query = active_query.find_by field: 123
+      expect(new_query).to be_nil
     end
   end
 
@@ -199,18 +215,18 @@ describe ActiveForce::ActiveQuery do
     let(:expected_query){ "SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\' AND NumberField = 123 AND QuoteField = ''' OR Id!=NULL OR Id=''')" }
 
     it 'escapes quotes and backslashes in bind parameters' do
-      active_query.where('Backslash_Field__c = :backslash_field AND NumberField = :number_field AND QuoteField = :quote_field', number_field: number_input, backslash_field: backslash_input, quote_field: quote_input)
-      expect(active_query.to_s).to eq(expected_query)
+      new_query = active_query.where('Backslash_Field__c = :backslash_field AND NumberField = :number_field AND QuoteField = :quote_field', number_field: number_input, backslash_field: backslash_input, quote_field: quote_input)
+      expect(new_query.to_s).to eq(expected_query)
     end
 
     it 'escapes quotes and backslashes in named bind parameters' do
-      active_query.where('Backslash_Field__c = ? AND NumberField = ? AND QuoteField = ?', backslash_input, number_input, quote_input)
-      expect(active_query.to_s).to eq(expected_query)
+      new_query = active_query.where('Backslash_Field__c = ? AND NumberField = ? AND QuoteField = ?', backslash_input, number_input, quote_input)
+      expect(new_query.to_s).to eq(expected_query)
     end
 
     it 'escapes quotes and backslashes in hash conditions' do
-      active_query.where(backslash_field: backslash_input, number_field: number_input, quote_field: quote_input)
-      expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\') AND (NumberField = 123) AND (QuoteField = ''' OR Id!=NULL OR Id=''')")
+      new_query = active_query.where(backslash_field: backslash_input, number_field: number_input, quote_field: quote_input)
+      expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\') AND (NumberField = 123) AND (QuoteField = ''' OR Id!=NULL OR Id=''')")
     end
   end
 

@@ -31,7 +31,7 @@ module ActiveForce
 
     def count
       super
-      sfdc_client.query(to_s).first.expr0
+      sfdc_client.query(to_s).first.expr0 #always reruns the query, even if we already have a result.
     end
 
     def limit limit
@@ -41,9 +41,7 @@ module ActiveForce
 
     def where args=nil, *rest
       return self if args.nil?
-      return clone_self_and_clear_cache.where(args, *rest) if @decorated_records.present?
       super build_condition args, rest
-      self
     end
 
     def select *fields

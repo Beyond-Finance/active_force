@@ -36,8 +36,17 @@ module ActiveForce
     end
 
     def where condition
-      @conditions << condition if condition
-      self
+      new_conditions = @conditions + [condition]
+      if new_conditions != @conditions
+        chained_query = self.clone
+        chained_query.instance_variable_set(:@conditions, new_conditions)
+        chained_query
+      else
+        self
+      end
+
+      # @conditions << condition if condition
+      # self
     end
 
     def order order
@@ -46,6 +55,7 @@ module ActiveForce
     end
 
     def limit size
+      # binding.pry
       @size = size if size
       self
     end
@@ -64,8 +74,7 @@ module ActiveForce
     end
 
     def find id
-      where "#{ @table_id } = '#{ id }'"
-      limit 1
+      where("#{ @table_id } = '#{ id }'").limit 1
     end
 
     def first
