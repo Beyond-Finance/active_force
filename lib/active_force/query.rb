@@ -31,33 +31,24 @@ module ActiveForce
     end
 
     def select *columns
-      @query_fields = columns
-      self
+      clone_and_set_instance_variables(query_fields: columns)
     end
 
     def where condition
-      new_conditions = @conditions + [condition]
+      new_conditions = @conditions | [condition]
       if new_conditions != @conditions
-        chained_query = self.clone
-        chained_query.instance_variable_set(:@conditions, new_conditions)
-        chained_query
+        clone_and_set_instance_variables({conditions: new_conditions})
       else
         self
       end
-
-      # @conditions << condition if condition
-      # self
     end
 
     def order order
-      @order = order if order
-      self
+      order ? clone_and_set_instance_variables(order: order) : self
     end
 
     def limit size
-      # binding.pry
-      @size = size if size
-      self
+      size ? clone_and_set_instance_variables(size: size) : self
     end
 
     def limit_value
@@ -65,8 +56,7 @@ module ActiveForce
     end
 
     def offset offset
-      @offset = offset
-      self
+      clone_and_set_instance_variables(offset: offset)
     end
 
     def offset_value
@@ -86,13 +76,13 @@ module ActiveForce
     end
 
     def join object_query
-      fields ["(#{ object_query.to_s })"]
-      self
+      chained_query = self.clone
+      chained_query.fields ["(#{ object_query.to_s })"]
+      chained_query
     end
 
     def count
-      @query_fields = ["count(Id)"]
-      self
+      clone_and_set_instance_variables(query_fields: ["count(Id)"])
     end
 
     protected
@@ -114,6 +104,12 @@ module ActiveForce
 
       def build_offset
         "OFFSET #{ @offset }" if @offset
+      end
+
+      def clone_and_set_instance_variables instance_variable_hash={}
+        clone = self.clone
+        instance_variable_hash.each { |k,v| clone.instance_variable_set("@#{k.to_s}", v) }
+        clone
       end
   end
 end

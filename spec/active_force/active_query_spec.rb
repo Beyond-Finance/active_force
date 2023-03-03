@@ -42,8 +42,8 @@ describe ActiveForce::ActiveQuery do
 
   describe "select only some field using mappings" do
     it "should return a query only with selected field" do
-      active_query.select(:field)
-      expect(active_query.to_s).to eq("SELECT Field__c FROM table_name")
+      new_query = active_query.select(:field)
+      expect(new_query.to_s).to eq("SELECT Field__c FROM table_name")
     end
   end
 
@@ -147,7 +147,6 @@ describe ActiveForce::ActiveQuery do
     it 'allows method chaining' do
       result = active_query.where("Text_Label = 'foo'").where("Checkbox_Label = true")
       expect(result).to be_a described_class
-      # expect(result.first).to eq(api_result2.first)
     end
 
     context 'when calling `where` on an ActiveQuery object that already has records' do

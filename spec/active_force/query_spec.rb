@@ -47,7 +47,15 @@ describe ActiveForce::Query do
       expect(query.where("condition1 = 1").where("condition2 = 2 OR condition3 = 3").to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (condition1 = 1) AND (condition2 = 2 OR condition3 = 3)"
     end
 
+    it "should not duplicate conditions" do
+      first_query = query.where("name = 'cool'").where("foo = 'baz'")
+      second_query = first_query.where("name = 'cool'")
+      expect(first_query.to_s).to eq(second_query.to_s)
+      expect(first_query.object_id).to eq(second_query.object_id)
+    end
+
     it "should not update the original query" do
+      binding.pry
       new_query = query.where("name = 'cool'")
       expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
       expect(new_query.to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (name = 'cool')"
@@ -68,8 +76,8 @@ describe ActiveForce::Query do
 
   describe ".limit_value" do
     it "should return the limit value" do
-      query.limit(4)
-      expect(query.limit_value).to eq 4
+      new_query = query.limit(4)
+      expect(new_query.limit_value).to eq 4
     end
   end
 
@@ -87,8 +95,8 @@ describe ActiveForce::Query do
 
   describe ".offset_value" do
     it "should return the offset value" do
-      query.offset(4)
-      expect(query.offset_value).to eq 4
+      new_query = query.offset(4)
+      expect(new_query.offset_value).to eq 4
     end
   end
 
@@ -108,9 +116,9 @@ describe ActiveForce::Query do
     end
 
     it "should not update the original query" do
-      ordered_query = query.order("name asc")
+      ordered_query = query.order("name desc")
       expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
-      expect(ordered_query.to_s).to eq "SELECT Id, name, etc FROM table_name ORDER BY name desc "
+      expect(ordered_query.to_s).to eq "SELECT Id, name, etc FROM table_name ORDER BY name desc"
     end
   end
 
