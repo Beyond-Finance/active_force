@@ -55,7 +55,6 @@ describe ActiveForce::Query do
     end
 
     it "should not update the original query" do
-      binding.pry
       new_query = query.where("name = 'cool'")
       expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
       expect(new_query.to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (name = 'cool')"
