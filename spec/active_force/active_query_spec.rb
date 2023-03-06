@@ -159,6 +159,7 @@ describe ActiveForce::ActiveQuery do
           expect(second_active_query).to be_a described_class
           expect(second_active_query).not_to eq first_active_query
           expect(second_active_query.to_s).not_to eq first_active_query.to_s
+          expect(second_active_query.to_a.size).to eq(1)
         end
       end
     end
@@ -172,6 +173,7 @@ describe ActiveForce::ActiveQuery do
           expect(second_active_query).to be_a described_class
           expect(second_active_query).not_to eq first_active_query
           expect(second_active_query.to_s).not_to eq first_active_query.to_s
+          expect(second_active_query.to_a.size).to eq(1)
         end
       end
     end

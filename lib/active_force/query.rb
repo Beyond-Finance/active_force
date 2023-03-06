@@ -108,6 +108,8 @@ module ActiveForce
 
       def clone_and_set_instance_variables instance_variable_hash={}
         clone = self.clone
+        clone.instance_variable_set(:@decorated_records, nil)
+        clone.instance_variable_set(:@records, nil)
         instance_variable_hash.each { |k,v| clone.instance_variable_set("@#{k.to_s}", v) }
         clone
       end
