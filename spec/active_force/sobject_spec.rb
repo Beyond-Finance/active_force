@@ -14,6 +14,20 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe ".alias_original_fields" do
+    let(:sobject){ Whizbang.build sobject_hash }
+
+    it 'aliases the original Salesforce fields' do
+      expect(sobject.checkbox).to eq sobject.checkbox_label
+      expect(sobject.text).to eq sobject.text_label
+      expect(sobject.date).to eq sobject.date_label
+      expect(sobject.datetime).to eq sobject.datetime_label
+      expect(sobject.picklist_multiselect).to eq sobject.picklist_multiselect_label
+      expect(sobject.boolean).to eq sobject.boolean_label
+      expect(sobject.percent).to eq sobject.percent_label
+    end
+  end
+
   describe ".build" do
     let(:sobject){ Whizbang.build sobject_hash }
 

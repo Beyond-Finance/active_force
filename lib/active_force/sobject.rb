@@ -22,6 +22,7 @@ module ActiveForce
     define_model_callbacks :build, :create, :update, :save, :destroy
 
     class_attribute :mappings, :table_name
+    class_attribute :alias_original_fields, default: false
 
     attr_accessor :id, :title
 
@@ -149,6 +150,7 @@ module ActiveForce
       cast_type = args.fetch(:as, :string)
       attribute field_name, cast_type
       define_attribute_methods field_name
+      alias_attribute(args[:from].downcase.to_sym, field_name) if alias_original_fields? && args[:from] && args[:from].downcase.to_sym != field_name
     end
 
     def modified_attributes

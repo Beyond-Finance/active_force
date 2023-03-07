@@ -1,4 +1,5 @@
 class Whizbang < ActiveForce::SObject
+  self.alias_original_fields = true
 
   field :id,                   from: 'Id'
   field :checkbox,             from: 'Checkbox_Label', as: :boolean
