@@ -1,6 +1,10 @@
 module ActiveForce
   module Association
     class HasManyAssociation < Association
+      def sfdc_association_field
+        relationship_name.gsub /__c\z/, 's__r'
+      end
+
       private
 
       def default_foreign_key

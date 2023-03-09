@@ -8,13 +8,14 @@ module ActiveForce
   class ActiveQuery < Query
     extend Forwardable
 
-    attr_reader :sobject
+    attr_reader :sobject, :association_mapping
 
     def_delegators :sobject, :sfdc_client, :build, :table_name, :mappings
     def_delegators :to_a, :each, :map, :inspect, :pluck, :each_with_object
 
     def initialize sobject
       @sobject = sobject
+      @association_mapping = {}
       super table_name
       fields sobject.fields
     end
@@ -24,7 +25,7 @@ module ActiveForce
     end
 
     private def records
-      @records ||= result.to_a.map { |mash| build mash }
+      @records ||= result.to_a.map { |mash| build mash, association_mapping }
     end
 
     alias_method :all, :to_a
@@ -65,6 +66,7 @@ module ActiveForce
       relations.each do |relation|
         association = sobject.associations[relation]
         fields Association::EagerLoadProjectionBuilder.build association
+        association_mapping[association.sfdc_association_field] = association.relation_name
       end
       self
     end
