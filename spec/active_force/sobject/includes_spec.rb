@@ -278,7 +278,7 @@ module ActiveForce
             }
           })]
           allow(client).to receive(:query).once.and_return response
-          account = Account.includes(:opportunities).find '123'
+          account = Account.includes(:opportunities, :owner).find '123'
           expect(account.opportunities).to be_an Array
           expect(account.opportunities.all? { |o| o.is_a? Opportunity }).to eq true
           expect(account.owner).to be_a Owner
