@@ -46,7 +46,7 @@ module ActiveForce
         context 'with namespaced SObjects' do
           it 'queries the API for the associated record' do
             soql = Salesforce::Territory.includes(:quota).where(id: '123').to_s
-            expect(soql).to eq "SELECT Id, QuotaId, WidgetId, Quota__r.Id FROM Territory WHERE (Id = '123')"
+            expect(soql).to eq "SELECT Id, QuotaId, WidgetId, QuotaId.Id FROM Territory WHERE (Id = '123')"
           end
 
           it "queries the API once to retrieve the object and its related one" do
@@ -54,7 +54,7 @@ module ActiveForce
               "Id"       => "123",
               "QuotaId"  => "321",
               "WidgetId" => "321",
-              "Quota__r" => {
+              "QuotaId" => {
                 "Id" => "321"
               }
             })]
@@ -88,7 +88,7 @@ module ActiveForce
 
           context 'when the class name does not match the SFDC entity name' do
             let(:expected_soql) do
-              "SELECT Id, QuotaId, WidgetId, Tegdiw__r.Id FROM Territory WHERE (Id = '123')"
+              "SELECT Id, QuotaId, WidgetId, WidgetId.Id FROM Territory WHERE (Id = '123')"
             end
 
             it 'queries the API for the associated record' do
@@ -100,7 +100,7 @@ module ActiveForce
               response = [build_restforce_sobject({
                 "Id"        => "123",
                 "WidgetId"  => "321",
-                "Tegdiw__r" => {
+                "WidgetId" => {
                   "Id" => "321"
                 }
               })]
@@ -115,7 +115,7 @@ module ActiveForce
           context 'child to several parents' do
             it 'queries the API for associated records' do
               soql = Salesforce::Territory.includes(:quota, :widget).where(id: '123').to_s
-              expect(soql).to eq "SELECT Id, QuotaId, WidgetId, Quota__r.Id, Tegdiw__r.Id FROM Territory WHERE (Id = '123')"
+              expect(soql).to eq "SELECT Id, QuotaId, WidgetId, QuotaId.Id, WidgetId.Id FROM Territory WHERE (Id = '123')"
             end
 
             it "queries the API once to retrieve the object and its assocations" do
@@ -123,10 +123,10 @@ module ActiveForce
                 "Id"       => "123",
                 "QuotaId"  => "321",
                 "WidgetId" => "321",
-                "Quota__r" => {
+                "QuotaId" => {
                   "Id" => "321"
                 },
-                "Tegdiw__r" => {
+                "WidgetId" => {
                   "Id" => "321"
                 }
               })]
@@ -263,7 +263,7 @@ module ActiveForce
       describe 'mixing belongs_to and has_many' do
         it 'formulates the correct SOQL query' do
           soql = Account.includes(:opportunities, :owner).where(id: '123').to_s
-          expect(soql).to eq "SELECT Id, OwnerId, (SELECT Id, AccountId FROM Opportunities), Owner__r.Id FROM Account WHERE (Id = '123')"
+          expect(soql).to eq "SELECT Id, OwnerId, (SELECT Id, AccountId FROM Opportunities), OwnerId.Id FROM Account WHERE (Id = '123')"
         end
 
         it 'builds the associated objects and caches them' do
@@ -273,12 +273,12 @@ module ActiveForce
               {'Id' => '213', 'AccountId' => '123'},
               {'Id' => '214', 'AccountId' => '123'}
             ]),
-            'Owner__r' => {
+            'OwnerId' => {
               'Id' => '321'
             }
           })]
           allow(client).to receive(:query).once.and_return response
-          account = Account.includes(:opportunities).find '123'
+          account = Account.includes(:opportunities, :owner).find '123'
           expect(account.opportunities).to be_an Array
           expect(account.opportunities.all? { |o| o.is_a? Opportunity }).to eq true
           expect(account.owner).to be_a Owner

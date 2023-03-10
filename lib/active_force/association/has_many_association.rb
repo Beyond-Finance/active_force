@@ -1,6 +1,13 @@
 module ActiveForce
   module Association
     class HasManyAssociation < Association
+      def sfdc_association_field
+        name = relationship_name.gsub /__c\z/, '__r'
+        match = name.match /__r\z/
+        # pluralize the table name, and append '__r' if it was there to begin with
+        name.sub(match.to_s, '').pluralize + match.to_s
+      end
+
       private
 
       def default_foreign_key
