@@ -18,6 +18,7 @@ module ActiveForce
 
         @parent.send :define_method, "#{_method}=" do |other|
           value_to_set = other.nil? ? nil : self.id
+          other = other.first if other.is_a?(Array)
           # Do we change the object that was passed in or do we modify the already associated object?
           obj_to_change = value_to_set ? other : self.send(association.relation_name)
           obj_to_change.send "#{ association.foreign_key }=", value_to_set
