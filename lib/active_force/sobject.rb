@@ -59,8 +59,8 @@ module ActiveForce
       sobject.build_attributes = mash[:build_attributes] || mash
       sobject.run_callbacks(:build) do
         mash.each do |column, value|
-          if association_mapping.has_key?(column)
-            column = association_mapping[column]
+          if association_mapping.has_key?(column.downcase)
+            column = association_mapping[column.downcase]
           end
           sobject.write_value column, value
         end

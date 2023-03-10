@@ -66,7 +66,8 @@ module ActiveForce
       relations.each do |relation|
         association = sobject.associations[relation]
         fields Association::EagerLoadProjectionBuilder.build association
-        association_mapping[association.sfdc_association_field] = association.relation_name
+        # downcase the key and downcase when we do the comparison so we don't do any more crazy string manipulation
+        association_mapping[association.sfdc_association_field.downcase] = association.relation_name
       end
       self
     end
