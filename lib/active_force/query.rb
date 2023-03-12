@@ -35,6 +35,16 @@ module ActiveForce
       self
     end
 
+    def not query
+      @conditions << "NOT ((#{ query.conditions.join(') AND (') }))"
+      self
+    end
+
+    def or query
+      @conditions = ["((#{ @conditions.join(') AND (') })) OR ((#{ query.conditions.join(') AND (') }))"]
+      self
+    end
+
     def where condition
       @conditions << condition if condition
       self
@@ -87,6 +97,10 @@ module ActiveForce
     end
 
     protected
+      def conditions
+        @conditions
+      end
+
       def build_select
         @query_fields.compact.uniq.join(', ')
       end
