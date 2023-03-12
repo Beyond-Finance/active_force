@@ -15,9 +15,9 @@ module ActiveForce
             query = association.relation_model.query
             if scope = association.options[:scoped_as]
               if scope.arity > 0
-                query.instance_exec self, &scope
+                query = query.instance_exec self, &scope
               else
-                query.instance_exec &scope
+                query = query.instance_exec &scope
               end
             end
             association_cache[_method] = query.where association.foreign_key => self.id

@@ -35,20 +35,17 @@ module ActiveForce
     end
 
     def limit limit
-      super
-      limit == 1 ? to_a.first : self
+      limit == 1 ? super.to_a.first : super
     end
 
     def where args=nil, *rest
       return self if args.nil?
-      return clone_self_and_clear_cache.where(args, *rest) if @decorated_records.present?
       super build_condition args, rest
-      self
     end
 
-    def select *fields
-      fields.map! { |field| mappings[field] }
-      super *fields
+    def select *selected_fields
+      selected_fields.map! { |field| mappings[field] }
+      super *selected_fields
     end
 
     def find_by conditions
@@ -163,13 +160,6 @@ module ActiveForce
 
     def result
       sfdc_client.query(self.to_s)
-    end
-
-    def clone_self_and_clear_cache
-      new_query = self.clone
-      new_query.instance_variable_set(:@decorated_records, nil)
-      new_query.instance_variable_set(:@records, nil)
-      new_query
     end
   end
 end
