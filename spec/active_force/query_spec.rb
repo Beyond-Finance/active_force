@@ -50,8 +50,17 @@ describe ActiveForce::Query do
 
   describe ".not" do
     let(:subquery) { ActiveForce::Query.new 'table_name' }
+
     it 'should add a not condition' do
       expect(query.not(subquery.where('condition1 = 1')).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (NOT ((condition1 = 1)))"
+    end
+  end
+
+  describe ".or" do
+    let(:subquery) { ActiveForce::Query.new 'table_name' }
+
+    it 'should create an or condition' do
+      expect(query.where('condition1 = 1').or(subquery.where('condition2 = 2')).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (((condition1 = 1)) OR ((condition2 = 2)))"
     end
   end
 
