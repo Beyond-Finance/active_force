@@ -36,12 +36,12 @@ module ActiveForce
     end
 
     def not query
-      @conditions << "NOT ((#{ query.conditions.join(') AND (') }))"
+      @conditions << "NOT (#{ query.and_conditions })"
       self
     end
 
     def or query
-      @conditions = ["((#{ @conditions.join(') AND (') })) OR ((#{ query.conditions.join(') AND (') }))"]
+      @conditions = ["(#{ and_conditions }) OR (#{ query.and_conditions })"]
       self
     end
 
@@ -97,8 +97,8 @@ module ActiveForce
     end
 
     protected
-      def conditions
-        @conditions
+      def and_conditions
+        "(#{@conditions.join(') AND (')})" unless @conditions.empty?
       end
 
       def build_select
@@ -106,7 +106,7 @@ module ActiveForce
       end
 
       def build_where
-        "WHERE (#{ @conditions.join(') AND (') })" unless @conditions.empty?
+        "WHERE #{and_conditions}" unless @conditions.empty?
       end
 
       def build_limit

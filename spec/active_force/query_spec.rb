@@ -60,7 +60,7 @@ describe ActiveForce::Query do
     let(:subquery) { ActiveForce::Query.new 'table_name' }
 
     it 'should create an or condition' do
-      expect(query.where('condition1 = 1').or(subquery.where('condition2 = 2')).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (((condition1 = 1)) OR ((condition2 = 2)))"
+      expect(query.where('condition1 = 1').where('condition2 = 2').or(subquery.where('condition3 = 3')).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (((condition1 = 1) AND (condition2 = 2)) OR ((condition3 = 3)))"
     end
   end
 
