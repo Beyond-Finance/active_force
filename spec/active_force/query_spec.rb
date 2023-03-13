@@ -52,7 +52,7 @@ describe ActiveForce::Query do
     let(:subquery) { ActiveForce::Query.new 'table_name' }
 
     it 'should add a not condition' do
-      expect(query.not(subquery.where('condition1 = 1')).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (NOT ((condition1 = 1)))"
+      expect(query.not(['condition1 = 1']).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (NOT ((condition1 = 1)))"
     end
   end
 
