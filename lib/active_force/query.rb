@@ -35,8 +35,8 @@ module ActiveForce
       self
     end
 
-    def not query
-      @conditions << "NOT (#{ query.and_conditions })"
+    def not condition
+      @conditions << "NOT ((#{ condition.join(') AND (') }))"
       self
     end
 
@@ -45,7 +45,7 @@ module ActiveForce
       self
     end
 
-    def where condition
+    def where condition = nil
       @conditions << condition if condition
       self
     end
