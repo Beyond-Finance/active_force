@@ -1,7 +1,16 @@
 module ActiveForce
   module Association
     class BelongsToAssociation < Association
+
+      def relationship_name
+        options[:relationship_name] || default_relationship_name
+      end
+
       private
+
+      def default_relationship_name
+        @parent.mappings[foreign_key].gsub /__c\z/, '__r'
+      end
 
       def default_foreign_key
         infer_foreign_key_from_model relation_model
