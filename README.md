@@ -160,6 +160,25 @@ Account.where(web_enable: 1, contact_by: ['web', 'email']).limit(2)
 #                    LIMIT 2
 ```
 
+You can query using _NOT_ (negated conditions):
+
+```ruby
+Account.where.not(web_enable: 1)
+#=> this will query "SELECT Id, Name...
+#                    FROM Account
+#                    WHERE NOT WebEnable__c = 1"
+```
+
+You can create _OR_ queries:
+
+```ruby
+Account.where(contact_by: 'web').or(Account.where(contact_by: 'email'))
+#=> this will query "SELECT Id, Name...
+#                    FROM Account
+#                    WHERE (contact_by__c = 'web')
+#                    OR (contact_by__c = 'email')"
+```
+
 It is also possible to eager load associations:
 
 ```ruby
