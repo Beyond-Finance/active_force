@@ -96,6 +96,11 @@ module ActiveForce
       self
     end
 
+    def sum field
+      @query_fields = ["sum(#{field})"]
+      self
+    end
+
     protected
       def and_conditions
         "(#{@conditions.join(') AND (')})" unless @conditions.empty?
