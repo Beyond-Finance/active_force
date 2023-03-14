@@ -40,6 +40,12 @@ module ActiveForce
       limit == 1 ? to_a.first : self
     end
 
+    def not args=nil, *rest
+      return self if args.nil?
+      super build_condition args, rest
+      self
+    end
+
     def where args=nil, *rest
       return self if args.nil?
       return clone_self_and_clear_cache.where(args, *rest) if @decorated_records.present?
