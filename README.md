@@ -120,7 +120,7 @@ class Account < ActiveForce::SObject
     scoped_as: ->{ where("Discontinued__c > ? OR Discontinued__c = ?", Date.today.strftime("%Y-%m-%d"), nil) }
 
   has_many :today_log_entries,
-    model: DailyLogEntry,
+    model: 'DailyLogEntry',
     scoped_as: ->{ where(date: Time.now.in_time_zone.strftime("%Y-%m-%d")) }
 
   has_many :labs,
@@ -133,7 +133,7 @@ end
 
 ```ruby
 class Car < ActiveForce::SObject
-  has_one :engine, model: CarEngine
+  has_one :engine, model: 'CarEngine'
 end
 ```
 

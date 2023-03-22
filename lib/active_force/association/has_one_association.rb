@@ -12,7 +12,7 @@ module ActiveForce
         _method = @relation_name
         @parent.send :define_method, _method do
           association_cache.fetch(_method) do
-            association_cache[_method] = association.relation_model.to_s.constantize.find_by(association.foreign_key => self.id)
+            association_cache[_method] = association.relation_model.find_by(association.foreign_key => self.id)
           end
         end
 

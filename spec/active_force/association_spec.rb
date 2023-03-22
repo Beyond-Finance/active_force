@@ -93,6 +93,22 @@ describe ActiveForce::SObject do
       soql = "SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comment__c WHERE (PostId = '1')"
       expect(post.comments.to_s).to eq soql
     end
+
+    context 'when passing `model` option' do
+      before do
+        allow(Comment).to receive(:where).once.and_return([comment])
+      end
+
+      it 'allows passing as a constant' do
+        Post.has_many :comments, model: Comment
+        expect { post.comments }.to_not raise_error
+      end
+
+      it 'allows passing as a string' do
+        Post.has_many :comments, model: 'Comment'
+        expect { post.comments }.to_not raise_error
+      end
+    end
   end
 
   describe "has_one_query" do
@@ -102,14 +118,6 @@ describe ActiveForce::SObject do
 
     it "should return a the correct child object" do
       expect(has_one_parent.has_one_child).to be_a HasOneChild
-    end
-
-    it "should allow to pass a foreign key as options" do
-      HasOneParent.has_one :has_one_child, foreign_key: :fancy_parent_id
-      allow(has_one_parent).to receive(:id).and_return "2"
-      expect(client).to receive(:query).with("SELECT Id, has_one_parent_id__c, FancyParentId FROM HasOneChild__c WHERE (FancyParentId = '2') LIMIT 1")
-      has_one_parent.has_one_child
-      HasOneParent.has_one :has_one_child, foreign_key: :has_one_parent_id # reset association to original value
     end
 
     it 'makes only one API call to fetch the associated object' do
@@ -170,17 +178,35 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe 'has_one(options)' do
+    it 'allows passing a foreign key' do
+      HasOneParent.has_one :has_one_child, foreign_key: :fancy_parent_id
+      allow(has_one_parent).to receive(:id).and_return "2"
+      expect(client).to receive(:query).with("SELECT Id, has_one_parent_id__c, FancyParentId FROM HasOneChild__c WHERE (FancyParentId = '2') LIMIT 1")
+      has_one_parent.has_one_child
+      HasOneParent.has_one :has_one_child, foreign_key: :has_one_parent_id # reset association to original value
+    end
+
+    context 'when passing `model` option' do
+      before do
+        allow(HasOneChild).to receive(:find_by).and_return(has_one_child)
+      end
+
+      it 'allows passing as a constant' do
+        HasOneParent.has_one :has_one_child, model: HasOneChild
+        expect { has_one_parent.has_one_child }.to_not raise_error
+      end
+
+      it 'allows passing as a string' do
+        HasOneParent.has_one :has_one_child, model: 'HasOneChild'
+        expect { has_one_parent.has_one_child }.to_not raise_error
+      end
+    end
+  end
+
   describe "belongs_to" do
     it "should get the resource it belongs to" do
       expect(comment.post).to be_instance_of(Post)
-    end
-
-    it "should allow to pass a foreign key as options" do
-      Comment.belongs_to :post, foreign_key: :fancy_post_id
-      allow(comment).to receive(:fancy_post_id).and_return "2"
-      expect(client).to receive(:query).with("SELECT Id, Title__c FROM Post__c WHERE (Id = '2') LIMIT 1")
-      comment.post
-      Comment.belongs_to :post # reset association to original value
     end
 
     it 'makes only one API call to fetch the associated object' do
@@ -234,6 +260,32 @@ describe ActiveForce::SObject do
           expect(client).to receive(:query).with("SELECT Id FROM Lead WHERE (Id = '2') LIMIT 1")
           attachment.fancy_lead
         end
+      end
+    end
+  end
+
+  describe 'belongs_to(options)' do
+    it 'allows passing a foreign key' do
+      Comment.belongs_to :post, foreign_key: :fancy_post_id
+      allow(comment).to receive(:fancy_post_id).and_return "2"
+      expect(client).to receive(:query).with("SELECT Id, Title__c FROM Post__c WHERE (Id = '2') LIMIT 1")
+      comment.post
+      Comment.belongs_to :post # reset association to original value
+    end
+
+    context 'when passing `model` option' do
+      before do
+        allow(Post).to receive(:find).once.and_return(post)
+      end
+
+      it 'allows passing as a constant' do
+        Comment.belongs_to :post, model: Post
+        expect { comment.post.id }.to_not raise_error
+      end
+
+      it 'allows passing as a string' do
+        Comment.belongs_to :post, model: 'Post'
+        expect { comment.post.id }.to_not raise_error
       end
     end
   end
