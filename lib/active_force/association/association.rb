@@ -14,7 +14,7 @@ module ActiveForce
       end
 
       def relation_model
-        options[:model] || relation_name.to_s.singularize.camelcase.constantize
+        (options[:model] || relation_name.to_s.singularize.camelcase).to_s.constantize
       end
 
       def foreign_key
