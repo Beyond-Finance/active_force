@@ -35,6 +35,11 @@ module ActiveForce
       sfdc_client.query(to_s).first.expr0
     end
 
+    def sum field
+      super(mappings[field])
+      sfdc_client.query(to_s).first.expr0
+    end
+
     def limit limit
       super
       limit == 1 ? to_a.first : self

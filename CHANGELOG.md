@@ -2,13 +2,13 @@
 
 ## Not released
 
+## 0.10.1
+* Added support for 'or' and 'not' clauses (https://github.com/Beyond-Finance/active_force/pull/13)
+* Added support for the SUM aggregate function (https://github.com/Beyond-Finance/active_force/pull/14)
 ## 0.10.0
 * Fix `#where` chaining on `ActiveQuery` (https://github.com/Beyond-Finance/active_force/pull/7)
 * Add `#find_by!` which raises `ActiveForce::RecordNotFound` if nothing is found. (https://github.com/Beyond-Finance/active_force/pull/8)
 * Fix `#includes` to find, build, and set the association. (https://github.com/Beyond-Finance/active_force/pull/12)
-
-## 0.10.1
-* Added support for 'or' and 'not' clauses (https://github.com/Beyond-Finance/active_force/pull/13)
 
 ## 0.9.1
 * Fix invalid error class (https://github.com/Beyond-Finance/active_force/pull/6)

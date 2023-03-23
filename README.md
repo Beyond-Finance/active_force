@@ -185,6 +185,16 @@ It is also possible to eager load associations:
 Comment.includes(:post)
 ```
 
+### Aggregates
+
+Summing the values of a column:
+```ruby
+Transaction.where(offer_id: 'ABD832024').sum(:amount)
+#=> This will query "SELECT SUM(Amount__c) 
+#                    FROM Transaction__c 
+#                    WHERE offer_id = 'ABD832024'"
+```
+
 #### Decorator
 
 You can specify a `self.decorate(records)` method on the class, which will be called once with
