@@ -139,4 +139,14 @@ describe ActiveForce::Query do
       expect(query.where("name = 'cool'").count.to_s).to eq "SELECT count(Id) FROM table_name WHERE (name = 'cool')"
     end
   end
+
+  describe ".sum" do
+    it "should return the query for summing the desired column" do
+      expect(query.sum(:field1).to_s).to eq 'SELECT sum(field1) FROM table_name'
+    end
+
+    it "should work with a condition" do
+      expect(query.where("name = 'cool'").sum(:field1).to_s).to eq "SELECT sum(field1) FROM table_name WHERE (name = 'cool')"
+    end
+  end
 end
