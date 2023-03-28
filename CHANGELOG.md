@@ -3,7 +3,7 @@
 ## Not released
 
 ## 0.11.1
-* Fix `datetime` fields of SObjects to use iso(8601) format when sending to SF
+* Fix `datetime` fields of SObjects to use iso(8601) format when sending to SF (https://github.com/Beyond-Finance/active_force/pull/18)
 
 ## 0.11.0
 * Added support for 'or' and 'not' clauses (https://github.com/Beyond-Finance/active_force/pull/13)
