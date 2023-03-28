@@ -23,5 +23,11 @@ describe ActiveForce::Field do
       names = field.new(:names, as: :multipicklist)
       expect(names.value_for_hash ['olvap', 'eloy']).to eq 'olvap;eloy'
     end
+
+    it 'a datetime should return a string like "YYYY-MM-DDTHH:MM:SSZ"' do
+      current_time = DateTime.now
+      names = field.new(:time, as: :datetime)
+      expect(names.value_for_hash current_time).to eq current_time.to_fs(:iso8601)
+    end
   end
 end

@@ -13,6 +13,8 @@ module ActiveForce
       case as
       when :multipicklist
         (value || Array.new).reject(&:empty?).join(';')
+      when :datetime
+        value.to_fs(:iso8601)
       else
         value
       end
