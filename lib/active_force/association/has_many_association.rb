@@ -14,29 +14,28 @@ module ActiveForce
         infer_foreign_key_from_model @parent
       end
 
-      def define_relation_method
-        association = self
-        _method = @relation_name
-        @parent.send :define_method, _method do
-          association_cache.fetch _method do
-            query = association.relation_model.query
-            association_cache[_method] = if id.present?
-                                           if (scope = association.options[:scoped_as])
-                                             if scope.arity.positive?
-                                               query.instance_exec self, &scope
-                                             else
-                                               query.instance_exec(&scope)
-                                             end
-                                           end
-                                           query.where association.foreign_key => id
-                                         else
-                                           query.none
-                                         end
-          end
-        end
+      def target(owner)
+        apply_scope(relation_model.query, owner).where(foreign_key => owner.id)
+      end
 
-        @parent.send :define_method, "#{_method}=" do |associated|
-          association_cache[_method] = associated
+      def untargetable_value
+        relation_model.none
+      end
+
+      def apply_scope(query, owner)
+        return query unless (scope = options[:scoped_as])
+
+        if scope.arity.positive?
+          query.instance_exec(owner, &scope)
+        else
+          query.instance_exec(&scope)
+        end
+      end
+
+      def define_assignment_method
+        method_name = relation_name
+        parent.send :define_method, "#{method_name}=" do |associated|
+          association_cache[method_name] = associated
         end
       end
     end

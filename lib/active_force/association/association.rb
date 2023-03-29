@@ -11,6 +11,7 @@ module ActiveForce
         @relation_name = relation_name
         @options       = options
         define_relation_method
+        define_assignment_method
       end
 
       def relation_model
@@ -38,13 +39,42 @@ module ActiveForce
         relationship_name.gsub /__c\z/, '__r'
       end
 
+      def find_target(owner)
+        if targetable?(owner)
+          target(owner)
+        else
+          untargetable_value
+        end
+      end
+
       private
+
+      attr_reader :parent
+
+      def targetable?(owner)
+        owner&.persisted?
+      end
+
+      def target(_owner)
+        raise NoMethodError, 'target must be implemented'
+      end
+
+      def untargetable_value
+        nil
+      end
+
+      def define_relation_method
+        association = self
+        method_name = relation_name
+        parent.send(:define_method, method_name) do
+          association_cache.fetch(method_name) { association_cache[method_name] = association.find_target(self) }
+        end
+      end
 
       def infer_foreign_key_from_model(model)
         name = model.custom_table? ? model.name : model.table_name
         name.foreign_key.to_sym
       end
     end
-
   end
 end

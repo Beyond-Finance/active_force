@@ -1,12 +1,19 @@
 module ActiveForce
   module Association
     class BelongsToAssociation < Association
-
       def relationship_name
         options[:relationship_name] || default_relationship_name
       end
 
       private
+
+      def targetable?(owner)
+        owner&.public_send(foreign_key).present?
+      end
+
+      def target(owner)
+        relation_model.find(owner.send(foreign_key))
+      end
 
       def default_relationship_name
         @parent.mappings[foreign_key].gsub /__c\z/, '__r'
@@ -16,19 +23,12 @@ module ActiveForce
         infer_foreign_key_from_model relation_model
       end
 
-      def define_relation_method
+      def define_assignment_method
         association = self
-        _method = @relation_name
-        @parent.send :define_method, _method do
-          association_cache.fetch(_method) do
-            fk_value = send(association.foreign_key)
-            association_cache[_method] = fk_value.present? ? association.relation_model.find(fk_value) : nil
-          end
-        end
-
-        @parent.send :define_method, "#{_method}=" do |other|
-          send "#{ association.foreign_key }=", other.nil? ? nil : other.id
-          association_cache[_method] = other
+        method_name = relation_name
+        parent.send :define_method, "#{method_name}=" do |other|
+          send "#{association.foreign_key}=", other&.id
+          association_cache[method_name] = other
         end
       end
     end
