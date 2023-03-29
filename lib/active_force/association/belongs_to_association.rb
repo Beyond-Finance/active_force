@@ -21,7 +21,8 @@ module ActiveForce
         _method = @relation_name
         @parent.send :define_method, _method do
           association_cache.fetch(_method) do
-            association_cache[_method] = association.relation_model.find(send association.foreign_key)
+            fk_value = send(association.foreign_key)
+            association_cache[_method] = fk_value.present? ? association.relation_model.find(fk_value) : nil
           end
         end
 

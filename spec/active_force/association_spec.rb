@@ -47,6 +47,19 @@ describe ActiveForce::SObject do
       end
     end
 
+    context 'when primary key is blank' do
+      let(:post) { Post.new }
+
+      it 'does not make any queries' do
+        post.comments.to_a
+        expect(client).not_to have_received :query
+      end
+
+      it 'returns empty' do
+        expect(post.comments.to_a).to be_empty
+      end
+    end
+
     context 'when the SObject is namespaced' do
       let(:account){ Foo::Account.new(id: '1') }
 
@@ -124,6 +137,19 @@ describe ActiveForce::SObject do
       expect(HasOneChild).to receive(:find_by).once.and_return(has_one_child)
       has_one_parent.has_one_child.id
       has_one_parent.has_one_child.id
+    end
+
+    context 'when primary key is blank' do
+      let(:parent) { HasOneParent.new }
+
+      it 'does not make any queries' do
+        parent.has_one_child
+        expect(client).not_to have_received :query
+      end
+
+      it 'returns nil' do
+        expect(parent.has_one_child).to be_nil
+      end
     end
 
     describe "assignments" do
@@ -213,6 +239,19 @@ describe ActiveForce::SObject do
       expect(client).to receive(:query).once
       comment.post
       comment.post
+    end
+
+    context 'when foreign key is blank' do
+      let(:comment) { Comment.new(id: '1') }
+
+      it 'does not make any queries' do
+        comment.post
+        expect(client).not_to have_received :query
+      end
+
+      it 'returns nil' do
+        expect(comment.post).to be_nil
+      end
     end
 
     describe "assignments" do
