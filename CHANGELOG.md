@@ -2,6 +2,10 @@
 
 ## Not released
 
+## 0.11.2
+
+* Fix: prevent association methods from running queries when keys do not exist (https://github.com/Beyond-Finance/active_force/pull/20)
+
 ## 0.11.1
 * Fix `datetime` fields of SObjects to use iso(8601) format when sending to SF (https://github.com/Beyond-Finance/active_force/pull/18)
 
