@@ -7,7 +7,7 @@ module ActiveForce
 
       private
 
-      def targetable?(owner)
+      def loadable?(owner)
         owner&.public_send(foreign_key).present?
       end
 
@@ -16,7 +16,7 @@ module ActiveForce
       end
 
       def default_relationship_name
-        @parent.mappings[foreign_key].gsub /__c\z/, '__r'
+        parent.mappings[foreign_key].gsub(/__c\z/, '__r')
       end
 
       def default_foreign_key

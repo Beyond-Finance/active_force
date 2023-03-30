@@ -11,14 +11,14 @@ module ActiveForce
       private
 
       def default_foreign_key
-        infer_foreign_key_from_model @parent
+        infer_foreign_key_from_model parent
       end
 
       def target(owner)
         apply_scope(relation_model.query, owner).where(foreign_key => owner.id)
       end
 
-      def untargetable_value
+      def target_when_unloadable
         relation_model.none
       end
 

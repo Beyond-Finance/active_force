@@ -8,7 +8,7 @@ module ActiveForce
       end
 
       def default_foreign_key
-        infer_foreign_key_from_model @parent
+        infer_foreign_key_from_model parent
       end
 
       def define_assignment_method

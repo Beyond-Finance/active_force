@@ -39,11 +39,11 @@ module ActiveForce
         relationship_name.gsub /__c\z/, '__r'
       end
 
-      def find_target(owner)
-        if targetable?(owner)
+      def load_target(owner)
+        if loadable?(owner)
           target(owner)
         else
-          untargetable_value
+          target_when_unloadable
         end
       end
 
@@ -51,7 +51,7 @@ module ActiveForce
 
       attr_reader :parent
 
-      def targetable?(owner)
+      def loadable?(owner)
         owner&.persisted?
       end
 
@@ -59,7 +59,7 @@ module ActiveForce
         raise NoMethodError, 'target must be implemented'
       end
 
-      def untargetable_value
+      def target_when_unloadable
         nil
       end
 
@@ -67,8 +67,12 @@ module ActiveForce
         association = self
         method_name = relation_name
         parent.send(:define_method, method_name) do
-          association_cache.fetch(method_name) { association_cache[method_name] = association.find_target(self) }
+          association_cache.fetch(method_name) { association_cache[method_name] = association.load_target(self) }
         end
+      end
+
+      def define_assignment_method
+        raise NoMethodError, 'define_assignment_method must be implemented'
       end
 
       def infer_foreign_key_from_model(model)
