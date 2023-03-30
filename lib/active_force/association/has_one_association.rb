@@ -15,11 +15,13 @@ module ActiveForce
         association = self
         method_name = relation_name
         parent.send :define_method, "#{method_name}=" do |other|
-          value_to_set = other.nil? ? nil : self.id
           other = other.first if other.is_a?(Array)
-          # Do we change the object that was passed in or do we modify the already associated object?
-          obj_to_change = value_to_set ? other : send(method_name)
-          obj_to_change.send "#{association.foreign_key}=", value_to_set
+          if persisted?
+            value_to_set = other.nil? ? nil : id
+            # Do we change the object that was passed in or do we modify the already associated object?
+            obj_to_change = value_to_set ? other : send(method_name)
+            obj_to_change.send "#{association.foreign_key}=", value_to_set
+          end
           association_cache[method_name] = other
         end
       end
