@@ -8,11 +8,11 @@ module ActiveForce
       private
 
       def loadable?(owner)
-        owner&.public_send(foreign_key).present?
+        foreign_key_value(owner).present?
       end
 
       def target(owner)
-        relation_model.find(owner.send(foreign_key))
+        relation_model.find(foreign_key_value(owner))
       end
 
       def default_relationship_name
@@ -21,6 +21,10 @@ module ActiveForce
 
       def default_foreign_key
         infer_foreign_key_from_model relation_model
+      end
+
+      def foreign_key_value(owner)
+        owner&.public_send(foreign_key)
       end
 
       def define_assignment_method
