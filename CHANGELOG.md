@@ -2,7 +2,7 @@
 
 ## Not released
 
-## 0.12.0
+## 0.11.2
 
 * Fix: prevent association methods from running queries when keys do not exist (https://github.com/Beyond-Finance/active_force/pull/20)
 
