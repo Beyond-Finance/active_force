@@ -1,5 +1,5 @@
 module RestforceFactories
-  def build_restforce_collection(array)
+  def build_restforce_collection(array=[])
     Restforce::Collection.new({ 'records' => array }, nil)
   end
 

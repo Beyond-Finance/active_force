@@ -40,9 +40,7 @@ module ActiveForce
       # relationship name. Per SFDC convention, the name needs
       # to be pluralized
       def projections
-        match = association.sfdc_association_field.match /__r\z/
-        # pluralize the table name, and append '__r' if it was there to begin with
-        relationship_name = association.sfdc_association_field.sub(match.to_s, '').pluralize + match.to_s
+        relationship_name = association.sfdc_association_field
         query = Query.new relationship_name
         query.fields association.relation_model.fields
         ["(#{query.to_s})"]

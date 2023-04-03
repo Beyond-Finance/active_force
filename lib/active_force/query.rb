@@ -34,13 +34,23 @@ module ActiveForce
       clone_and_set_instance_variables(query_fields: columns)
     end
 
-    def where condition
+    def where condition = nil
       new_conditions = @conditions | [condition]
       if new_conditions != @conditions
         clone_and_set_instance_variables({conditions: new_conditions})
       else
         self
       end
+    end
+
+    def not condition
+      @conditions << "NOT ((#{ condition.join(') AND (') }))"
+      self
+    end
+
+    def or query
+      @conditions = ["(#{ and_conditions }) OR (#{ query.and_conditions })"]
+      self
     end
 
     def order order
@@ -85,13 +95,22 @@ module ActiveForce
       clone_and_set_instance_variables(query_fields: ["count(Id)"])
     end
 
+    def sum field
+      @query_fields = ["sum(#{field})"]
+      self
+    end
+
     protected
+      def and_conditions
+        "(#{@conditions.join(') AND (')})" unless @conditions.empty?
+      end
+
       def build_select
         @query_fields.compact.uniq.join(', ')
       end
 
       def build_where
-        "WHERE (#{ @conditions.join(') AND (') })" unless @conditions.empty?
+        "WHERE #{and_conditions}" unless @conditions.empty?
       end
 
       def build_limit

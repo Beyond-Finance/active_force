@@ -120,7 +120,7 @@ class Account < ActiveForce::SObject
     scoped_as: ->{ where("Discontinued__c > ? OR Discontinued__c = ?", Date.today.strftime("%Y-%m-%d"), nil) }
 
   has_many :today_log_entries,
-    model: DailyLogEntry,
+    model: 'DailyLogEntry',
     scoped_as: ->{ where(date: Time.now.in_time_zone.strftime("%Y-%m-%d")) }
 
   has_many :labs,
@@ -133,7 +133,7 @@ end
 
 ```ruby
 class Car < ActiveForce::SObject
-  has_one :engine, model: CarEngine
+  has_one :engine, model: 'CarEngine'
 end
 ```
 
@@ -160,10 +160,39 @@ Account.where(web_enable: 1, contact_by: ['web', 'email']).limit(2)
 #                    LIMIT 2
 ```
 
+You can query using _NOT_ (negated conditions):
+
+```ruby
+Account.where.not(web_enable: 1)
+#=> this will query "SELECT Id, Name...
+#                    FROM Account
+#                    WHERE NOT WebEnable__c = 1"
+```
+
+You can create _OR_ queries:
+
+```ruby
+Account.where(contact_by: 'web').or(Account.where(contact_by: 'email'))
+#=> this will query "SELECT Id, Name...
+#                    FROM Account
+#                    WHERE (contact_by__c = 'web')
+#                    OR (contact_by__c = 'email')"
+```
+
 It is also possible to eager load associations:
 
 ```ruby
 Comment.includes(:post)
+```
+
+### Aggregates
+
+Summing the values of a column:
+```ruby
+Transaction.where(offer_id: 'ABD832024').sum(:amount)
+#=> This will query "SELECT SUM(Amount__c) 
+#                    FROM Transaction__c 
+#                    WHERE offer_id = 'ABD832024'"
 ```
 
 #### Decorator

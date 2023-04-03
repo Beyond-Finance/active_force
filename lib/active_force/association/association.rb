@@ -11,10 +11,11 @@ module ActiveForce
         @relation_name = relation_name
         @options       = options
         define_relation_method
+        define_assignment_method
       end
 
       def relation_model
-        options[:model] || relation_name.to_s.singularize.camelcase.constantize
+        (options[:model] || relation_name.to_s.singularize.camelcase).to_s.constantize
       end
 
       def foreign_key
@@ -38,13 +39,46 @@ module ActiveForce
         relationship_name.gsub /__c\z/, '__r'
       end
 
+      def load_target(owner)
+        if loadable?(owner)
+          target(owner)
+        else
+          target_when_unloadable
+        end
+      end
+
       private
+
+      attr_reader :parent
+
+      def loadable?(owner)
+        owner&.persisted?
+      end
+
+      def target(_owner)
+        raise NoMethodError, 'target must be implemented'
+      end
+
+      def target_when_unloadable
+        nil
+      end
+
+      def define_relation_method
+        association = self
+        method_name = relation_name
+        parent.send(:define_method, method_name) do
+          association_cache.fetch(method_name) { association_cache[method_name] = association.load_target(self) }
+        end
+      end
+
+      def define_assignment_method
+        raise NoMethodError, 'define_assignment_method must be implemented'
+      end
 
       def infer_foreign_key_from_model(model)
         name = model.custom_table? ? model.name : model.table_name
         name.foreign_key.to_sym
       end
     end
-
   end
 end

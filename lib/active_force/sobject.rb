@@ -27,7 +27,7 @@ module ActiveForce
 
     class << self
       extend Forwardable
-      def_delegators :query, :where, :first, :last, :all, :find, :find_by, :find_by!, :count, :includes, :limit, :order, :select, :none
+      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
       def_delegators :mapping, :table, :table_name, :custom_table?, :mappings
 
       private
@@ -53,12 +53,15 @@ module ActiveForce
     end
 
     attr_accessor :build_attributes
-    def self.build mash
+    def self.build mash, association_mapping={}
       return unless mash
       sobject = new
       sobject.build_attributes = mash[:build_attributes] || mash
       sobject.run_callbacks(:build) do
         mash.each do |column, value|
+          if association_mapping.has_key?(column.downcase)
+            column = association_mapping[column.downcase]
+          end
           sobject.write_value column, value
         end
       end
@@ -164,7 +167,7 @@ module ActiveForce
     end
 
     def write_value key, value
-      if association = self.class.find_association(key.to_s)
+      if association = self.class.find_association(key.to_sym)
         field = association.relation_name
         value = Association::RelationModelBuilder.build(association, value)
       elsif key.to_sym.in?(mappings.keys)

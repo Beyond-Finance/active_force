@@ -61,6 +61,22 @@ describe ActiveForce::Query do
     end
   end
 
+  describe ".not" do
+    let(:subquery) { ActiveForce::Query.new 'table_name' }
+
+    it 'should add a not condition' do
+      expect(query.not(['condition1 = 1']).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (NOT ((condition1 = 1)))"
+    end
+  end
+
+  describe ".or" do
+    let(:subquery) { ActiveForce::Query.new 'table_name' }
+
+    it 'should create an or condition' do
+      expect(query.where('condition1 = 1').where('condition2 = 2').or(subquery.where('condition3 = 3')).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (((condition1 = 1) AND (condition2 = 2)) OR ((condition3 = 3)))"
+    end
+  end
+
   describe ".limit" do
     it "should add a limit to a query" do
       expect(query.limit("25").to_s).to eq "SELECT Id, name, etc FROM table_name LIMIT 25"
@@ -176,6 +192,16 @@ describe ActiveForce::Query do
       query_with_count = query.where("name = 'cool'").count
       expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
       expect(query_with_count.to_s).to eq "SELECT count(Id) FROM table_name WHERE (name = 'cool')"
+    end
+  end
+
+  describe ".sum" do
+    it "should return the query for summing the desired column" do
+      expect(query.sum(:field1).to_s).to eq 'SELECT sum(field1) FROM table_name'
+    end
+
+    it "should work with a condition" do
+      expect(query.where("name = 'cool'").sum(:field1).to_s).to eq "SELECT sum(field1) FROM table_name WHERE (name = 'cool')"
     end
   end
 end

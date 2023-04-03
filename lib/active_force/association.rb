@@ -11,11 +11,8 @@ module ActiveForce
       @associations ||= {}
     end
 
-    # i.e name = 'Quota__r'
     def find_association name
-      associations.values.detect do |association|
-        association.represents_sfdc_table? name
-      end
+      associations[name.to_sym]
     end
 
     def has_many relation_name, options = {}

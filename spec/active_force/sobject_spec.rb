@@ -226,7 +226,9 @@ describe ActiveForce::SObject do
 
     describe 'self.create' do
       before do
-        expect(client).to receive(:create!).with(Whizbang.table_name, 'Text_Label' => 'some text', 'Updated_From__c'=>'Rails').and_return('id')
+        expect(client).to receive(:create!)
+          .with(Whizbang.table_name, { 'Text_Label' => 'some text', 'Updated_From__c' => 'Rails' })
+          .and_return('id')
       end
 
       it 'should create a new instance' do

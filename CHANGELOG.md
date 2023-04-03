@@ -1,8 +1,23 @@
 # Changelog
 
 ## Not released
-* Fix `where` chaining on `ActiveQuery` (https://github.com/Beyond-Finance/active_force/pull/7)
-* Add `find_by!` which raises `ActiveForce::RecordNotFound` if nothing is found. (https://github.com/Beyond-Finance/active_force/pull/8)
+
+## 0.11.2
+
+* Fix: prevent association methods from running queries when keys do not exist (https://github.com/Beyond-Finance/active_force/pull/20)
+
+## 0.11.1
+* Fix `datetime` fields of SObjects to use iso(8601) format when sending to SF (https://github.com/Beyond-Finance/active_force/pull/18)
+
+## 0.11.0
+* Added support for 'or' and 'not' clauses (https://github.com/Beyond-Finance/active_force/pull/13)
+* Added support for the SUM aggregate function (https://github.com/Beyond-Finance/active_force/pull/14)
+* Allow `model` to be passed as a string or a constant (https://github.com/Beyond-Finance/active_force/pull/16)
+
+## 0.10.0
+* Fix `#where` chaining on `ActiveQuery` (https://github.com/Beyond-Finance/active_force/pull/7)
+* Add `#find_by!` which raises `ActiveForce::RecordNotFound` if nothing is found. (https://github.com/Beyond-Finance/active_force/pull/8)
+* Fix `#includes` to find, build, and set the association. (https://github.com/Beyond-Finance/active_force/pull/12)
 
 ## 0.9.1
 * Fix invalid error class (https://github.com/Beyond-Finance/active_force/pull/6)
