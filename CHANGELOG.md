@@ -2,6 +2,10 @@
 
 ## Not released
 
+## 0.11.3
+
+* Fix has_one assignment when receiver does not have id (https://github.com/Beyond-Finance/active_force/pull/23)
+
 ## 0.11.2
 
 * Fix: prevent association methods from running queries when keys do not exist (https://github.com/Beyond-Finance/active_force/pull/20)

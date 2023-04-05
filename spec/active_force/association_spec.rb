@@ -165,10 +165,17 @@ describe ActiveForce::SObject do
 
       it 'accepts assignment of an existing object as an association' do
         expect(client).to_not receive(:query)
-        other_child = HasOneChild.new(id: "2")
+        other_child = HasOneChild.new(id: '2')
         has_one.has_one_child = other_child
         expect(has_one.has_one_child.has_one_parent_id).to eq has_one.id
         expect(has_one.has_one_child).to eq other_child
+      end
+
+      it 'uses first element if given Array' do
+        first_child = HasOneChild.new(id: '2')
+        has_one.has_one_child = [first_child, HasOneChild.new(id: '3')]
+        expect(has_one.has_one_child.has_one_parent_id).to eq has_one.id
+        expect(has_one.has_one_child).to eq first_child
       end
 
       it 'can desassociate an object by setting it as nil' do
@@ -177,8 +184,35 @@ describe ActiveForce::SObject do
         expect(old_child.has_one_parent_id).to eq nil
         expect(has_one.has_one_child).to eq nil
       end
-    end
 
+      context 'when primary key is blank' do
+        let(:child) { HasOneChild.new }
+        let(:parent) { HasOneParent.new }
+
+        it 'accepts assignment' do
+          parent.has_one_child = child
+          expect(parent.has_one_child).to eq(child)
+        end
+
+        it 'accepts reassignment' do
+          parent.has_one_child = child
+          other_child = HasOneChild.new(id: 'x')
+          parent.has_one_child = other_child
+          expect(parent.has_one_child).to eq(other_child)
+        end
+
+        it 'accepts nil assignment' do
+          parent.has_one_child = child
+          parent.has_one_child = nil
+          expect(parent.has_one_child).to be_nil
+        end
+
+        it 'assigns the first element if given an array' do
+          parent.has_one_child = [child, 'something else']
+          expect(parent.has_one_child).to eq(child)
+        end
+      end
+    end
 
     context 'when the SObject is namespaced' do
       let(:attachment){ Foo::Attachment.new(id: '1', lead_id: '2') }
