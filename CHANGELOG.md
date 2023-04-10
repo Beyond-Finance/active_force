@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.11.4
+* Properly escape single quote (https://github.com/Beyond-Finance/active_force/pull/29)
+
 ## 0.11.3
 
 * Fix has_one assignment when receiver does not have id (https://github.com/Beyond-Finance/active_force/pull/23)
