@@ -162,7 +162,7 @@ module ActiveForce
     def enclose_value value
       case value
       when String
-        "'#{quote_string(value)}'"
+        quote_string(value)
       when NilClass
         'NULL'
       when Time
@@ -173,8 +173,7 @@ module ActiveForce
     end
 
     def quote_string(s)
-      # From activerecord/lib/active_record/connection_adapters/abstract/quoting.rb, version 4.1.5, line 82
-      s.gsub(/\\/, '\&\&').gsub(/'/, "''")
+      "'#{s.gsub(/(['\\])/, '\\\\\\1')}'"
     end
 
     def result
