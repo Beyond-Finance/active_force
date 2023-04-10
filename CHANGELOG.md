@@ -4,6 +4,8 @@
 
 ## 0.11.4
 * Properly escape single quote (https://github.com/Beyond-Finance/active_force/pull/29)
+* Fix `Time` value formatting in `.where` (https://github.com/Beyond-Finance/active_force/pull/28)
+
 
 ## 0.11.3
 

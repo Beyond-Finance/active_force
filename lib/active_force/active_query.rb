@@ -165,6 +165,8 @@ module ActiveForce
         quote_string(value)
       when NilClass
         'NULL'
+      when Time
+        value.iso8601
       else
         value.to_s
       end
