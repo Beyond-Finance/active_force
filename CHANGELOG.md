@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.11.5
+* Use attributes' values_for_database (serialize) value instead of using the type casted value to allow more flexibility when creating your own ActiveModel type
+
 ## 0.11.4
 * Properly escape single quote (https://github.com/Beyond-Finance/active_force/pull/29)
 * Fix `Time` value formatting in `.where` (https://github.com/Beyond-Finance/active_force/pull/28)
