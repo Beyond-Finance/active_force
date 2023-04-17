@@ -2,6 +2,10 @@
 
 ## Not released
 
+## 0.12.0
+
+* Add `.describe` to `SObject` to allow convenient metadata fetching (https://github.com/Beyond-Finance/active_force/pull/36)
+
 ## 0.11.4
 * Properly escape single quote (https://github.com/Beyond-Finance/active_force/pull/29)
 * Fix `Time` value formatting in `.where` (https://github.com/Beyond-Finance/active_force/pull/28)
