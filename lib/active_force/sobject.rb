@@ -52,6 +52,10 @@ module ActiveForce
       ActiveForce::ActiveQuery.new self
     end
 
+    def self.describe
+      sfdc_client.describe(table_name)
+    end
+
     attr_accessor :build_attributes
     def self.build mash, association_mapping={}
       return unless mash
