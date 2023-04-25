@@ -288,6 +288,27 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe '.find!' do
+    let(:id) { 'abc123' }
+
+    before do
+      allow(client).to receive(:query)
+    end
+
+    it 'returns found record' do
+      query = "SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c WHERE (Id = '#{id}') LIMIT 1"
+      expected = Restforce::Mash.new(Id: id)
+      allow(client).to receive(:query).with(query).and_return([expected])
+      actual = Whizbang.find!(id)
+      expect(actual.id).to eq(expected.Id)
+    end
+
+    it 'raises RecordNotFound if nothing found' do
+      expect { Whizbang.find!(id) }
+        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{Whizbang.table_name} with #{{ id: id }}")
+    end
+  end
+
   describe '#reload' do
     let(:client) do
       double("sfdc_client", query: [Restforce::Mash.new(Id: 1, Name: 'Jeff')])

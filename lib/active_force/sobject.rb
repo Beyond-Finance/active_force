@@ -8,7 +8,7 @@ require 'logger'
 require 'restforce'
 
 module ActiveForce
-  class RecordInvalid < StandardError;end
+  class RecordInvalid < StandardError; end
 
   class SObject
     include ActiveModel::API
@@ -27,7 +27,8 @@ module ActiveForce
 
     class << self
       extend Forwardable
-      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
+      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count,
+                     :includes, :limit, :order, :select, :none
       def_delegators :mapping, :table, :table_name, :custom_table?, :mappings
 
       private
@@ -57,15 +58,15 @@ module ActiveForce
     end
 
     attr_accessor :build_attributes
-    def self.build mash, association_mapping={}
+
+    def self.build(mash, association_mapping = {})
       return unless mash
+
       sobject = new
       sobject.build_attributes = mash[:build_attributes] || mash
       sobject.run_callbacks(:build) do
         mash.each do |column, value|
-          if association_mapping.has_key?(column.downcase)
-            column = association_mapping[column.downcase]
-          end
+          column = association_mapping[column.downcase] if association_mapping.has_key?(column.downcase)
           sobject.write_value column, value
         end
       end
@@ -73,7 +74,7 @@ module ActiveForce
       sobject
     end
 
-    def update_attributes! attributes = {}
+    def update_attributes!(attributes = {})
       assign_attributes attributes
       validate!
       run_callbacks :save do
@@ -85,15 +86,15 @@ module ActiveForce
       true
     end
 
-    alias_method :update!, :update_attributes!
+    alias update! update_attributes!
 
-    def update_attributes attributes = {}
+    def update_attributes(attributes = {})
       update_attributes! attributes
-    rescue Faraday::ClientError, RecordInvalid => error
-      handle_save_error error
+    rescue Faraday::ClientError, RecordInvalid => e
+      handle_save_error e
     end
 
-    alias_method :update, :update_attributes
+    alias update update_attributes
 
     def create!
       validate!
@@ -108,8 +109,8 @@ module ActiveForce
 
     def create
       create!
-    rescue Faraday::ClientError, RecordInvalid => error
-      handle_save_error error
+    rescue Faraday::ClientError, RecordInvalid => e
+      handle_save_error e
       self
     end
 
@@ -119,11 +120,11 @@ module ActiveForce
       end
     end
 
-    def self.create args
+    def self.create(args)
       new(args).create
     end
 
-    def self.create! args
+    def self.create!(args)
       new(args).create!
     end
 
@@ -139,8 +140,8 @@ module ActiveForce
 
     def save
       save!
-    rescue Faraday::ClientError, RecordInvalid => error
-      handle_save_error error
+    rescue Faraday::ClientError, RecordInvalid => e
+      handle_save_error e
     end
 
     def to_param
@@ -151,7 +152,7 @@ module ActiveForce
       !!id
     end
 
-    def self.field field_name, args = {}
+    def self.field(field_name, args = {})
       mapping.field field_name, args
       cast_type = args.fetch(:as, :string)
       attribute field_name, cast_type
@@ -159,7 +160,7 @@ module ActiveForce
     end
 
     def modified_attributes
-      attributes.select{ |attr, key| changed.include? attr.to_s }
+      attributes.select { |attr, _key| changed.include? attr.to_s }
     end
 
     def reload
@@ -170,7 +171,7 @@ module ActiveForce
       self
     end
 
-    def write_value key, value
+    def write_value(key, value)
       if association = self.class.find_association(key.to_sym)
         field = association.relation_name
         value = Association::RelationModelBuilder.build(association, value)
@@ -188,22 +189,21 @@ module ActiveForce
       send(name.to_sym)
     end
 
-    def []=(name,value)
+    def []=(name, value)
       send("#{name.to_sym}=", value)
     end
 
-   private
+    private
 
     def validate!
-      unless valid?
-        raise RecordInvalid.new(
-          "Validation failed: #{errors.full_messages.join(', ')}"
-        )
-      end
+      return if valid?
+
+      raise RecordInvalid, "Validation failed: #{errors.full_messages.join(', ')}"
     end
 
-    def handle_save_error error
-      return false if error.class == RecordInvalid
+    def handle_save_error(error)
+      return false if error.instance_of?(RecordInvalid)
+
       logger_output __method__, error, attributes
     end
 
@@ -211,20 +211,20 @@ module ActiveForce
       @association_cache ||= {}
     end
 
-    def logger_output action, exception, params = {}
+    def logger_output(action, exception, params = {})
       logger = Logger.new(STDOUT)
-      logger.info("[SFDC] [#{self.class.model_name}] [#{self.class.table_name}] Error while #{ action }, params: #{params}, error: #{exception.inspect}")
+      logger.info("[SFDC] [#{self.class.model_name}] [#{self.class.table_name}] Error while #{action}, params: #{params}, error: #{exception.inspect}")
       errors.add(:base, exception.message)
       false
     end
 
     def attributes_for_sfdb
       attrs = self.class.mapping.translate_to_sf(modified_attributes)
-      attrs.merge!({'Id' => id }) if persisted?
+      attrs.merge!({ 'Id' => id }) if persisted?
       attrs
     end
 
-    def self.picklist field
+    def self.picklist(field)
       picks = sfdc_client.picklist_values(table_name, mappings[field])
       picks.map do |value|
         [value[:label], value[:value]]
@@ -239,5 +239,4 @@ module ActiveForce
       self.class.sfdc_client
     end
   end
-
 end
