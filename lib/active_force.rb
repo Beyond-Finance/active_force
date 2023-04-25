@@ -12,4 +12,5 @@ module ActiveForce
 
   self.sfdc_client = Restforce.new
 
+  Error = Class.new(StandardError)
 end

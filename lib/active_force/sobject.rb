@@ -2,6 +2,7 @@ require 'active_model'
 require 'active_force/active_query'
 require 'active_force/association'
 require 'active_force/mapping'
+require 'active_force/composite/treeable'
 require 'yaml'
 require 'forwardable'
 require 'logger'
@@ -16,6 +17,7 @@ module ActiveForce
     include ActiveModel::Attributes
     include ActiveModel::Model
     include ActiveModel::Dirty
+    include Composite::Treeable
     extend ActiveModel::Callbacks
     extend ActiveForce::Association
 
@@ -190,6 +192,14 @@ module ActiveForce
 
     def []=(name,value)
       send("#{name.to_sym}=", value)
+    end
+
+    def save_request
+      {
+        method: persisted? ? 'PATCH' : 'POST',
+        url: '?',
+        body: attributes_for_sfdb
+      }
     end
 
    private
