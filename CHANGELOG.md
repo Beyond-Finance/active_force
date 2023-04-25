@@ -2,8 +2,13 @@
 
 ## Not released
 
-## 0.11.5
+## 0.12.1
+
 * Use attributes' values_for_database (serialize) value instead of using the type casted value to allow more flexibility when creating your own ActiveModel type
+
+## 0.12.0
+
+* Add `.describe` to `SObject` to allow convenient metadata fetching (https://github.com/Beyond-Finance/active_force/pull/36)
 
 ## 0.11.4
 * Properly escape single quote (https://github.com/Beyond-Finance/active_force/pull/29)

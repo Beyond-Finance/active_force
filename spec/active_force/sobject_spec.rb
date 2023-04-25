@@ -104,6 +104,25 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe '.describe' do
+    subject { Whizbang.describe }
+
+    let(:describe_response) { { 'fields' => [] } }
+
+    before do
+      allow(client).to receive(:describe).and_return(describe_response)
+    end
+
+    it 'passes table_name to sfdc_client.describe' do
+      subject
+      expect(client).to have_received(:describe).with(Whizbang.table_name)
+    end
+
+    it 'returns response from describe' do
+      expect(subject).to eq(describe_response)
+    end
+  end
+
   describe "CRUD" do
     let(:instance){ Whizbang.new(id: '1') }
 
