@@ -197,7 +197,7 @@ module ActiveForce
     def save_request
       {
         method: persisted? ? 'PATCH' : 'POST',
-        url: '?',
+        url: save_request_url,
         body: attributes_for_sfdb
       }
     end
@@ -232,6 +232,10 @@ module ActiveForce
       attrs = self.class.mapping.translate_to_sf(modified_attributes)
       attrs.merge!({'Id' => id }) if persisted?
       attrs
+    end
+
+    def save_request_url
+      "/services/data/sobjects/v#{sfdc_client.options.fetch(:api_version)}/#{table_name}" + (persisted? ? "/#{id}" : '')
     end
 
     def self.picklist field

@@ -23,7 +23,7 @@ module ActiveForce
       end
 
       def relationship_name
-        options[:relationship_name] || relation_model.to_s.constantize.table_name
+        options[:relationship_name] || default_relationship_name
       end
 
       ###
@@ -68,6 +68,15 @@ module ActiveForce
         method_name = relation_name
         parent.send(:define_method, method_name) do
           association_cache.fetch(method_name) { association_cache[method_name] = association.load_target(self) }
+        end
+      end
+
+      def default_relationship_name
+        table_name = relation_model.to_s.constantize.table_name
+        if table_name.end_with?('__c')
+          table_name.chomp('__c').pluralize.concat('__r')
+        else
+          table_name.pluralize
         end
       end
 

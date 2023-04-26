@@ -3,6 +3,12 @@
 module ActiveForce
   module Composite
     class TreeBuilder
+      Result = Struct.new(:error_responses) do
+        def success?
+          error_responses.blank?
+        end
+      end
+
       def initialize(root_object_class, **options)
         @root_object_class = root_object_class
         @options = options
@@ -12,13 +18,29 @@ module ActiveForce
       def commit
         raise InvalidOperationError, 'trees have already been committed' if committed?
 
-        send_tree_requests(roots.map { |root| Tree.build(root) })
+        result = send_tree_requests(roots.map { |root| Tree.build(root) })
         @committed = true
+        result
+      end
+
+      def commit!
+        result = commit
+        raise FailedRequestError, result.error_responses unless result.success?
+
+        result
       end
 
       def committed?
         @committed
       end
+
+      def add_roots(*objects)
+        objects&.each { |object| add_root(object) }
+      end
+
+      private
+
+      attr_reader :root_object_class, :options
 
       def add_root(object)
         raise ArgumentError, "All root objects must be #{root_object_class}" unless object.is_a?(root_object_class)
@@ -27,20 +49,14 @@ module ActiveForce
         roots << object
       end
 
-      private
-
-      attr_reader :root_object_class, :options
-
       def send_tree_requests(trees)
-        errors = []
+        error_responses = []
         batch_trees(trees).each do |batch|
           response = send_request({ records: combine_tree_requests(batch) })
           batch.each { |tree| tree.assign_ids(response) }
-        rescue FailedRequestError => e
-          errors << e
+          error_responses << response if response.hasErrors
         end
-        # TODO
-        raise FailedRequestError.new(errors) if errors.present?
+        Result.new(error_responses)
       end
 
       def combine_tree_requests(trees)
@@ -68,13 +84,7 @@ module ActiveForce
       end
 
       def send_request(body)
-        response = ActiveForce.sfdc_client.api_post("composite/tree/#{object_name}", body.to_json)
-        raise_on_error(response)
-        response
-      end
-
-      def raise_on_error(response)
-        # TODO
+        ActiveForce.sfdc_client.api_post("composite/tree/#{root_object_class.table_name}", body.to_json)
       end
 
       def max_roots?

@@ -1,10 +1,6 @@
 module ActiveForce
   module Association
     class BelongsToAssociation < Association
-      def relationship_name
-        options[:relationship_name] || default_relationship_name
-      end
-
       private
 
       def loadable?(owner)

@@ -39,8 +39,8 @@ module ActiveForce
         return if subrequest.blank?
 
         check_depth(depth)
-        object.traversable_children.each do |child_name, children|
-          subrequest[child_name] = { records: children.map { |child| traverse(child, depth + 1) }.compact }
+        object.traversable_children.each do |relationship_name, children|
+          subrequest[relationship_name] = { records: children.map { |child| traverse(child, depth + 1) }.compact }
         end
         record_object(reference_id, object)
         subrequest

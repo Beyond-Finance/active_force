@@ -2,8 +2,16 @@
 
 module ActiveForce
   module Composite
-    FailedRequestError = Class.new(ActiveForce::Error)
-    ExceedsLimitsError = Class.new(ActiveForce::Error)
-    InvalidOperationError = Class.new(ActiveForce::Error)
+    ExceedsLimitsError = Class.new(Error)
+    InvalidOperationError = Class.new(Error)
+
+    class FailedRequestError < Error
+      attr_reader :errors
+
+      def initialize(responses)
+        @errors = responses&.select(&:hasErrors)&.map(&:results)&.flatten || []
+        super("Composite request had errors: #{errors}")
+      end
+    end
   end
 end
