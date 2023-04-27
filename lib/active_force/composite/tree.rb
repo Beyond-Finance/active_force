@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
+require 'active_force/composite/errors'
+require 'securerandom'
+
 module ActiveForce
   module Composite
+    #
+    # Represents a single rooted sObject tree.
+    #
     class Tree
       attr_reader :root, :max_depth
 

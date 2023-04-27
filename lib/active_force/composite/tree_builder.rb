@@ -1,14 +1,20 @@
 # frozen_string_literal: true
 
+require 'active_force'
+require 'active_force/composite/errors'
+require 'set'
+
 module ActiveForce
   module Composite
+    #
+    # Entrypoint for constructing and sending sObject Tree requests, all with the same root object type.
+    # This can send multiple trees in a single request
+    # and also provides an option (allow_multiple_requests) for sending multiple requests
+    # that will stay within total object limits enforced by the Salesforce REST API.
+    # allow_multiple_requests is false by default, since typically you would want these
+    # requests to all succeed or fail together.
+    #
     class TreeBuilder
-      Result = Struct.new(:error_responses) do
-        def success?
-          error_responses.blank?
-        end
-      end
-
       def initialize(root_object_class, **options)
         @root_object_class = root_object_class
         @options = options
@@ -101,6 +107,12 @@ module ActiveForce
 
       def max_objects
         @max_objects ||= (options[:max_objects] || 200)
+      end
+
+      Result = Struct.new(:error_responses) do
+        def success?
+          error_responses.blank?
+        end
       end
     end
   end

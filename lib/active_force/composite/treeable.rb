@@ -1,25 +1,26 @@
 # frozen_string_literal: true
 
+require 'active_force/composite/tree_builder'
+
 module ActiveForce
   module Composite
+    #
+    # Adds methods for constructing and sending sObject Tree requests
+    #
     module Treeable
-      include Traversable
+      def tree(objects, **options)
+        build_tree_builder(objects, **options).commit
+      end
 
-      class << self
-        def self.tree(objects, **options)
-          build_tree_builder(objects, **options).commit
-        end
+      def tree!(objects, **options)
+        build_tree_builder(objects, **options).commit!
+      end
 
-        def self.tree!(objects, **options)
-          build_tree_builder(objects, **options).commit!
-        end
+      private
 
-        private
-
-        def build_tree_builder(objects, **options)
-          TreeBuilder.new(self, **options).tap do |b|
-            b.add_roots(*objects)
-          end
+      def build_tree_builder(objects, **options)
+        TreeBuilder.new(self, **options).tap do |b|
+          b.add_roots(*objects)
         end
       end
     end

@@ -2,6 +2,7 @@ require 'active_model'
 require 'active_force/active_query'
 require 'active_force/association'
 require 'active_force/mapping'
+require 'active_force/composite/traversable'
 require 'active_force/composite/treeable'
 require 'yaml'
 require 'forwardable'
@@ -17,9 +18,10 @@ module ActiveForce
     include ActiveModel::Attributes
     include ActiveModel::Model
     include ActiveModel::Dirty
-    include Composite::Treeable
+    include Composite::Traversable
     extend ActiveModel::Callbacks
     extend ActiveForce::Association
+    extend Composite::Treeable
 
     define_model_callbacks :build, :create, :update, :save, :destroy
 

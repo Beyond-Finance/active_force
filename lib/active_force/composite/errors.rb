@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
+require 'active_force/errors'
+
 module ActiveForce
   module Composite
     ExceedsLimitsError = Class.new(Error)
     InvalidOperationError = Class.new(Error)
 
+    #
+    # Is raised when a Composite request fails.
+    #
     class FailedRequestError < Error
       attr_reader :errors
 
