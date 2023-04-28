@@ -2,6 +2,10 @@
 
 ## Not released
 
+## 0.13.0
+
+* Add `.find!` to `SObject` (https://github.com/Beyond-Finance/active_force/pull/39)
+
 ## 0.12.0
 
 * Add `.describe` to `SObject` to allow convenient metadata fetching (https://github.com/Beyond-Finance/active_force/pull/36)

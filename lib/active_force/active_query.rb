@@ -4,7 +4,13 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
-  class RecordNotFound < StandardError; end
+
+  class RecordNotFound < StandardError
+    def initialize(table_name, conditions)
+      super("Couldn't find #{table_name} with #{conditions}")
+    end
+  end
+
   class ActiveQuery < Query
     extend Forwardable
 
@@ -63,14 +69,22 @@ module ActiveForce
       super *fields
     end
 
+    def find!(id)
+      result = find(id)
+      raise RecordNotFound.new(table_name, id: id) if result.nil?
+
+      result
+    end
+
     def find_by conditions
       where(conditions).limit 1
     end
 
-    def find_by! conditions
-      res = find_by(conditions)
-      raise RecordNotFound if res.nil?
-      res
+    def find_by!(conditions)
+      result = find_by(conditions)
+      raise RecordNotFound.new(table_name, conditions) if result.nil?
+
+      result
     end
 
     def includes(*relations)
