@@ -17,6 +17,7 @@ module ActiveForce
     include ActiveModel::Model
     include ActiveModel::Dirty
     extend ActiveModel::Callbacks
+    include ActiveModel::Serializers::JSON
     extend ActiveForce::Association
 
     define_model_callbacks :build, :create, :update, :save, :destroy
