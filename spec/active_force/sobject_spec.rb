@@ -355,6 +355,22 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe 'to_json' do
+    let(:instance) { Whizbang.new }
+
+    it 'responds to' do
+      expect(instance).to respond_to(:to_json)
+    end
+  end
+
+  describe 'as_json' do
+    let(:instance) { Whizbang.new }
+
+    it 'responds to' do
+      expect(instance).to respond_to(:as_json)
+    end
+  end
+
   describe ".save!" do
     let(:instance){ Whizbang.new }
 
