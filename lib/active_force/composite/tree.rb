@@ -18,7 +18,7 @@ module ActiveForce
 
       def initialize(root, max_depth: 5)
         @root = root
-        @max_depth = max_depth
+        @max_depth = [1, max_depth || 0].max
       end
 
       def request
