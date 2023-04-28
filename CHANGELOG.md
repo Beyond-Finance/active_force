@@ -2,121 +2,131 @@
 
 ## Not released
 
+- Add `.to_json` and `.as_json` to `SObject` to allow JSON serialization (https://github.com/Beyond-Finance/active_force/pull/37)
+
+## 0.13.0
+
+- Add `.find!` to `SObject` (https://github.com/Beyond-Finance/active_force/pull/39)
+
 ## 0.12.0
 
-* Add `.describe` to `SObject` to allow convenient metadata fetching (https://github.com/Beyond-Finance/active_force/pull/36)
+- Add `.describe` to `SObject` to allow convenient metadata fetching (https://github.com/Beyond-Finance/active_force/pull/36)
 
 ## 0.11.4
-* Properly escape single quote (https://github.com/Beyond-Finance/active_force/pull/29)
-* Fix `Time` value formatting in `.where` (https://github.com/Beyond-Finance/active_force/pull/28)
 
+- Properly escape single quote (https://github.com/Beyond-Finance/active_force/pull/29)
+- Fix `Time` value formatting in `.where` (https://github.com/Beyond-Finance/active_force/pull/28)
 
 ## 0.11.3
 
-* Fix has_one assignment when receiver does not have id (https://github.com/Beyond-Finance/active_force/pull/23)
+- Fix has_one assignment when receiver does not have id (https://github.com/Beyond-Finance/active_force/pull/23)
 
 ## 0.11.2
 
-* Fix: prevent association methods from running queries when keys do not exist (https://github.com/Beyond-Finance/active_force/pull/20)
+- Fix: prevent association methods from running queries when keys do not exist (https://github.com/Beyond-Finance/active_force/pull/20)
 
 ## 0.11.1
-* Fix `datetime` fields of SObjects to use iso(8601) format when sending to SF (https://github.com/Beyond-Finance/active_force/pull/18)
+
+- Fix `datetime` fields of SObjects to use iso(8601) format when sending to SF (https://github.com/Beyond-Finance/active_force/pull/18)
 
 ## 0.11.0
-* Added support for 'or' and 'not' clauses (https://github.com/Beyond-Finance/active_force/pull/13)
-* Added support for the SUM aggregate function (https://github.com/Beyond-Finance/active_force/pull/14)
-* Allow `model` to be passed as a string or a constant (https://github.com/Beyond-Finance/active_force/pull/16)
+
+- Added support for 'or' and 'not' clauses (https://github.com/Beyond-Finance/active_force/pull/13)
+- Added support for the SUM aggregate function (https://github.com/Beyond-Finance/active_force/pull/14)
+- Allow `model` to be passed as a string or a constant (https://github.com/Beyond-Finance/active_force/pull/16)
 
 ## 0.10.0
-* Fix `#where` chaining on `ActiveQuery` (https://github.com/Beyond-Finance/active_force/pull/7)
-* Add `#find_by!` which raises `ActiveForce::RecordNotFound` if nothing is found. (https://github.com/Beyond-Finance/active_force/pull/8)
-* Fix `#includes` to find, build, and set the association. (https://github.com/Beyond-Finance/active_force/pull/12)
+
+- Fix `#where` chaining on `ActiveQuery` (https://github.com/Beyond-Finance/active_force/pull/7)
+- Add `#find_by!` which raises `ActiveForce::RecordNotFound` if nothing is found. (https://github.com/Beyond-Finance/active_force/pull/8)
+- Fix `#includes` to find, build, and set the association. (https://github.com/Beyond-Finance/active_force/pull/12)
 
 ## 0.9.1
-* Fix invalid error class (https://github.com/Beyond-Finance/active_force/pull/6)
+
+- Fix invalid error class (https://github.com/Beyond-Finance/active_force/pull/6)
 
 ## 0.9.0
 
-* Add support for Rails 7 and update Restforce dependency to newer version. (https://github.com/Beyond-Finance/active_force/pull/3)
-* Add `has_one` association. (https://github.com/Beyond-Finance/active_force/pull/3)
-* Model generator enhancements (https://github.com/Beyond-Finance/active_force/pull/3):
-  * automatically add types to fields
-  * sort fields alphabetically
-  * add `table_name` to class
-  * add optional namespace parameter so generated models can be namespaced
-* Add get/set via `[]` and `[]=` for `SObject` attributes. (https://github.com/Beyond-Finance/active_force/pull/3)
+- Add support for Rails 7 and update Restforce dependency to newer version. (https://github.com/Beyond-Finance/active_force/pull/3)
+- Add `has_one` association. (https://github.com/Beyond-Finance/active_force/pull/3)
+- Model generator enhancements (https://github.com/Beyond-Finance/active_force/pull/3):
+  - automatically add types to fields
+  - sort fields alphabetically
+  - add `table_name` to class
+  - add optional namespace parameter so generated models can be namespaced
+- Add get/set via `[]` and `[]=` for `SObject` attributes. (https://github.com/Beyond-Finance/active_force/pull/3)
 
 ## 0.7.1
 
-* Allow sfdc_client to be set. ([#92][])
+- Allow sfdc_client to be set. ([#92][])
 
 ## 0.7.0
 
-* Rails4-style conditional has_many associations  ([Dan Olson][])
-* Add `#includes` query method to eager load has_many association.  ([Dan Olson][])
-* Add `#includes` query method to eager load belongs_to association. ([#65][])
-* SObject#destroy method.
+- Rails4-style conditional has_many associations ([Dan Olson][])
+- Add `#includes` query method to eager load has_many association. ([Dan Olson][])
+- Add `#includes` query method to eager load belongs_to association. ([#65][])
+- SObject#destroy method.
 
 ## 0.6.1
 
-* Fix missing require of 'restforce'. Now clients don't need to add an initializer.
+- Fix missing require of 'restforce'. Now clients don't need to add an initializer.
 
 ## 0.6.0
 
-* Add select statement functionality. ([Pablo Oldani][], [#33][])
-* Add callback functionality ([Pablo Oldani][], [#20][])
-* Support bind parameters. ([Dan Olson][], [#29][])
-* Fix when passing nil value in a :where condition. ([Armando Andini][])
-* Model generator complete ([Armando Andini][], [#19][])
+- Add select statement functionality. ([Pablo Oldani][], [#33][])
+- Add callback functionality ([Pablo Oldani][], [#20][])
+- Support bind parameters. ([Dan Olson][], [#29][])
+- Fix when passing nil value in a :where condition. ([Armando Andini][])
+- Model generator complete ([Armando Andini][], [#19][])
 
 ## 0.5.0
 
-* Provide a default id field for all SObject subclassees ([Dan Olson][], [#30][])
-* Fix Ruby 2.0 compatibility issue ([Dan Olson][], [Pablo Oldani][], [#28][])
-* Normalize rspec syntax to remove deprecation warnings ([Dan Olson][], [#26][])
-* Remove namespace when inferring default SObject.table_name ([Dan Olson][], [#24][])
-* Add create! and save! methods. ([Pablo Oldani][], [#21][])
-* Refactor update and create methods. ([Pablo Oldani][], [#21][])
-* Add a generator. ([José Piccioni][], [#19][])
-* ActiveQuery now provides :each, :map and :inspect. ([Armando Andini][])
-* Add SObject.create class mehtod. ([Pablo Oldani][], [#10][])
-* SObject.field default mapping value follows SFDC API naming convention.
+- Provide a default id field for all SObject subclassees ([Dan Olson][], [#30][])
+- Fix Ruby 2.0 compatibility issue ([Dan Olson][], [Pablo Oldani][], [#28][])
+- Normalize rspec syntax to remove deprecation warnings ([Dan Olson][], [#26][])
+- Remove namespace when inferring default SObject.table_name ([Dan Olson][], [#24][])
+- Add create! and save! methods. ([Pablo Oldani][], [#21][])
+- Refactor update and create methods. ([Pablo Oldani][], [#21][])
+- Add a generator. ([José Piccioni][], [#19][])
+- ActiveQuery now provides :each, :map and :inspect. ([Armando Andini][])
+- Add SObject.create class mehtod. ([Pablo Oldani][], [#10][])
+- SObject.field default mapping value follows SFDC API naming convention.
   ([Dan Olson][], [#14][] [#15][])
 
 ## 0.4.2
 
-* Use ActiveQuery instead of Query. ([Armando Andini][])
-* Add instructions to use validations ([José Piccioni][])
-* Lots of refactoring.
+- Use ActiveQuery instead of Query. ([Armando Andini][])
+- Add instructions to use validations ([José Piccioni][])
+- Lots of refactoring.
 
 ## 0.3.2
 
-* Fixed gemspec.
+- Fixed gemspec.
 
 ## 0.3.1
 
-* Create different classes for associations. ([#4][])
-* Big refactor on has_many association. ([Armando Andini][])
-* Add a lot of specs and refactors. ([Armando Andini][])
-* Add a Finders module. ([Armando Andini][])
-* Add fist and last method to SObject.
+- Create different classes for associations. ([#4][])
+- Big refactor on has_many association. ([Armando Andini][])
+- Add a lot of specs and refactors. ([Armando Andini][])
+- Add a Finders module. ([Armando Andini][])
+- Add fist and last method to SObject.
 
 ## 0.2.0
 
-* Add belogns_to and has_many associations.
-* Changed when the SOQL query is sent to the client.
-* Add join method to query to use associtations.
+- Add belogns_to and has_many associations.
+- Changed when the SOQL query is sent to the client.
+- Add join method to query to use associtations.
 
 ## 0.1.0
 
-* Add query builder object to chain conditions.
-* Update update and create methods.
-* Add Campaing standard table name.
+- Add query builder object to chain conditions.
+- Update update and create methods.
+- Add Campaing standard table name.
 
 ## 0.0.6.alfa
 
-* ActiveForce::SObject#table_name is auto populated using the class
-  name. It adds "__c" to all non standard types.
+- ActiveForce::SObject#table_name is auto populated using the class
+  name. It adds "\_\_c" to all non standard types.
 
 <!--- The following link definition list is generated by PimpMyChangelog --->
 
@@ -136,7 +146,7 @@
 [#33]: https://github.com/ionia-corporation/active_force/issues/33
 [#65]: https://github.com/ionia-corporation/active_force/issues/65
 [#92]: https://github.com/ionia-corporation/active_force/issues/92
-[Pablo Oldani]: https://github.com/olvap
-[Armando Andini]: https://github.com/antico5
-[José Piccioni]: https://github.com/lmhsjackson
-[Dan Olson]: https://github.com/DanOlson
+[pablo oldani]: https://github.com/olvap
+[armando andini]: https://github.com/antico5
+[josé piccioni]: https://github.com/lmhsjackson
+[dan olson]: https://github.com/DanOlson
