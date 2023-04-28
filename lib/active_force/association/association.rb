@@ -73,11 +73,9 @@ module ActiveForce
 
       def default_relationship_name
         table_name = relation_model.to_s.constantize.table_name
-        if table_name.end_with?('__c')
-          table_name.chomp('__c').pluralize.concat('__r')
-        else
-          table_name.pluralize
-        end
+        pluralized = table_name.chomp('__c').pluralize
+        suffix = table_name.end_with?('__c') ? '__r' : ''
+        pluralized.concat(suffix)
       end
 
       def define_assignment_method
