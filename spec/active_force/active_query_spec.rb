@@ -263,7 +263,7 @@ describe ActiveForce::ActiveQuery do
 
       it 'raises RecordNotFound' do
         expect { active_query.find!(id) }
-          .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with #{{ id: id }}")
+          .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with id #{id}")
       end
     end
   end

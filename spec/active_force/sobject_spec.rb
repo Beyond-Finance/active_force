@@ -305,7 +305,7 @@ describe ActiveForce::SObject do
 
     it 'raises RecordNotFound if nothing found' do
       expect { Whizbang.find!(id) }
-        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{Whizbang.table_name} with #{{ id: id }}")
+        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{Whizbang.table_name} with id #{id}")
     end
   end
 

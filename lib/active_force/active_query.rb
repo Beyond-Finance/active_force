@@ -6,8 +6,13 @@ module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
 
   class RecordNotFound < StandardError
-    def initialize(table_name, conditions)
-      super("Couldn't find #{table_name} with #{conditions}")
+    attr_reader :table_name, :conditions
+
+    def initialize(message = nil, table_name = nil, conditions = nil)
+      @table_name = table_name
+      @conditions = conditions
+
+      super(message)
     end
   end
 
@@ -71,7 +76,7 @@ module ActiveForce
 
     def find!(id)
       result = find(id)
-      raise RecordNotFound.new(table_name, id: id) if result.nil?
+      raise RecordNotFound.new("Couldn't find #{table_name} with id #{id}", table_name, id: id) if result.nil?
 
       result
     end
@@ -82,7 +87,7 @@ module ActiveForce
 
     def find_by!(conditions)
       result = find_by(conditions)
-      raise RecordNotFound.new(table_name, conditions) if result.nil?
+      raise RecordNotFound.new("Couldn't find #{table_name} with #{conditions}", table_name, conditions) if result.nil?
 
       result
     end
