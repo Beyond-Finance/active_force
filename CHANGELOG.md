@@ -3,6 +3,7 @@
 ## Not released
 
 - Add `.to_json` and `.as_json` to `SObject` to allow JSON serialization (https://github.com/Beyond-Finance/active_force/pull/37)
+- Memoize the `ActiveForce::Mapping#mappings` Hash since it is based on the fields and those are generally only set when the class is loaded. Also use `Hash#key` which returns the key for a value rather than `Hash#invert` which creates a new Hash with key/value inverted. (https://github.com/Beyond-Finance/active_force/pull/41)
 
 ## 0.13.0
 

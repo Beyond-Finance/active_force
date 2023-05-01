@@ -13,7 +13,7 @@ module ActiveForce
     end
 
     def mappings
-      Hash[fields.map { |field, attr| [field, attr.sfdc_name] }]
+      @mappings ||= Hash[fields.map { |field, attr| [field, attr.sfdc_name] }]
     end
 
     def sfdc_names

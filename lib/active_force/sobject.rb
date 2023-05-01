@@ -180,7 +180,7 @@ module ActiveForce
         field = key
       else
         # Assume key is an SFDC column
-        field = mappings.invert[key]
+        field = mappings.key(key)
       end
       send "#{field}=", value if field && respond_to?(field)
     end
