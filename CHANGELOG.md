@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.13.2
+- Add `#loaded?` method for ActiveQueries to allow the detection of records loaded in memory or pending to be loaded. (https://github.com/Beyond-Finance/active_force/pull/45)
+
 ## 0.13.1
 
 - Fix constructor of `ActiveForce::RecordNotFound` (https://github.com/Beyond-Finance/active_force/pull/44)
