@@ -315,4 +315,24 @@ describe ActiveForce::ActiveQuery do
       active_query.none.to_a
     end
   end
+
+  describe '#loaded?' do
+    subject { active_query.loaded? }
+
+    before do
+      active_query.instance_variable_set(:@records, records)
+    end
+
+    context 'when there are records loaded in memory' do
+      let(:records) { nil }
+
+      it { is_expected.to be_falsey }
+    end
+
+    context 'when there are records loaded in memory' do
+      let(:records) { [build_restforce_sobject(id: 1)] }
+
+      it { is_expected.to be_truthy }
+    end
+  end
 end

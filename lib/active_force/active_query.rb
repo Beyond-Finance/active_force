@@ -107,6 +107,10 @@ module ActiveForce
       where(id: '1'*18).where(id: '0'*18)
     end
 
+    def loaded?
+      @records.present?
+    end
+
     private
 
     def build_condition(args, other=[])
