@@ -108,7 +108,7 @@ module ActiveForce
     end
 
     def loaded?
-      @records.present?
+      !@records.nil?
     end
 
     private
