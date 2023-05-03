@@ -74,6 +74,17 @@ describe ActiveForce::SObject do
         sundae.flavors = %w(chocolate vanilla strawberry)
       end
 
+      context 'mutation of multipicklist' do
+        let(:sundae) { IceCream.new }
+
+        before { sundae.clear_changes_information }
+
+        it 'detects mutation' do
+          sundae.flavors.delete('chocolate')
+          expect(sundae.flavors_changed?).to be true
+        end
+      end
+
       context 'on create' do
         let(:sundae) { IceCream.new }
         it 'formats the picklist values' do

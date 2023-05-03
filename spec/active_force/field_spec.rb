@@ -19,11 +19,6 @@ describe ActiveForce::Field do
   end
 
   describe 'when the field is' do
-    it 'a multipick should return all values as 1 string separated with ";"' do
-      names = field.new(:names, as: :multipicklist)
-      expect(names.value_for_hash ['olvap', 'eloy']).to eq 'olvap;eloy'
-    end
-
     it 'a datetime should return a string like "YYYY-MM-DDTHH:MM:SSZ"' do
       current_time = DateTime.now
       names = field.new(:time, as: :datetime)
