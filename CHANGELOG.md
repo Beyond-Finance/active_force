@@ -2,6 +2,8 @@
 
 ## Not released
 
+- Use attributes' values_for_database (serialize) value instead of using the type casted value to allow more flexibility when creating your own ActiveModel type
+
 ## 0.13.1
 
 - Fix constructor of `ActiveForce::RecordNotFound` (https://github.com/Beyond-Finance/active_force/pull/44)
