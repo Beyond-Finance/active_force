@@ -224,10 +224,47 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
-  describe "#find_by!" do
-    it "raises if record not found" do
+  describe '#find_by!' do
+    it 'raises if record not found' do
       allow(client).to receive(:query).and_return(build_restforce_collection)
-      expect { active_query.find_by!(field: 123) }.to raise_error(ActiveForce::RecordNotFound)
+      expect { active_query.find_by!(field: 123) }
+        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with {:field=>123}")
+    end
+  end
+
+  describe '#find!' do
+    let(:id) { 'test_id' }
+
+    before do
+      allow(client).to receive(:query).and_return(build_restforce_collection([{ 'Id' => id }]))
+    end
+
+    it 'queries for single record by given id' do
+      active_query.find!(id)
+      expect(client).to have_received(:query).with("SELECT Id FROM #{sobject.table_name} WHERE (Id = '#{id}') LIMIT 1")
+    end
+
+    context 'when record is found' do
+      let(:record) { build_restforce_sobject(id: id) }
+
+      before do
+        allow(active_query).to receive(:build).and_return(record)
+      end
+
+      it 'returns the record' do
+        expect(active_query.find!(id)).to eq(record)
+      end
+    end
+
+    context 'when no record is found' do
+      before do
+        allow(client).to receive(:query).and_return(build_restforce_collection)
+      end
+
+      it 'raises RecordNotFound' do
+        expect { active_query.find!(id) }
+          .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with id #{id}")
+      end
     end
   end
 
@@ -276,6 +313,26 @@ describe ActiveForce::ActiveQuery do
     it 'does not query the API' do
       expect(client).to_not receive :query
       active_query.none.to_a
+    end
+  end
+
+  describe '#loaded?' do
+    subject { active_query.loaded? }
+
+    before do
+      active_query.instance_variable_set(:@records, records)
+    end
+
+    context 'when there are records loaded in memory' do
+      let(:records) { nil }
+
+      it { is_expected.to be_falsey }
+    end
+
+    context 'when there are records loaded in memory' do
+      let(:records) { [build_restforce_sobject(id: 1)] }
+
+      it { is_expected.to be_truthy }
     end
   end
 end
