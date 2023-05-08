@@ -56,11 +56,11 @@ module ActiveForce
         return if object.blank? || object.persisted?
 
         { attributes: { type: object.class.table_name, referenceId: reference_id } }
-          .merge(object.save_request[:body] || {})
+          .merge(object.save_request.fetch(:body, {}))
       end
 
       def record_object(reference_id, object)
-        object[reference_id] = object
+        objects[reference_id] = object
       end
 
       def check_depth(depth)
