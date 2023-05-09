@@ -62,7 +62,7 @@ module ActiveForce
       def send_tree_requests(trees)
         error_responses = []
         batch_trees(trees).each do |batch|
-          response = send_request({ records: combine_tree_requests(batch) })
+          response = send_request({ records: combine_tree_requests(batch) }).body
           batch.each { |tree| tree.assign_ids(response) }
           error_responses << response if response.hasErrors
         end

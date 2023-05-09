@@ -4,14 +4,20 @@ require 'spec_helper'
 require 'active_force/composite/tree'
 require 'active_force/composite/tree_builder'
 
+StubResponse = Struct.new(:body)
+
 module ActiveForce
   module Composite
     RSpec.describe TreeBuilder do
       let(:client) { instance_double(Restforce::Client, options: { api_version: '51.0' }) }
       let(:root_class) { CompositeSupport::Root }
 
+      def build_response(body = {})
+        StubResponse.new(Restforce::Mash.new(body))
+      end
+
       before do
-        allow(client).to receive(:api_post).and_return(Restforce::Mash.new)
+        allow(client).to receive(:api_post).and_return(build_response)
         ActiveForce.sfdc_client = client
       end
 
@@ -44,7 +50,7 @@ module ActiveForce
           end
           let(:tree) { instance_double(Tree, object_count: 1, request: tree_request, assign_ids: nil) }
           let(:response) do
-            Restforce::Mash.new({ hasErrors: false, results: [{ id: 'id1', referenceId: 'root1' }] })
+            build_response({ hasErrors: false, results: [{ id: 'id1', referenceId: 'root1' }] })
           end
 
           before do
@@ -65,7 +71,7 @@ module ActiveForce
 
           it 'assigns ids on tree with response' do
             builder.commit
-            expect(tree).to have_received(:assign_ids).with(response)
+            expect(tree).to have_received(:assign_ids).with(response.body)
           end
 
           context 'when successful' do
@@ -77,13 +83,13 @@ module ActiveForce
           context 'when there are errors' do
             let(:errors) { [{ message: 'some error' }] }
             let(:response) do
-              Restforce::Mash.new({ hasErrors: true, results: [{ referenceId: 'root1', errors: errors }] })
+              build_response({ hasErrors: true, results: [{ referenceId: 'root1', errors: errors }] })
             end
 
             it 'returns result with errors' do
               result = builder.commit
               expect(result.success?).to be(false)
-              expect(result.error_responses).to match_array([response])
+              expect(result.error_responses).to match_array([response.body])
             end
           end
 
@@ -118,7 +124,7 @@ module ActiveForce
           context 'when multiple requests are not allowed' do
             let(:response) do
               results = roots.map.with_index { |_, i| { id: "id#{i}", referenceId: "ref#{i}" } }
-              Restforce::Mash.new({ hasErrors: false, results: results })
+              build_response({ hasErrors: false, results: results })
             end
 
             before do
@@ -142,7 +148,7 @@ module ActiveForce
 
             it 'assigns ids on all trees with response' do
               builder.commit
-              expect(trees).to all(have_received(:assign_ids).with(response))
+              expect(trees).to all(have_received(:assign_ids).with(response.body))
             end
           end
 
@@ -157,7 +163,7 @@ module ActiveForce
             context 'when all trees can fit in a single request' do
               let(:response) do
                 results = roots.map.with_index { |_, i| { id: "id#{i}", referenceId: "ref#{i}" } }
-                Restforce::Mash.new({ hasErrors: false, results: results })
+                build_response({ hasErrors: false, results: results })
               end
 
               before do
@@ -171,14 +177,14 @@ module ActiveForce
 
               it 'assigns ids on all trees with response' do
                 builder.commit
-                expect(trees).to all(have_received(:assign_ids).with(response))
+                expect(trees).to all(have_received(:assign_ids).with(response.body))
               end
             end
 
             context 'when trees cannot fit in a single request' do
               let(:responses) do
                 roots.map.with_index do |_, i|
-                  Restforce::Mash.new({ hasErrors: false, results: [{ id: "id#{i}", referenceId: "ref#{i}" }] })
+                  build_response({ hasErrors: false, results: [{ id: "id#{i}", referenceId: "ref#{i}" }] })
                 end
               end
 
@@ -197,7 +203,7 @@ module ActiveForce
 
               it 'assigns ids to trees in each batch with the appropriate response' do
                 builder.commit
-                trees.each_with_index { |tree, i| expect(tree).to have_received(:assign_ids).with(responses[i]) }
+                trees.each_with_index { |tree, i| expect(tree).to have_received(:assign_ids).with(responses[i].body) }
               end
 
               context 'when all requests are successful' do
@@ -208,14 +214,14 @@ module ActiveForce
 
               context 'when some requests have errors' do
                 before do
-                  responses.first.hasErrors = true
-                  responses.last.hasErrors = true
+                  responses.first.body.hasErrors = true
+                  responses.last.body.hasErrors = true
                 end
 
                 it 'combines errors into a single result' do
                   result = builder.commit
                   expect(result.success?).to be(false)
-                  expect(result.error_responses).to match_array([responses.first, responses.last])
+                  expect(result.error_responses).to match_array([responses.first.body, responses.last.body])
                 end
               end
 
@@ -247,7 +253,7 @@ module ActiveForce
 
         it 'raises FailedRequestError if result is unsuccessful' do
           message = 'test error message'
-          response = Restforce::Mash.new(hasErrors: true, results: [{ message: message }])
+          response = Restforce::Mash.new({ hasErrors: true, results: [{ message: message }] })
           result = TreeBuilder::Result.new([response])
           allow(builder).to receive(:commit).and_return(result)
           expect { builder.commit! }.to raise_error(FailedRequestError, /#{message}/)
