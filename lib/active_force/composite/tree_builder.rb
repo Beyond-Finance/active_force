@@ -2,6 +2,7 @@
 
 require 'active_force'
 require 'active_force/composite/errors'
+require 'active_force/composite/tree'
 require 'set'
 
 module ActiveForce
