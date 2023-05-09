@@ -8,17 +8,17 @@ module ActiveForce
     # Adds methods for constructing and sending sObject Tree requests
     #
     module Treeable
-      def tree(objects, **options)
-        build_tree_builder(objects, **options).commit
+      def tree(objects, allow_multiple_requests: false)
+        tree_builder(objects, allow_multiple_requests: allow_multiple_requests).commit
       end
 
-      def tree!(objects, **options)
-        build_tree_builder(objects, **options).commit!
+      def tree!(objects, allow_multiple_requests: false)
+        tree_builder(objects, allow_multiple_requests: allow_multiple_requests).commit!
       end
 
       private
 
-      def build_tree_builder(objects, **options)
+      def tree_builder(objects, **options)
         TreeBuilder.new(self, **options).tap do |b|
           b.add_roots(*objects)
         end

@@ -390,10 +390,10 @@ module ActiveForce
         it 'creates tree and calls request with given arguments' do
           root = CompositeSupport::Root.new
           options = { max_depth: 2 }
-          request = { test: 'test_value' }
-          tree_mock = instance_double(Tree, request: request)
+          tree_mock = instance_double(Tree, request: nil)
           allow(Tree).to receive(:new).with(root, **options).and_return(tree_mock)
-          expect(Tree.build(root, **options)).to eq(request)
+          expect(Tree.build(root, **options)).to eq(tree_mock)
+          expect(tree_mock).to have_received(:request)
         end
       end
     end

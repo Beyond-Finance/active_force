@@ -12,8 +12,7 @@ module ActiveForce
       attr_reader :root, :max_depth
 
       def self.build(root, **kwargs)
-        tree = new(root, **kwargs)
-        tree.request
+        new(root, **kwargs).tap(&:request)
       end
 
       def initialize(root, max_depth: 5, uuid_generator: SecureRandom)

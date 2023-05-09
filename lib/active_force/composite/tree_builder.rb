@@ -15,9 +15,10 @@ module ActiveForce
     # requests to all succeed or fail together.
     #
     class TreeBuilder
-      def initialize(root_object_class, **options)
+      def initialize(root_object_class, allow_multiple_requests: false, max_objects: 200)
         @root_object_class = root_object_class
-        @options = options
+        @allow_multiple_requests = allow_multiple_requests
+        @max_objects = max_objects
         @committed = false
       end
 
@@ -41,12 +42,14 @@ module ActiveForce
       end
 
       def add_roots(*objects)
+        raise InvalidOperationError, 'trees have already been committed' if committed?
+
         objects&.each { |object| add_root(object) }
       end
 
       private
 
-      attr_reader :root_object_class, :options
+      attr_reader :root_object_class, :max_objects
 
       def add_root(object)
         raise ArgumentError, "All root objects must be #{root_object_class}" unless object.is_a?(root_object_class)
@@ -81,12 +84,17 @@ module ActiveForce
       end
 
       def tree_overflows_batch?(batch, new_tree)
+        check_tree_size(new_tree)
         overflows = (batch + [new_tree]).sum(&:objects_count) > max_objects
         if overflows && !allow_multiple_requests?
           raise ExceedsLimitsError, "Cannot have more than #{max_objects} in one request"
         end
 
         overflows
+      end
+
+      def check_tree_size(tree)
+        raise ExceedsLimitsError, "A tree has more than #{max_objects} objects" if tree.object_count > max_objects
       end
 
       def send_request(body)
@@ -98,15 +106,11 @@ module ActiveForce
       end
 
       def allow_multiple_requests?
-        !!options[:allow_multiple_requests]
+        !!@allow_multiple_requests
       end
 
       def roots
         @roots ||= Set.new
-      end
-
-      def max_objects
-        @max_objects ||= (options[:max_objects] || 200)
       end
 
       Result = Struct.new(:error_responses) do
