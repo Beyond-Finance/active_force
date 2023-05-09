@@ -25,6 +25,7 @@ module ActiveForce
           it 'does not send any requests' do
             builder = described_class.new(root_class)
             builder.commit
+            expect(client).not_to have_received(:api_post)
           end
         end
 
@@ -109,9 +110,39 @@ module ActiveForce
       end
 
       describe '#add_roots' do
-        it 'raises ArgumentError if given an object that does not match the root class'
-        it 'raises ExceedsLimitsError if number of roots would exceed max_objects'
-        it 'raises InvalidOperationError if instance has already committed'
+        let(:max_objects) { 2 }
+        let(:builder) { described_class.new(root_class, max_objects: max_objects) }
+
+        it 'raises ArgumentError if given an object that does not match the root class' do
+          expect { builder.add_roots(Numeric.new) }.to raise_error(ArgumentError, /#{root_class}/)
+        end
+
+        it 'raises InvalidOperationError if instance has already committed' do
+          builder.commit
+          expect { builder.add_roots(root_class.new) }.to raise_error(InvalidOperationError, /committed/)
+        end
+
+        it 'does not keep duplicate roots' do
+          root = root_class.new
+          expect { builder.add_roots(*(max_objects + 1).times.map { root }) }
+            .not_to raise_error(ExceedsLimitsError)
+        end
+
+        context 'when multiple requests are not allowed' do
+          it 'raises ExceedsLimitsError if number of roots would exceed max_objects' do
+            expect { builder.add_roots(*(max_objects + 1).times.map { root_class.new }) }
+              .to raise_error(ExceedsLimitsError, /#{max_objects}/)
+          end
+        end
+
+        context 'when multiple requests are allowed' do
+          let(:builder) { described_class.new(root_class, max_objects: max_objects, allow_multiple_requests: true) }
+
+          it 'does not raise ExceedsLimitsError if number of roots would exceed max_objects' do
+            expect { builder.add_roots(*(max_objects + 1).times.map { root_class.new }) }
+              .not_to raise_error(ExceedsLimitsError, /#{max_objects}/)
+          end
+        end
       end
     end
   end
