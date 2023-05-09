@@ -302,6 +302,11 @@ module ActiveForce
           expect(Tree.new(root).object_count).to eq(7)
         end
 
+        it 'does not count already persisted objects' do
+          root = CompositeSupport::Parent.with_children(CompositeSupport::Child.new(id: 'id'))
+          expect(Tree.new(root).object_count).to eq(1)
+        end
+
         it 'raises ExceedsLimitError if depth is greater than max depth' do
           expect { Tree.new(tree_with_depth(max_depth + 1)).object_count }
             .to raise_error(ExceedsLimitsError, /max depth/)

@@ -74,6 +74,7 @@ module ActiveForce
 
       def batch_trees(trees)
         trees.each_with_object([]) do |tree, batches|
+          check_size(tree)
           current_batch = batches.last
           if current_batch.blank? || tree_overflows_batch?(current_batch, tree)
             current_batch = []
@@ -84,8 +85,7 @@ module ActiveForce
       end
 
       def tree_overflows_batch?(batch, new_tree)
-        check_tree_size(new_tree)
-        overflows = (batch + [new_tree]).sum(&:objects_count) > max_objects
+        overflows = (batch + [new_tree]).sum(&:object_count) > max_objects
         if overflows && !allow_multiple_requests?
           raise ExceedsLimitsError, "Cannot have more than #{max_objects} in one request"
         end
@@ -93,7 +93,7 @@ module ActiveForce
         overflows
       end
 
-      def check_tree_size(tree)
+      def check_size(tree)
         raise ExceedsLimitsError, "A tree has more than #{max_objects} objects" if tree.object_count > max_objects
       end
 
