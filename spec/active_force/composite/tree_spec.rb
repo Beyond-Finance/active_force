@@ -7,6 +7,17 @@ module ActiveForce
   module Composite
     RSpec.describe Tree do
       let(:client) { instance_double(Restforce::Client, options: { api_version: '51.0' }) }
+      let(:max_depth) { 5 }
+
+      def tree_with_depth(depth)
+        root = CompositeSupport::SelfRelated.new
+        current = root
+        (depth - 1).times do
+          current.child = CompositeSupport::SelfRelated.new
+          current = current.child
+        end
+        root
+      end
 
       before do
         ActiveForce.sfdc_client = client
@@ -33,7 +44,6 @@ module ActiveForce
       end
 
       describe '#request' do
-        let(:max_depth) { 5 }
         let(:root) { CompositeSupport::Root.new }
         let(:tree) { Tree.new(root, max_depth: max_depth) }
 
@@ -81,11 +91,7 @@ module ActiveForce
         end
 
         context 'when root object has only parent associations' do
-          let(:root) do
-            parent = CompositeSupport::Parent.new
-            parent.root = CompositeSupport::Root.new
-            parent
-          end
+          let(:root) { CompositeSupport::Parent.new.tap { |parent| parent.root = CompositeSupport::Root.new } }
 
           it 'has :attributes with the correct type' do
             expect(subject.dig(:attributes, :type)).to eq(root.table_name)
@@ -104,11 +110,7 @@ module ActiveForce
 
         context 'when root object has child associations' do
           let(:children) { 2.times.map { CompositeSupport::Child.new } }
-          let(:root) do
-            parent = CompositeSupport::Parent.new
-            parent.children = children
-            parent
-          end
+          let(:root) { CompositeSupport::Parent.with_children(children) }
           let(:child_subrequests) do
             relationship_name = root.class.associations[:children].relationship_name
             subject.dig(relationship_name, :records)
@@ -240,16 +242,6 @@ module ActiveForce
             end
           end
 
-          def tree_with_depth(depth)
-            root = CompositeSupport::SelfRelated.new
-            current = root
-            (depth - 1).times do
-              current.child = CompositeSupport::SelfRelated.new
-              current = current.child
-            end
-            root
-          end
-
           context 'with depth equal to max_depth' do
             let(:root) { tree_with_depth(max_depth) }
             let(:relationship_name) { CompositeSupport::SelfRelated.associations[:child].relationship_name }
@@ -279,11 +271,7 @@ module ActiveForce
           end
 
           context 'with cyclical self-reference' do
-            let(:root) do
-              object = CompositeSupport::SelfRelated.new
-              object.child = object
-              object
-            end
+            let(:root) { CompositeSupport::SelfRelated.new.tap { |o| o.child = o } }
 
             it 'raises an ExceedsLimitError' do
               expect { subject }.to raise_error(ExceedsLimitsError, /max depth/)
@@ -291,9 +279,123 @@ module ActiveForce
           end
         end
       end
-      describe '#object_count'
-      describe '#assign_ids'
-      describe '.build'
+
+      describe '#object_count' do
+        it 'is 0 if root is blank' do
+          expect(Tree.new(nil).object_count).to eq(0)
+        end
+
+        it 'is 1 if root has no children' do
+          root = CompositeSupport::Root.new
+          expect(Tree.new(root).object_count).to eq(1)
+        end
+
+        it 'counts children of root' do
+          root = CompositeSupport::Parent.with_children(*3.times.map { CompositeSupport::Child.new })
+          expect(Tree.new(root).object_count).to eq(4)
+        end
+
+        it 'counts children of children' do
+          root = CompositeSupport::Parent.with_children(
+            *3.times.map { CompositeSupport::Child.with_leaves(CompositeSupport::Leaf.new) }
+          )
+          expect(Tree.new(root).object_count).to eq(7)
+        end
+
+        it 'raises ExceedsLimitError if depth is greater than max depth' do
+          expect { Tree.new(tree_with_depth(max_depth + 1)).object_count }
+            .to raise_error(ExceedsLimitsError, /max depth/)
+        end
+      end
+
+      describe '#assign_ids' do
+        let(:ids) { [] }
+        let(:response) { Restforce::Mash.new(results: ids) }
+        let(:uuid_generator) do
+          double('uuid_generator').tap do |mock|
+            sequence = ids.map { |x| x[:referenceId] } + 5.times.map { SecureRandom.uuid }
+            allow(mock).to receive(:uuid).and_return(*sequence)
+          end
+        end
+        let(:root) do
+          CompositeSupport::Parent.with_children(
+            CompositeSupport::Child.with_leaves(CompositeSupport::Leaf.new)
+          )
+        end
+        let(:objects) { ([root] + root.children + root.children.pluck(:leaves)).flatten }
+        let(:tree) { Tree.new(root, uuid_generator: uuid_generator) }
+
+        before { tree.assign_ids(response) }
+
+        def assert_id_assigned(id_response)
+          expect(tree.find_object(id_response[:referenceId]).id).to eq(id_response[:id])
+        end
+
+        context 'with no ids in response' do
+          it 'does not assign any ids' do
+            expect(objects.pluck(:id)).to all(be_blank)
+          end
+        end
+
+        context 'with a subset of referenced objects in response' do
+          let(:ids) { [{ referenceId: 'refId1', id: 'id1' }] }
+
+          it 'assigns ids to referenced objects' do
+            ids.each { |id_response| assert_id_assigned(id_response) }
+          end
+
+          it 'does not assign ids to objects not referenced in response' do
+            assigned = ids.map { |id| tree.find_object(id[:referenceId]) }
+            expect((objects - assigned).pluck(:id)).to all(be_blank)
+          end
+        end
+
+        context 'with exactly the referenced objects in response' do
+          let(:ids) do
+            objects.map { { id: SecureRandom.uuid, referenceId: SecureRandom.uuid } }
+          end
+
+          it 'assigns ids to each object' do
+            expect(objects.pluck(:id)).to all(be_present)
+            ids.each { |id_response| assert_id_assigned(id_response) }
+          end
+        end
+
+        context 'with superset of referenced objects in response' do
+          let(:ids) do
+            (objects + 2.times.to_a).map { { id: SecureRandom.uuid, referenceId: SecureRandom.uuid } }
+          end
+
+          it 'assigns ids to each object' do
+            expect(objects.pluck(:id)).to all(be_present)
+            ids.take(objects.length).each { |id_response| assert_id_assigned(id_response) }
+          end
+        end
+
+        context 'with blank response' do
+          let(:response) { nil }
+
+          it 'does not assign ids to any object' do
+            expect(objects.pluck(:id)).to all(be_blank)
+          end
+        end
+
+        it 'raises ExceedsLimitError if depth is greater than max depth' do
+          expect { Tree.new(tree_with_depth(max_depth + 1)).assign_ids({}) }
+            .to raise_error(ExceedsLimitsError, /max depth/)
+        end
+      end
+
+      describe '.build' do
+        it 'creates tree and calls request with given arguments' do
+          root = CompositeSupport::Root.new
+          options = { max_depth: 2 }
+          request = { test: 'test_value' }
+          tree_mock = instance_double(Tree, request: request)
+          allow(Tree).to receive(:new).with(root, **options).and_return(tree_mock)
+          expect(Tree.build(root, **options)).to eq(request)
+        end
+      end
     end
   end
 end

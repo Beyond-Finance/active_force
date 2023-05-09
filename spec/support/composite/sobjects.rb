@@ -23,6 +23,10 @@ module CompositeSupport
     has_many :other_children, model: 'CompositeSupport::OtherChild'
     has_one :favorite_child, model: 'CompositeSupport::Child',
                              foreign_key: :parent_id, scoped_as: -> { where(is_favorite: true) }
+
+    def self.with_children(*children)
+      new.tap { |r| r.children = children }
+    end
   end
 
   class Child < ActiveForce::SObject
@@ -36,6 +40,10 @@ module CompositeSupport
 
     belongs_to :parent, model: Parent
     has_many :leaves, model: 'CompositeSupport::Leaf', relationship_name: 'Leaves__r'
+
+    def self.with_leaves(*leaves)
+      new.tap { |c| c.leaves = leaves }
+    end
   end
 
   class OtherChild < ActiveForce::SObject

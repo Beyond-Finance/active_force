@@ -16,9 +16,10 @@ module ActiveForce
         tree.request
       end
 
-      def initialize(root, max_depth: 5)
+      def initialize(root, max_depth: 5, uuid_generator: SecureRandom)
         @root = root
         @max_depth = [1, max_depth || 0].max
+        @uuid_generator = uuid_generator
       end
 
       def request
@@ -26,11 +27,17 @@ module ActiveForce
       end
 
       def object_count
+        request
         objects.size
       end
 
       def assign_ids(response)
-        response&.results&.each { |result| objects[result.referenceId]&.id = result.id }
+        request
+        response&.results&.each { |result| find_object(result&.referenceId)&.id = result.id }
+      end
+
+      def find_object(reference_id)
+        objects[reference_id]
       end
 
       private
@@ -40,7 +47,7 @@ module ActiveForce
       end
 
       def traverse(object, depth = 1)
-        reference_id = SecureRandom.uuid
+        reference_id = @uuid_generator.uuid
         subrequest = subrequest(reference_id, object)
         return if subrequest.blank?
 
