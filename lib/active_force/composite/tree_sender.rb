@@ -15,36 +15,24 @@ module ActiveForce
     # allow_multiple_requests is false by default, since typically you would want these
     # requests to all succeed or fail together.
     #
-    class TreeBuilder
+    class TreeSender
       def initialize(root_object_class, allow_multiple_requests: false, max_objects: 200)
         @root_object_class = root_object_class
         @allow_multiple_requests = allow_multiple_requests
         @max_objects = max_objects
-        @committed = false
       end
 
-      def commit
-        raise InvalidOperationError, 'trees have already been committed' if committed?
-
-        result = send_tree_requests(roots.map { |root| Tree.build(root) })
-        @committed = true
-        result
+      def send_trees
+        send_tree_requests(roots.map { |root| Tree.build(root) })
       end
 
-      def commit!
-        result = commit
-        raise FailedRequestError, result.error_responses unless result.success?
-
-        result
-      end
-
-      def committed?
-        @committed
+      def send_trees!
+        send_trees.tap do |result|
+          raise FailedRequestError, result.error_responses unless result.success?
+        end
       end
 
       def add_roots(*objects)
-        raise InvalidOperationError, 'trees have already been committed' if committed?
-
         objects&.each { |object| add_root(object) }
       end
 
