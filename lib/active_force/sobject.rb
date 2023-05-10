@@ -238,7 +238,8 @@ module ActiveForce
     end
 
     def save_request_url
-      "/services/data/sobjects/v#{sfdc_client.options.fetch(:api_version)}/#{table_name}" + (persisted? ? "/#{id}" : '')
+      suffix = persisted? ? "/#{id}" : ''
+      "/services/data/sobjects/v#{ActiveForce.sf_api_version}/#{table_name}#{suffix}"
     end
 
     def self.picklist field
