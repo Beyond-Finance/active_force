@@ -62,9 +62,9 @@ module ActiveForce
       def send_tree_requests(trees)
         error_responses = []
         batch_trees(trees).each do |batch|
-          response = send_request({ records: combine_tree_requests(batch) }).body
+          response = send_request({ records: combine_tree_requests(batch) })
           batch.each { |tree| tree.assign_ids(response) }
-          error_responses << response if response.hasErrors
+          error_responses << response if response&.hasErrors
         end
         Result.new(error_responses)
       end
@@ -99,7 +99,9 @@ module ActiveForce
       end
 
       def send_request(body)
-        ActiveForce.sfdc_client.api_post("composite/tree/#{root_object_class.table_name}", body.to_json)
+        ActiveForce.sfdc_client.api_post("composite/tree/#{root_object_class.table_name}", body.to_json)&.body
+      rescue Restforce::ResponseError => e
+        e.response&.body
       end
 
       def max_roots?

@@ -216,6 +216,16 @@ module ActiveForce
                 before do
                   responses.first.body.hasErrors = true
                   responses.last.body.hasErrors = true
+                  # It doesn't seem like rspec supports sequences of returning values and raising exceptions.
+                  responses_clone = responses.clone
+                  allow(client).to receive(:api_post) do
+                    response = responses_clone.shift
+                    if response.body.hasErrors
+                      raise Restforce::ResponseError.new(nil, response)
+                    else
+                      response
+                    end
+                  end
                 end
 
                 it 'combines errors into a single result' do
