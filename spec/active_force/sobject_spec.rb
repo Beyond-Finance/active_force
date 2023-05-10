@@ -5,7 +5,8 @@ require 'active_force/composite/tree_sender'
 
 describe ActiveForce::SObject do
   let(:sobject_hash) { YAML.load(fixture('sobject/single_sobject_hash')) }
-  let(:client) { double 'Client' }
+  let(:api_version) { '50.0' }
+  let(:client) { instance_double(Restforce::Client, options: { api_version: api_version }) }
 
   before do
     ActiveForce.sfdc_client = client
@@ -585,6 +586,52 @@ describe ActiveForce::SObject do
         expect(instance.errors).to be_present
         expect(instance.errors.full_messages.count).to eq(1)
         expect(instance.errors.full_messages[0]).to eq("Percent can't be blank")
+      end
+    end
+  end
+
+  describe '#save_request' do
+    let(:object) { Whizbang.new }
+    let(:base_url) { "/services/data/sobjects/v#{api_version}/#{Whizbang.table_name}" }
+
+    context 'when not persisted' do
+      it 'has POST method' do
+        expect(object.save_request.fetch(:method)).to eq('POST')
+      end
+
+      it 'does not include id in url' do
+        expect(object.save_request.fetch(:url)).to eq(base_url)
+      end
+
+      it 'does not include id in body' do
+        expect(object.save_request.fetch(:body).keys).not_to include('Id')
+      end
+
+      it 'includes all and only updated fields in body' do
+        object.text = 'test_text'
+        object.boolean = true
+        expect(object.save_request.fetch(:body)).to eq({ 'Text_Label' => 'test_text', 'Boolean_Label' => true })
+      end
+    end
+
+    context 'when persisted' do
+      let(:id) { 'test_id' }
+
+      before { object.id = id }
+
+      it 'has PATCH method' do
+        expect(object.save_request.fetch(:method)).to eq('PATCH')
+      end
+
+      it 'includes id in url' do
+        expect(object.save_request.fetch(:url)).to eq("#{base_url}/#{id}")
+      end
+
+      it 'includes Id and all and only updated fields in body' do
+        object.text = 'test_text'
+        object.boolean = true
+        expect(object.save_request.fetch(:body))
+          .to eq({ 'Text_Label' => 'test_text', 'Boolean_Label' => true, 'Id' => id })
       end
     end
   end
