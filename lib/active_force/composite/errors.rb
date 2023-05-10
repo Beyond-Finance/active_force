@@ -6,7 +6,7 @@ module ActiveForce
   module Composite
     ExceedsLimitsError = Class.new(Error)
     #
-    # Is raised when a Composite request fails.
+    # Is raised when Salesforce returns a response with errors.
     #
     class FailedRequestError < Error
       attr_reader :errors
