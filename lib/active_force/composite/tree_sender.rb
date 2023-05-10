@@ -23,7 +23,7 @@ module ActiveForce
       end
 
       def send_trees
-        send_tree_requests(roots.map { |root| Tree.build(root) })
+        send_tree_requests(roots.map { |root| Tree.new(root) })
       end
 
       def send_trees!

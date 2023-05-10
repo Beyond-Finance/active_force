@@ -390,17 +390,6 @@ module ActiveForce
             .to raise_error(ExceedsLimitsError, /max depth/)
         end
       end
-
-      describe '.build' do
-        it 'creates tree and calls request with given arguments' do
-          root = CompositeSupport::Root.new
-          options = { max_depth: 2 }
-          tree_mock = instance_double(Tree, request: nil)
-          allow(Tree).to receive(:new).with(root, **options).and_return(tree_mock)
-          expect(Tree.build(root, **options)).to eq(tree_mock)
-          expect(tree_mock).to have_received(:request)
-        end
-      end
     end
   end
 end

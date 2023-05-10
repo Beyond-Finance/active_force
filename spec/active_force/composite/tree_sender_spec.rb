@@ -44,7 +44,7 @@ module ActiveForce
           end
 
           before do
-            allow(Tree).to receive(:build).with(root).and_return(tree)
+            allow(Tree).to receive(:new).with(root).and_return(tree)
             allow(client).to receive(:api_post).and_return(response)
             builder.add_roots(root)
           end
@@ -106,7 +106,7 @@ module ActiveForce
           end
 
           before do
-            trees.each_with_index { |tree, i| allow(Tree).to receive(:build).with(roots[i]).and_return(tree) }
+            trees.each_with_index { |tree, i| allow(Tree).to receive(:new).with(roots[i]).and_return(tree) }
             builder.add_roots(*roots)
           end
 

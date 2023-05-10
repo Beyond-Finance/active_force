@@ -11,14 +11,11 @@ module ActiveForce
     class Tree
       attr_reader :root, :max_depth
 
-      def self.build(root, **kwargs)
-        new(root, **kwargs).tap(&:request)
-      end
-
       def initialize(root, max_depth: 5, uuid_generator: SecureRandom)
         @root = root
         @max_depth = [1, max_depth || 0].max
         @uuid_generator = uuid_generator
+        request
       end
 
       def request
@@ -26,12 +23,10 @@ module ActiveForce
       end
 
       def object_count
-        request
         objects.size
       end
 
       def assign_ids(response)
-        request
         response&.results&.each { |result| find_object(result&.referenceId)&.id = result.id }
       end
 
@@ -41,12 +36,14 @@ module ActiveForce
 
       private
 
+      attr_reader :uuid_generator
+
       def objects
         @objects ||= {}
       end
 
       def traverse(object, depth = 1)
-        reference_id = @uuid_generator.uuid
+        reference_id = uuid_generator.uuid
         subrequest = subrequest(reference_id, object)
         return if subrequest.blank?
 
