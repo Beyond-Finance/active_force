@@ -19,8 +19,8 @@ module ActiveForce
       private
 
       def tree_sender(objects, **options)
-        TreeSender.new(self, **options).tap do |b|
-          b.add_roots(*objects)
+        TreeSender.new(self, **options).tap do |sender|
+          sender.add_roots(*[objects].flatten)
         end
       end
     end

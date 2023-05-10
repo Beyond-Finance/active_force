@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'active_force/composite/tree_sender'
 
 describe ActiveForce::SObject do
   let(:sobject_hash) { YAML.load(fixture('sobject/single_sobject_hash')) }
@@ -62,6 +63,88 @@ describe ActiveForce::SObject do
       it 'can be overridden' do
         expect(Quota.new).to respond_to(:id)
         expect(Quota.mappings[:id]).to eq 'Bar_Id__c'
+      end
+    end
+
+    describe '.tree' do
+      let!(:sender_mock) do
+        instance_double(ActiveForce::Composite::TreeSender, add_roots: [], send_trees: nil).tap do |mock|
+          allow(ActiveForce::Composite::TreeSender).to receive(:new).and_return(mock)
+        end
+      end
+
+      context 'when given single object' do
+        it 'adds object to sender' do
+          object = Whizbang.new
+          Whizbang.tree(object)
+          expect(sender_mock).to have_received(:add_roots).with(object)
+        end
+      end
+
+      context 'when given array of objects' do
+        it 'adds all objects to sender' do
+          objects = [Whizbang.new, Whizbang.new]
+          Whizbang.tree(objects)
+          expect(sender_mock).to have_received(:add_roots).with(*objects)
+        end
+      end
+
+      it 'calls send_trees on sender' do
+        Whizbang.tree(Whizbang.new)
+        expect(sender_mock).to have_received(:send_trees)
+      end
+
+      it 'allow_multiple_requests is false by default' do
+        Whizbang.tree(Whizbang.new)
+        expect(ActiveForce::Composite::TreeSender)
+          .to have_received(:new).with(Whizbang, allow_multiple_requests: false)
+      end
+
+      it 'passes allow_multiple_requests to sender' do
+        Whizbang.tree(Whizbang.new, allow_multiple_requests: true)
+        expect(ActiveForce::Composite::TreeSender)
+          .to have_received(:new).with(Whizbang, allow_multiple_requests: true)
+      end
+    end
+
+    describe '.tree!' do
+      let!(:sender_mock) do
+        instance_double(ActiveForce::Composite::TreeSender, add_roots: [], send_trees!: nil).tap do |mock|
+          allow(ActiveForce::Composite::TreeSender).to receive(:new).and_return(mock)
+        end
+      end
+
+      context 'when given single object' do
+        it 'adds object to sender' do
+          object = Whizbang.new
+          Whizbang.tree!(object)
+          expect(sender_mock).to have_received(:add_roots).with(object)
+        end
+      end
+
+      context 'when given array of objects' do
+        it 'adds all objects to sender' do
+          objects = [Whizbang.new, Whizbang.new]
+          Whizbang.tree!(objects)
+          expect(sender_mock).to have_received(:add_roots).with(*objects)
+        end
+      end
+
+      it 'calls send_trees! on sender' do
+        Whizbang.tree!(Whizbang.new)
+        expect(sender_mock).to have_received(:send_trees!)
+      end
+
+      it 'allow_multiple_requests is false by default' do
+        Whizbang.tree!(Whizbang.new)
+        expect(ActiveForce::Composite::TreeSender)
+          .to have_received(:new).with(Whizbang, allow_multiple_requests: false)
+      end
+
+      it 'passes allow_multiple_requests to sender' do
+        Whizbang.tree!(Whizbang.new, allow_multiple_requests: true)
+        expect(ActiveForce::Composite::TreeSender)
+          .to have_received(:new).with(Whizbang, allow_multiple_requests: true)
       end
     end
 
