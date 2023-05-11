@@ -65,20 +65,17 @@ describe ActiveForce::ActiveQuery do
 
     it "formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if it's a DateTime" do
       value = DateTime.now
-      active_query.where(field: value)
-      expect(active_query.to_s).to end_with("(Field__c = #{value.iso8601})")
+      expect(active_query.where(field: value).to_s).to end_with("(Field__c = #{value.iso8601})")
     end
 
     it "formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if it's a Time" do
       value = Time.now
-      active_query.where(field: value)
-      expect(active_query.to_s).to end_with("(Field__c = #{value.iso8601})")
+      expect(active_query.where(field: value).to_s).to end_with("(Field__c = #{value.iso8601})")
     end
 
     it "formats as YYYY-MM-DD and does not enclose in quotes if it's a Date" do
       value = Date.today
-      active_query.where(field: value)
-      expect(active_query.to_s).to end_with("(Field__c = #{value.iso8601})")
+      expect(active_query.where(field: value).to_s).to end_with("(Field__c = #{value.iso8601})")
     end
 
     it "puts NULL when a field is set as nil" do
@@ -111,20 +108,17 @@ describe ActiveForce::ActiveQuery do
 
       it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a DateTime' do
         value = DateTime.now
-        active_query.where('Field__c > ?', value)
-        expect(active_query.to_s).to end_with("(Field__c > #{value.iso8601})")
+        expect(active_query.where('Field__c > ?', value).to_s).to end_with("(Field__c > #{value.iso8601})")
       end
 
       it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a Time' do
         value = Time.now
-        active_query.where('Field__c > ?', value)
-        expect(active_query.to_s).to end_with("(Field__c > #{value.iso8601})")
+        expect(active_query.where('Field__c > ?', value).to_s).to end_with("(Field__c > #{value.iso8601})")
       end
 
       it 'formats as YYYY-MM-DD and does not enclose in quotes if value is a Date' do
         value = Date.today
-        active_query.where('Field__c > ?', value)
-        expect(active_query.to_s).to end_with("(Field__c > #{value.iso8601})")
+        expect(active_query.where('Field__c > ?', value).to_s).to end_with("(Field__c > #{value.iso8601})")
       end
 
       it 'complains when there given an incorrect number of bind parameters' do
@@ -146,20 +140,20 @@ describe ActiveForce::ActiveQuery do
 
         it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a DateTime' do
           value = DateTime.now
-          active_query.where('Field__c < :field', field: value)
-          expect(active_query.to_s).to end_with("(Field__c < #{value.iso8601})")
+          new_query = active_query.where('Field__c < :field', field: value)
+          expect(new_query.to_s).to end_with("(Field__c < #{value.iso8601})")
         end
 
         it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a Time' do
           value = Time.now
-          active_query.where('Field__c < :field', field: value)
-          expect(active_query.to_s).to end_with("(Field__c < #{value.iso8601})")
+          new_query = active_query.where('Field__c < :field', field: value)
+          expect(new_query.to_s).to end_with("(Field__c < #{value.iso8601})")
         end
 
         it 'formats as YYYY-MM-DD and does not enclose in quotes if value is a Date' do
           value = Date.today
-          active_query.where('Field__c < :field', field: value)
-          expect(active_query.to_s).to end_with("(Field__c < #{value.iso8601})")
+          new_query = active_query.where('Field__c < :field', field: value)
+          expect(new_query.to_s).to end_with("(Field__c < #{value.iso8601})")
         end
 
         it 'accepts multiple bind parameters' do
@@ -317,8 +311,8 @@ describe ActiveForce::ActiveQuery do
     end
 
     it 'escapes quotes and backslashes in hash conditions' do
-      active_query.where(backslash_field: backslash_input, number_field: number_input, quote_field: quote_input)
-      expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\') AND (NumberField = 123) AND (QuoteField = '\\' OR Id!=NULL OR Id=\\'')")
+      new_query = active_query.where(backslash_field: backslash_input, number_field: number_input, quote_field: quote_input)
+      expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\') AND (NumberField = 123) AND (QuoteField = '\\' OR Id!=NULL OR Id=\\'')")
     end
   end
 

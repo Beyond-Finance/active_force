@@ -100,8 +100,10 @@ module ActiveForce
     end
 
     def none
-      @records = []
-      where(id: '1'*18).where(id: '0'*18)
+      clone_and_set_instance_variables(
+        records: [],
+        conditions: [build_condition(id: '1' * 18), build_condition(id: '0' * 18)]
+      )
     end
 
     def loaded?
