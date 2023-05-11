@@ -21,6 +21,7 @@ module CompositeSupport
     belongs_to :root, model: Root
     has_many :children, model: 'CompositeSupport::Child'
     has_many :other_children, model: 'CompositeSupport::OtherChild'
+    has_one :friend, model: 'CompositeSupport::Friend'
     has_one :favorite_child, model: 'CompositeSupport::Child',
                              foreign_key: :parent_id, scoped_as: -> { where(is_favorite: true) }
 
@@ -55,13 +56,25 @@ module CompositeSupport
     belongs_to :parent, model: Parent
   end
 
+  class Friend < ActiveForce::SObject
+    self.table_name = 'Friend'
+
+    field :parent_id
+    field :name, from: 'Name'
+
+    belongs_to :parent, model: Parent
+  end
+
   class Leaf < ActiveForce::SObject
     self.table_name = 'Leaf__c'
 
     field :child_id, from: 'Child_Id__c'
+    field :other_child_id, from: 'OtherChild_Id__c'
     field :name, from: 'Name'
 
     belongs_to :child, model: Child
+    belongs_to :other_child, model: OtherChild
+    belongs_to :child_alt, model: Child, relationship_name: 'Child_Id__r'
   end
 
   class SelfRelated < ActiveForce::SObject

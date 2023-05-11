@@ -35,8 +35,13 @@ module ActiveForce
 
       def loaded_associations(association_classes)
         self.class.associations.select do |name, assoc|
-          association_cache.key?(name) &&
-            (association_classes.blank? || association_classes.any? { |klass| assoc.is_a?(klass) })
+          cached = association_cache[name]
+          has_loaded_value = if cached.is_a?(ActiveQuery)
+                               cached.present? && cached.loaded? && cached.to_a.present?
+                             else
+                               cached.present?
+                             end
+          has_loaded_value && association_classes.any? { |klass| assoc.is_a?(klass) }
         end
       end
     end
