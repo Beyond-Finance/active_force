@@ -92,6 +92,19 @@ module ActiveForce
               expect { builder.send_trees }.to raise_error(error)
             end
           end
+
+          context 'when sending request raises Restforce::ResponseError without a response body' do
+            let(:error) { Restforce::ResponseError.new('some 400 error', nil) }
+
+            before { allow(client).to receive(:api_post).and_raise(error) }
+
+            it 'returns a result with the exception message in an error response' do
+              result = builder.send_trees
+              expect(result.success?).to be(false)
+              error_message = result.error_responses.first.results.first.errors.first.message
+              expect(error_message).to include(error.message)
+            end
+          end
         end
 
         context 'with multiple roots' do
@@ -233,6 +246,19 @@ module ActiveForce
 
                 it 'raises the error' do
                   expect { builder.send_trees }.to raise_error(error)
+                end
+              end
+
+              context 'when sending request raises Restforce::ResponseError without a response body' do
+                let(:error) { Restforce::ResponseError.new('some 400 error', nil) }
+
+                before { allow(client).to receive(:api_post).and_raise(error) }
+
+                it 'returns a result with the exception message in an error response' do
+                  result = builder.send_trees
+                  expect(result.success?).to be(false)
+                  error_message = result.error_responses.first.results.first.errors.first.message
+                  expect(error_message).to include(error.message)
                 end
               end
             end
