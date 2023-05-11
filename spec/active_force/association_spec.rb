@@ -40,6 +40,16 @@ describe ActiveForce::SObject do
       post.comments.to_a
     end
 
+    it 'is not mutated by #where' do
+      post.comments.where(body: 'test').to_a
+      expect(post.comments.to_s).to end_with("FROM Comment__c WHERE (PostId = '1')")
+    end
+
+    it 'is not mutated by #none' do
+      post.comments.none.to_a
+      expect(post.comments.to_s).to end_with("FROM Comment__c WHERE (PostId = '1')")
+    end
+
     describe 'to_s' do
       it "should return a SOQL statment" do
         soql = "SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comment__c WHERE (PostId = '1')"
