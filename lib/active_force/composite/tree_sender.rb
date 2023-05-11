@@ -89,7 +89,7 @@ module ActiveForce
       def send_request(body)
         ActiveForce.sfdc_client.api_post("composite/tree/#{root_object_class.table_name}", body.to_json)&.body
       rescue Restforce::ResponseError => e
-        e.response&.fetch(:body, nil) || default_restforce_error(e)
+        Restforce::Mash.new(e.response&.fetch(:body, nil) || default_restforce_error(e))
       end
 
       def max_roots?
@@ -105,10 +105,10 @@ module ActiveForce
       end
 
       def default_restforce_error(exception)
-        Restforce::Mash.new({ hasErrors: true,
-                              results: [{
-                                errors: [{ message: "Restforce::ResponseError without body: #{exception}" }]
-                              }] })
+        { hasErrors: true,
+          results: [{
+            errors: [{ message: "Restforce::ResponseError without body: #{exception}" }]
+          }] }
       end
 
       Result = Struct.new(:error_responses) do
