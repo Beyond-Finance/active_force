@@ -210,7 +210,7 @@ module ActiveForce
                   allow(client).to receive(:api_post) do
                     response = responses_clone.shift
                     if response.body.hasErrors
-                      raise Restforce::ResponseError.new(nil, response)
+                      raise Restforce::ResponseError.new(nil, response.to_h)
                     else
                       response
                     end
