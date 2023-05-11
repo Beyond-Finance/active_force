@@ -17,6 +17,7 @@ module ActiveForce
     include ActiveModel::Model
     include ActiveModel::Dirty
     extend ActiveModel::Callbacks
+    include ActiveModel::Serializers::JSON
     extend ActiveForce::Association
 
     define_model_callbacks :build, :create, :update, :save, :destroy
@@ -27,7 +28,7 @@ module ActiveForce
 
     class << self
       extend Forwardable
-      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
+      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
       def_delegators :mapping, :table, :table_name, :custom_table?, :mappings
 
       private
@@ -50,6 +51,10 @@ module ActiveForce
 
     def self.query
       ActiveForce::ActiveQuery.new self
+    end
+
+    def self.describe
+      sfdc_client.describe(table_name)
     end
 
     attr_accessor :build_attributes
@@ -175,7 +180,7 @@ module ActiveForce
         field = key
       else
         # Assume key is an SFDC column
-        field = mappings.invert[key]
+        field = mappings.key(key)
       end
       send "#{field}=", value if field && respond_to?(field)
     end
@@ -215,7 +220,7 @@ module ActiveForce
     end
 
     def attributes_for_sfdb
-      attrs = self.class.mapping.translate_to_sf(modified_attributes)
+      attrs = self.class.mapping.translate_to_sf(@attributes.values_for_database.slice(*changed))
       attrs.merge!({'Id' => id }) if persisted?
       attrs
     end

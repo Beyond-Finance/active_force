@@ -74,6 +74,17 @@ describe ActiveForce::SObject do
         sundae.flavors = %w(chocolate vanilla strawberry)
       end
 
+      context 'mutation of multipicklist' do
+        let(:sundae) { IceCream.new }
+
+        before { sundae.clear_changes_information }
+
+        it 'detects mutation' do
+          sundae.flavors.delete('chocolate')
+          expect(sundae.flavors_changed?).to be true
+        end
+      end
+
       context 'on create' do
         let(:sundae) { IceCream.new }
         it 'formats the picklist values' do
@@ -90,6 +101,25 @@ describe ActiveForce::SObject do
         end
       end
 
+    end
+  end
+
+  describe '.describe' do
+    subject { Whizbang.describe }
+
+    let(:describe_response) { { 'fields' => [] } }
+
+    before do
+      allow(client).to receive(:describe).and_return(describe_response)
+    end
+
+    it 'passes table_name to sfdc_client.describe' do
+      subject
+      expect(client).to have_received(:describe).with(Whizbang.table_name)
+    end
+
+    it 'returns response from describe' do
+      expect(subject).to eq(describe_response)
     end
   end
 
@@ -269,6 +299,27 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe '.find!' do
+    let(:id) { 'abc123' }
+
+    before do
+      allow(client).to receive(:query)
+    end
+
+    it 'returns found record' do
+      query = "SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c WHERE (Id = '#{id}') LIMIT 1"
+      expected = Restforce::Mash.new(Id: id)
+      allow(client).to receive(:query).with(query).and_return([expected])
+      actual = Whizbang.find!(id)
+      expect(actual.id).to eq(expected.Id)
+    end
+
+    it 'raises RecordNotFound if nothing found' do
+      expect { Whizbang.find!(id) }
+        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{Whizbang.table_name} with id #{id}")
+    end
+  end
+
   describe '#reload' do
     let(:client) do
       double("sfdc_client", query: [Restforce::Mash.new(Id: 1, Name: 'Jeff')])
@@ -333,6 +384,22 @@ describe ActiveForce::SObject do
     it 'catches and logs the error' do
       expect(instance).to receive(:logger_output).and_return(false)
       instance.save
+    end
+  end
+
+  describe 'to_json' do
+    let(:instance) { Whizbang.new }
+
+    it 'responds to' do
+      expect(instance).to respond_to(:to_json)
+    end
+  end
+
+  describe 'as_json' do
+    let(:instance) { Whizbang.new }
+
+    it 'responds to' do
+      expect(instance).to respond_to(:as_json)
     end
   end
 

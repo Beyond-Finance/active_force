@@ -12,15 +12,17 @@ module ActiveForce
       end
 
       def define_assignment_method
-        association = self
+        foreign_key = self.foreign_key
         method_name = relation_name
-        parent.send :define_method, "#{method_name}=" do |other|
-          value_to_set = other.nil? ? nil : self.id
-          other = other.first if other.is_a?(Array)
-          # Do we change the object that was passed in or do we modify the already associated object?
-          obj_to_change = value_to_set ? other : send(method_name)
-          obj_to_change.send "#{association.foreign_key}=", value_to_set
-          association_cache[method_name] = other
+        parent.send :define_method, "#{method_name}=" do |new_target|
+          new_target = new_target.first if new_target.is_a?(Array)
+          if new_target.present?
+            new_target.public_send("#{foreign_key}=", id)
+          else
+            current_target = public_send(method_name)
+            current_target&.public_send("#{foreign_key}=", nil)
+          end
+          association_cache[method_name] = new_target
         end
       end
     end

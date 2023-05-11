@@ -63,6 +63,24 @@ describe ActiveForce::ActiveQuery do
       expect(new_query.to_s).to end_with("(Field__c = 'hello')")
     end
 
+    it "formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if it's a DateTime" do
+      value = DateTime.now
+      active_query.where(field: value)
+      expect(active_query.to_s).to end_with("(Field__c = #{value.iso8601})")
+    end
+
+    it "formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if it's a Time" do
+      value = Time.now
+      active_query.where(field: value)
+      expect(active_query.to_s).to end_with("(Field__c = #{value.iso8601})")
+    end
+
+    it "formats as YYYY-MM-DD and does not enclose in quotes if it's a Date" do
+      value = Date.today
+      active_query.where(field: value)
+      expect(active_query.to_s).to end_with("(Field__c = #{value.iso8601})")
+    end
+
     it "puts NULL when a field is set as nil" do
       new_query = active_query.where field: nil
       expect(new_query.to_s).to end_with("(Field__c = NULL)")
@@ -91,6 +109,24 @@ describe ActiveForce::ActiveQuery do
         expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = 123 AND Other_Field__c = 321 AND Name = 'Bob')")
       end
 
+      it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a DateTime' do
+        value = DateTime.now
+        active_query.where('Field__c > ?', value)
+        expect(active_query.to_s).to end_with("(Field__c > #{value.iso8601})")
+      end
+
+      it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a Time' do
+        value = Time.now
+        active_query.where('Field__c > ?', value)
+        expect(active_query.to_s).to end_with("(Field__c > #{value.iso8601})")
+      end
+
+      it 'formats as YYYY-MM-DD and does not enclose in quotes if value is a Date' do
+        value = Date.today
+        active_query.where('Field__c > ?', value)
+        expect(active_query.to_s).to end_with("(Field__c > #{value.iso8601})")
+      end
+
       it 'complains when there given an incorrect number of bind parameters' do
         expect{
           active_query.where('Field__c = ? AND Other_Field__c = ? AND Name = ?', 123, 321)
@@ -106,6 +142,24 @@ describe ActiveForce::ActiveQuery do
         it 'accepts nil bind parameters' do
           new_query = active_query.where('Field__c = :field', field: nil)
           expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Field__c = NULL)")
+        end
+
+        it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a DateTime' do
+          value = DateTime.now
+          active_query.where('Field__c < :field', field: value)
+          expect(active_query.to_s).to end_with("(Field__c < #{value.iso8601})")
+        end
+
+        it 'formats as YYYY-MM-DDThh:mm:ss-hh:mm and does not enclose in quotes if value is a Time' do
+          value = Time.now
+          active_query.where('Field__c < :field', field: value)
+          expect(active_query.to_s).to end_with("(Field__c < #{value.iso8601})")
+        end
+
+        it 'formats as YYYY-MM-DD and does not enclose in quotes if value is a Date' do
+          value = Date.today
+          active_query.where('Field__c < :field', field: value)
+          expect(active_query.to_s).to end_with("(Field__c < #{value.iso8601})")
         end
 
         it 'accepts multiple bind parameters' do
@@ -187,10 +241,47 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
-  describe "#find_by!" do
-    it "raises if record not found" do
+  describe '#find_by!' do
+    it 'raises if record not found' do
       allow(client).to receive(:query).and_return(build_restforce_collection)
-      expect { active_query.find_by!(field: 123) }.to raise_error(ActiveForce::RecordNotFound)
+      expect { active_query.find_by!(field: 123) }
+        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with {:field=>123}")
+    end
+  end
+
+  describe '#find!' do
+    let(:id) { 'test_id' }
+
+    before do
+      allow(client).to receive(:query).and_return(build_restforce_collection([{ 'Id' => id }]))
+    end
+
+    it 'queries for single record by given id' do
+      active_query.find!(id)
+      expect(client).to have_received(:query).with("SELECT Id FROM #{sobject.table_name} WHERE (Id = '#{id}') LIMIT 1")
+    end
+
+    context 'when record is found' do
+      let(:record) { build_restforce_sobject(id: id) }
+
+      before do
+        allow(active_query).to receive(:build).and_return(record)
+      end
+
+      it 'returns the record' do
+        expect(active_query.find!(id)).to eq(record)
+      end
+    end
+
+    context 'when no record is found' do
+      before do
+        allow(client).to receive(:query).and_return(build_restforce_collection)
+      end
+
+      it 'raises RecordNotFound' do
+        expect { active_query.find!(id) }
+          .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with id #{id}")
+      end
     end
   end
 
@@ -213,7 +304,7 @@ describe ActiveForce::ActiveQuery do
     let(:quote_input){ "' OR Id!=NULL OR Id='" }
     let(:backslash_input){ "\\" }
     let(:number_input){ 123 }
-    let(:expected_query){ "SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\' AND NumberField = 123 AND QuoteField = ''' OR Id!=NULL OR Id=''')" }
+    let(:expected_query){ "SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\' AND NumberField = 123 AND QuoteField = '\\' OR Id!=NULL OR Id=\\'')" }
 
     it 'escapes quotes and backslashes in bind parameters' do
       new_query = active_query.where('Backslash_Field__c = :backslash_field AND NumberField = :number_field AND QuoteField = :quote_field', number_field: number_input, backslash_field: backslash_input, quote_field: quote_input)
@@ -226,8 +317,8 @@ describe ActiveForce::ActiveQuery do
     end
 
     it 'escapes quotes and backslashes in hash conditions' do
-      new_query = active_query.where(backslash_field: backslash_input, number_field: number_input, quote_field: quote_input)
-      expect(new_query.to_s).to eq("SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\') AND (NumberField = 123) AND (QuoteField = ''' OR Id!=NULL OR Id=''')")
+      active_query.where(backslash_field: backslash_input, number_field: number_input, quote_field: quote_input)
+      expect(active_query.to_s).to eq("SELECT Id FROM table_name WHERE (Backslash_Field__c = '\\\\') AND (NumberField = 123) AND (QuoteField = '\\' OR Id!=NULL OR Id=\\'')")
     end
   end
 
@@ -239,6 +330,26 @@ describe ActiveForce::ActiveQuery do
     it 'does not query the API' do
       expect(client).to_not receive :query
       active_query.none.to_a
+    end
+  end
+
+  describe '#loaded?' do
+    subject { active_query.loaded? }
+
+    before do
+      active_query.instance_variable_set(:@records, records)
+    end
+
+    context 'when there are records loaded in memory' do
+      let(:records) { nil }
+
+      it { is_expected.to be_falsey }
+    end
+
+    context 'when there are records loaded in memory' do
+      let(:records) { [build_restforce_sobject(id: 1)] }
+
+      it { is_expected.to be_truthy }
     end
   end
 end
