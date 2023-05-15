@@ -8,11 +8,11 @@ module ActiveForce
     # Adds methods for constructing and sending sObject Tree requests
     #
     module Treeable
-      def tree(objects, allow_multiple_requests: false)
+      def create_tree(objects, allow_multiple_requests: false)
         tree_sender(objects, allow_multiple_requests: allow_multiple_requests).send_trees
       end
 
-      def tree!(objects, allow_multiple_requests: false)
+      def create_tree!(objects, allow_multiple_requests: false)
         tree_sender(objects, allow_multiple_requests: allow_multiple_requests).send_trees!
       end
 
