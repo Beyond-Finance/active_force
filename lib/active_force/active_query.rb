@@ -42,13 +42,14 @@ module ActiveForce
     alias_method :all, :to_a
 
     def count
-      super
-      sfdc_client.query(to_s).first.expr0
+      sfdc_client.query(super.to_s).first.expr0
     end
 
     def sum field
-      super(mappings[field])
-      sfdc_client.query(to_s).first.expr0
+      raise ArgumentError, 'field is required' if field.blank?
+      raise ArgumentError, "field '#{field}' does not exist on #{sobject.class}" unless mappings.key?(field.to_sym)
+
+      sfdc_client.query(super(mappings.fetch(field.to_sym)).to_s).first.expr0
     end
 
     def limit limit
@@ -57,8 +58,8 @@ module ActiveForce
 
     def not args=nil, *rest
       return self if args.nil?
+
       super build_condition args, rest
-      self
     end
 
     def where args=nil, *rest

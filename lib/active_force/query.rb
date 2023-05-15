@@ -44,13 +44,13 @@ module ActiveForce
     end
 
     def not condition
-      @conditions << "NOT ((#{ condition.join(') AND (') }))"
-      self
+      condition ? where("NOT ((#{condition.join(') AND (')}))") : self
     end
 
     def or query
-      @conditions = ["(#{ and_conditions }) OR (#{ query.and_conditions })"]
-      self
+      return self unless query
+
+      clone_and_set_instance_variables(conditions: ["(#{and_conditions}) OR (#{query.and_conditions})"])
     end
 
     def order order
@@ -96,8 +96,7 @@ module ActiveForce
     end
 
     def sum field
-      @query_fields = ["sum(#{field})"]
-      self
+      clone_and_set_instance_variables(query_fields: ["sum(#{field})"])
     end
 
     protected

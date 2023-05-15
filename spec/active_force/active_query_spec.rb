@@ -192,9 +192,15 @@ describe ActiveForce::ActiveQuery do
         {"Id" => "0000000000EEEEEFFF"}
       ]
     end
+
     it 'allows method chaining' do
       result = active_query.where("Text_Label = 'foo'").where("Checkbox_Label = true")
       expect(result).to be_a described_class
+    end
+
+    it 'does not execute a query' do
+      active_query.where('x')
+      expect(client).not_to have_received(:query)
     end
 
     context 'when calling `where` on an ActiveQuery object that already has records' do
