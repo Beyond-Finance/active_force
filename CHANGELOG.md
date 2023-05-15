@@ -2,6 +2,10 @@
 
 ## Not released
 
+## 0.13.3
+
+- Fix bug with has_many queries due to query method chaining mutating in-place (https://github.com/Beyond-Finance/active_force/pull/10)
+
 ## 0.13.2
 - Add `#loaded?` method for ActiveQueries to allow the detection of records loaded in memory or pending to be loaded. (https://github.com/Beyond-Finance/active_force/pull/45)
 - Use attributes' values_for_database (serialize) value instead of using the type casted value to allow more flexibility when creating your own ActiveModel type
