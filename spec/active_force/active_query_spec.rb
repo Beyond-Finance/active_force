@@ -9,7 +9,7 @@ describe ActiveForce::ActiveQuery do
     })
   end
   let(:mappings){ { id: "Id", field: "Field__c", other_field: "Other_Field" } }
-  let(:client){ double("client") }
+  let(:client) { double('client', query: nil) }
   let(:active_query){ described_class.new(sobject) }
   let(:api_result) do
     [
@@ -230,6 +230,31 @@ describe ActiveForce::ActiveQuery do
           expect(second_active_query.to_a.size).to eq(1)
         end
       end
+    end
+  end
+
+  describe '#not' do
+    it 'adds a not condition' do
+      expect(active_query.not(field: 'x').to_s).to end_with("WHERE (NOT ((Field__c = 'x')))")
+    end
+
+    it 'allows chaining' do
+      expect(active_query.where(field: 'x').not(field: 'y').where(field: 'z')).to be_a(described_class)
+    end
+
+    it 'does not mutate the original query' do
+      original = active_query.to_s
+      active_query.not(field: 'x')
+      expect(active_query.to_s).to eq(original)
+    end
+
+    it 'returns the original query if not given a condition' do
+      expect(active_query.not).to be(active_query)
+    end
+
+    it 'does not execute a query' do
+      active_query.not(field: 'x')
+      expect(client).not_to have_received(:query)
     end
   end
 
