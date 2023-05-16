@@ -134,6 +134,7 @@ end
 ```ruby
 class Car < ActiveForce::SObject
   has_one :engine, model: 'CarEngine'
+  has_one :driver_seat, model: 'Seat', scoped_as: -> { where(can_access_steering_wheel: true).order('Position ASC') }
 end
 ```
 
