@@ -22,16 +22,6 @@ module ActiveForce
         relation_model.none
       end
 
-      def apply_scope(query, owner)
-        return query unless (scope = options[:scoped_as])
-
-        if scope.arity.positive?
-          query.instance_exec(owner, &scope)
-        else
-          query.instance_exec(&scope)
-        end
-      end
-
       def define_assignment_method
         method_name = relation_name
         parent.send :define_method, "#{method_name}=" do |associated|

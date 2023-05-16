@@ -79,6 +79,16 @@ module ActiveForce
         name = model.custom_table? ? model.name : model.table_name
         name.foreign_key.to_sym
       end
+
+      def apply_scope(query, owner)
+        return query unless (scope = options[:scoped_as])
+
+        if scope.arity.positive?
+          query.instance_exec(owner, &scope)
+        else
+          query.instance_exec(&scope)
+        end
+      end
     end
   end
 end

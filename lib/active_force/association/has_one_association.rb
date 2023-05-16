@@ -4,7 +4,7 @@ module ActiveForce
       private
 
       def target(owner)
-        relation_model.find_by(foreign_key => owner.id)
+        apply_scope(relation_model.query, owner).find_by(foreign_key => owner.id)
       end
 
       def default_foreign_key
