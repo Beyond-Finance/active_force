@@ -20,6 +20,8 @@ module ActiveForce
     include ActiveModel::Serializers::JSON
     extend ActiveForce::Association
 
+    FIELD_OPTIONS = %i[as from sfdc_name]
+
     define_model_callbacks :build, :create, :update, :save, :destroy
 
     class_attribute :mappings, :table_name
@@ -153,9 +155,10 @@ module ActiveForce
     end
 
     def self.field field_name, args = {}
+      options = args.reject { |arg| FIELD_OPTIONS.include?(arg) }
       mapping.field field_name, args
       cast_type = args.fetch(:as, :string)
-      attribute field_name, cast_type
+      attribute field_name, cast_type, **options
       define_attribute_methods field_name
     end
 
