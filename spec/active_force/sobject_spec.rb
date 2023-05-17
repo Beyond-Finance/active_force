@@ -342,6 +342,12 @@ describe ActiveForce::SObject do
       expect(Whizbang.pluck).to eq([])
     end
 
+    it 'works with another query' do
+      expected = 'SELECT Id, Text_Label FROM Whizbang__c WHERE (Checkbox_Label = true)'
+      Whizbang.where(checkbox: true).pluck(:id, :text)
+      expect(client).to have_received(:query).with(expected)
+    end
+
     context 'when given no fields' do
       it 'queries for all fields' do
         expected = "SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c"
