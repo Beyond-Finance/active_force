@@ -151,6 +151,16 @@ describe ActiveForce::SObject do
       end
     end
 
+    describe 'having an default value' do
+      it 'uses the default value' do
+        expect(Bangwhiz.new[:percent]).to eq(50.0)
+      end
+
+      it 'can be overridden' do
+        expect(Bangwhiz.new(percent: 25.0)[:percent]).to eq(25.0)
+      end
+    end
+
     context 'as: :multipicklist' do
       before do
         class IceCream < ActiveForce::SObject

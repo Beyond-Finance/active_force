@@ -15,6 +15,8 @@ class Post < ActiveForce::SObject
   has_many :reply_comments, model: Comment, scoped_as: ->(post){ where(body: "RE: #{post.title}").order('CreationDate DESC') }
   has_many :ugly_comments, { model: Comment }
   has_many :poster_comments, { foreign_key: :poster_id, model: Comment }
+  has_one :last_comment, model: Comment, scoped_as: -> { where.not(body: nil).order('CreatedDate DESC') }
+  has_one :repeat_comment, model: Comment, scoped_as: ->(post) { where(body: post.title) }
 end
 class Territory < ActiveForce::SObject
   field :quota_id, from: "Quota__c"
