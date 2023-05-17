@@ -1,7 +1,10 @@
 # Changelog
 
 ## Not released
+
+- Add `scoped_as` option to `has_one` association (https://github.com/Beyond-Finance/active_force/pull/50)
 - Add `default` to model fields (https://github.com/Beyond-Finance/active_force/pull/49)
+
 ## 0.13.2
 - Add `#loaded?` method for ActiveQueries to allow the detection of records loaded in memory or pending to be loaded. (https://github.com/Beyond-Finance/active_force/pull/45)
 - Use attributes' values_for_database (serialize) value instead of using the type casted value to allow more flexibility when creating your own ActiveModel type
