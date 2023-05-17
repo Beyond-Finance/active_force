@@ -2,6 +2,7 @@
 
 ## Not released
 
+- Add `pluck` query method (https://github.com/Beyond-Finance/active_force/pull/51)
 - Add `scoped_as` option to `has_one` association (https://github.com/Beyond-Finance/active_force/pull/50)
 - Add `default` to model fields (https://github.com/Beyond-Finance/active_force/pull/49)
 
