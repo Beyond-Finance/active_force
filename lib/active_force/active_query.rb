@@ -51,6 +51,15 @@ module ActiveForce
       sfdc_client.query(to_s).first.expr0
     end
 
+    def pluck(*fields)
+      fields = mappings.keys if fields.blank?
+
+      sfdc_client.query(select(*fields).to_s).map do |record|
+        values = fields.map { |field| cast_value(field, record) }
+        values.length == 1 ? values.first : values
+      end
+    end
+
     def limit limit
       super
       limit == 1 ? to_a.first : self
@@ -201,6 +210,12 @@ module ActiveForce
 
     def result
       sfdc_client.query(self.to_s)
+    end
+
+    def cast_value(field, object)
+      attribute_type = sobject.attribute_types[field.to_s]
+      value = object[mappings[field]]
+      attribute_type&.cast(value) || value
     end
 
     def clone_self_and_clear_cache
