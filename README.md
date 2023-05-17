@@ -83,6 +83,12 @@ class Medication < ActiveForce::SObject
   #   message: "%{value} is not a valid size" }
 
   ##
+  # Defaults
+  #
+  # Set a default on any field using `default`.
+  field :name,             from: 'Name', default: -> { 'default_name' }
+
+  ##
   # Callbacks
   #
   before_save :set_as_updated_from_rails
