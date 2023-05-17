@@ -83,6 +83,12 @@ class Medication < ActiveForce::SObject
   #   message: "%{value} is not a valid size" }
 
   ##
+  # Defaults
+  #
+  # Set a default on any field using `default`.
+  field :name,             from: 'Name', default: -> { 'default_name' }
+
+  ##
   # Callbacks
   #
   before_save :set_as_updated_from_rails
@@ -134,6 +140,7 @@ end
 ```ruby
 class Car < ActiveForce::SObject
   has_one :engine, model: 'CarEngine'
+  has_one :driver_seat, model: 'Seat', scoped_as: -> { where(can_access_steering_wheel: true).order('Position ASC') }
 end
 ```
 

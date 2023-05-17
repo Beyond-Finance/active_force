@@ -144,9 +144,17 @@ describe ActiveForce::SObject do
     end
 
     it 'makes only one API call to fetch the associated object' do
-      expect(HasOneChild).to receive(:find_by).once.and_return(has_one_child)
       has_one_parent.has_one_child.id
       has_one_parent.has_one_child.id
+      expect(client).to have_received(:query).once
+    end
+
+    it 'queries for a single record with the correct foreign key' do
+      expected = <<~SOQL.squish
+        SELECT Id, has_one_parent_id__c, FancyParentId FROM HasOneChild__c WHERE (has_one_parent_id__c = '1') LIMIT 1
+      SOQL
+      has_one_parent.has_one_child
+      expect(client).to have_received(:query).with(expected)
     end
 
     context 'when primary key is blank' do
@@ -270,6 +278,33 @@ describe ActiveForce::SObject do
       it 'allows passing as a string' do
         HasOneParent.has_one :has_one_child, model: 'HasOneChild'
         expect { has_one_parent.has_one_child }.to_not raise_error
+      end
+    end
+
+    context "when passing 'scoped_as' option" do
+      it 'makes a only single query if called more than once' do
+        post.last_comment
+        post.last_comment
+        expect(client).to have_received(:query).once
+      end
+
+      it 'applies the scope to the query' do
+        expected = <<~SOQL.squish
+          SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comment__c
+          WHERE (NOT ((Body__c = NULL))) AND (PostId = '1') ORDER BY CreatedDate DESC LIMIT 1
+        SOQL
+        post.last_comment
+        expect(client).to have_received(:query).with(expected)
+      end
+
+      it 'applies the scope to the query if the lambda takes an argument' do
+        post.title = 'test_post_title'
+        expected = <<~SOQL.squish
+          SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comment__c
+          WHERE (Body__c = 'test_post_title') AND (PostId = '1') LIMIT 1
+        SOQL
+        post.repeat_comment
+        expect(client).to have_received(:query).with(expected)
       end
     end
   end
