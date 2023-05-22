@@ -24,5 +24,11 @@ describe ActiveForce::Field do
       names = field.new(:time, as: :datetime)
       expect(names.value_for_hash current_time).to eq current_time.to_fs(:iso8601)
     end
+
+    it 'a datetime field whose value is nil' do
+      current_time = nil
+      names = field.new(:time, as: :datetime)
+      expect(names.value_for_hash current_time).to be_nil
+    end
   end
 end
