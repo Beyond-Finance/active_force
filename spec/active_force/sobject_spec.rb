@@ -65,13 +65,33 @@ describe ActiveForce::SObject do
       end
     end
 
-    describe 'having an default value' do
-      it 'uses the default value' do
-        expect(Bangwhiz.new[:percent]).to eq(50.0)
+    describe 'having a default value' do
+      subject { Bangwhiz }
+
+      shared_context 'new object with a default field' do
+        it 'sends percent to salesforce' do
+          expect(client).to receive(:create!)
+          .with(anything, hash_including('Percent_Label' => percent))
+          subject.create(**instantiation_attributes)
+        end
+
+        it 'sets percent field upon object instantiation' do
+          expect(subject.new(**instantiation_attributes)[:percent]).to eq(percent)
+        end
       end
 
-      it 'can be overridden' do
-        expect(Bangwhiz.new(percent: 25.0)[:percent]).to eq(25.0)
+      context 'when using the default value' do
+        let(:instantiation_attributes) { {name: 'some name'} }
+        let(:percent) { 50.0 }
+
+        it_behaves_like 'new object with a default field'
+      end
+
+      context 'when overriding a default value' do
+        let(:instantiation_attributes) { {name: 'some name', percent: percent} }
+        let(:percent) { 25.0 }
+
+        it_behaves_like 'new object with a default field'
       end
     end
 
