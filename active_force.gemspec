@@ -10,8 +10,13 @@ Gem::Specification.new do |spec|
   spec.email         = "eloyesp@gmail.com"
   spec.description   = %q{Use SalesForce as an ActiveModel}
   spec.summary       = %q{Help you implement models persisting on Sales Force within Rails using RESTForce}
-  spec.homepage      = "https://github.com/ionia-corporation/active_force"
+  spec.homepage      = "https://github.com/Beyond-Finance/active_force#readme"
   spec.license       = "MIT"
+  spec.metadata      = {
+    "bug_tracker_uri"   => "https://github.com/Beyond-Finance/active_force/issues",
+    "changelog_uri"     => "https://github.com/Beyond-Finance/active_force/blob/main/CHANGELOG.md",
+    "source_code_uri"   => "https://github.com/Beyond-Finance/active_force",
+  }
 
   spec.files         = `git ls-files`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
@@ -28,5 +33,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec_junit_formatter'
   spec.add_development_dependency 'pry', '>= 0'
   spec.add_development_dependency 'simplecov', '>= 0'
-
 end
