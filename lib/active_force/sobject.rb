@@ -222,18 +222,18 @@ module ActiveForce
     end
 
     def attributes_for_sfdb
-      persisted? ? sfdb_attributes_for_update : sfdb_attributes_for_create
-    end
-
-    def sfdb_attributes_for_create
-      attrs_to_change = changed
-      @attributes.each_value {|value| attrs_to_change << value.name if value.class == ActiveModel::Attribute::UserProvidedDefault }
+      attrs_to_change = persisted? ? attributes_for_update : attributes_for_create
       self.class.mapping.translate_to_sf(@attributes.values_for_database.slice(*attrs_to_change))
     end
 
-    def sfdb_attributes_for_update
-      attrs = self.class.mapping.translate_to_sf(@attributes.values_for_database.slice(*changed))
-      attrs.merge!({'Id' => id })
+    def attributes_for_create
+      @attributes.each_value.select { |value| value.is_a?(ActiveModel::Attribute::UserProvidedDefault) }
+                            .map(&:name)
+                            .concat(changed)
+    end
+
+    def attributes_for_update
+      ['id'].concat(changed)
     end
 
     def self.picklist field
