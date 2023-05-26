@@ -1,6 +1,7 @@
 # Changelog
 
 ## Not released
+## 0.15.0
 - Fix model defaults so data is persisted in Salesforce (https://github.com/Beyond-Finance/active_force/pull/55)
 - Add `pluck` query method (https://github.com/Beyond-Finance/active_force/pull/51)
 - Add `#order` method to active query that accepts arguments in several formats ( symbol, string that has raw soql) (https://github.com/Beyond-Finance/active_force/pull/58)
