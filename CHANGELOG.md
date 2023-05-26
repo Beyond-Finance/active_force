@@ -2,6 +2,7 @@
 
 ## Not released
 
+- Add `pluck` query method (https://github.com/Beyond-Finance/active_force/pull/51)
 - Add `#order` method to active query that accepts arguments in several formats ( symbol, string that has raw soql) (https://github.com/Beyond-Finance/active_force/pull/58)
 
 ## 0.14.0
