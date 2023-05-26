@@ -2,10 +2,7 @@
 
 ## Not released
 
-## 0.14.1
 - Add `#order` method to active query that accepts arguments in several formats ( symbol, string that has raw soql) (https://github.com/Beyond-Finance/active_force/pull/58)
-  - By default, the order is ascending. For descending order, you can map the column name symbol to :desc
-  - use-cases: User.order(:name), User.order(email: :desc),  User.order(:name, email: :desc), User.order('name')
 
 ## 0.14.0
 
