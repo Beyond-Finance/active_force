@@ -1,6 +1,7 @@
 # Changelog
 
 ## Not released
+- Fix model defaults so data is persisted in Salesforce (https://github.com/Beyond-Finance/active_force/pull/55)
 
 ## 0.14.0
 
