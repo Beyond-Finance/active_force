@@ -354,6 +354,71 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe '#pluck' do
+    let(:record_attributes) { [] }
+
+    before do
+      collection = build_restforce_collection(record_attributes.map { |a| build_restforce_sobject(a) })
+      allow(client).to receive(:query).and_return(collection)
+    end
+
+    it 'returns empty array if no records returned from query' do
+      expect(Whizbang.pluck).to eq([])
+    end
+
+    it 'works with another query' do
+      expected = 'SELECT Id, Text_Label FROM Whizbang__c WHERE (Checkbox_Label = true)'
+      Whizbang.where(checkbox: true).pluck(:id, :text)
+      expect(client).to have_received(:query).with(expected)
+    end
+
+    context 'when given no fields' do
+      it 'queries for all fields' do
+        expected = "SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c"
+        Whizbang.pluck
+        expect(client).to have_received(:query).with(expected)
+      end
+    end
+
+    context 'when given one field' do
+      let(:ids) { ['a', 'b', 1] }
+      let(:record_attributes) { ids.map { |v| { 'Id' => v } } }
+
+      it 'queries for only that field' do
+        expected = 'SELECT Id FROM Whizbang__c'
+        Whizbang.pluck(:id)
+        expect(client).to have_received(:query).with(expected)
+      end
+
+      it 'returns an array of casted values for that field' do
+        expect(Whizbang.pluck(:id)).to match_array(ids.map(&:to_s))
+      end
+    end
+
+    context 'when given more than one field' do
+      let(:record_attributes) do
+        [
+          { 'Text_Label' => 'test1', 'Date_Label' => '2023-01-01' },
+          { 'Text_Label' => 'test2', 'Date_Label' => '2023-01-02' }
+        ]
+      end
+
+      it 'queries for only those fields' do
+        expected = 'SELECT Text_Label, Date_Label FROM Whizbang__c'
+        Whizbang.pluck(:text, :date)
+        expect(client).to have_received(:query).with(expected)
+      end
+
+      it 'returns an array of arrays of casted values in the correct order' do
+        expected = [
+          ['test1', Date.new(2023, 1, 1)],
+          ['test2', Date.new(2023, 1, 2)]
+        ]
+        expect(Whizbang.pluck(:text, :date)).to match_array(expected)
+      end
+    end
+  end
+
   describe '#reload' do
     let(:client) do
       double("sfdc_client", query: [Restforce::Mash.new(Id: 1, Name: 'Jeff')])
