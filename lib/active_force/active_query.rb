@@ -120,6 +120,11 @@ module ActiveForce
       !@records.nil?
     end
 
+    def order *args
+      return self if args.nil?
+      super build_order_by args
+    end
+
     private
 
     def build_condition(args, other=[])
@@ -224,5 +229,23 @@ module ActiveForce
       new_query.instance_variable_set(:@records, nil)
       new_query
     end
+
+    def build_order_by(args)
+      args.map do |arg|
+        case arg
+        when Symbol
+          mappings[arg].to_s
+        when Hash
+          arg.map { |key, value| "#{mappings[key]} #{order_type(value)}" }
+        else
+          arg
+        end
+      end.join(', ')
+    end
+
+    def order_type(type)
+      type == :desc ? 'DESC' : 'ASC'
+    end
+
   end
 end
