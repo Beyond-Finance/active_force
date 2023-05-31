@@ -4,6 +4,16 @@
 
 - Fix bug with has_many queries due to query method chaining mutating in-place (https://github.com/Beyond-Finance/active_force/pull/10)
 
+## 0.15.1
+
+- Revert new `pluck` implementation due to compatibility issues (https://github.com/Beyond-Finance/active_force/pull/60)
+
+## 0.15.0
+
+- Fix model defaults so data is persisted in Salesforce (https://github.com/Beyond-Finance/active_force/pull/55)
+- Add `pluck` query method (https://github.com/Beyond-Finance/active_force/pull/51)
+- Add `#order` method to active query that accepts arguments in several formats ( symbol, string that has raw soql) (https://github.com/Beyond-Finance/active_force/pull/58)
+
 ## 0.14.0
 
 - Add `scoped_as` option to `has_one` association (https://github.com/Beyond-Finance/active_force/pull/50)
