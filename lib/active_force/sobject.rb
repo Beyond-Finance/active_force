@@ -29,8 +29,7 @@ module ActiveForce
 
     class << self
       extend Forwardable
-      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count,
-                     :includes, :limit, :order, :select, :none, :pluck
+      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
       def_delegators :mapping, :table, :table_name, :custom_table?, :mappings
 
       private
