@@ -47,7 +47,7 @@ module ActiveForce
 
     def sum field
       raise ArgumentError, 'field is required' if field.blank?
-      raise ArgumentError, "field '#{field}' does not exist on #{sobject.class}" unless mappings.key?(field.to_sym)
+      raise ArgumentError, "field '#{field}' does not exist on #{sobject}" unless mappings.key?(field.to_sym)
 
       sfdc_client.query(super(mappings.fetch(field.to_sym)).to_s).first.expr0
     end

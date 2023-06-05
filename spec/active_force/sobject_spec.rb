@@ -338,7 +338,7 @@ describe ActiveForce::SObject do
 
     it 'raises ArgumentError if given invalid field' do
       expect { Whizbang.sum(:invalid) }
-        .to raise_error(ArgumentError, /field 'invalid' does not exist on #{Whizbang.class}/i)
+        .to raise_error(ArgumentError, /field 'invalid' does not exist on Whizbang/i)
     end
 
     it 'sends the correct query to the client' do
