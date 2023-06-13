@@ -38,7 +38,7 @@ module ActiveForce
           let(:tree_request) do
             { attributes: { type: root.class.table_name, referenceId: 'root1' } }
           end
-          let(:tree) { instance_double(Tree, object_count: 1, request: tree_request, assign_ids: nil) }
+          let(:tree) { instance_double(Tree, object_count: 1, request: tree_request, update_objects: nil) }
           let(:response) do
             build_response({ hasErrors: false, results: [{ id: 'id1', referenceId: 'root1' }] })
           end
@@ -59,9 +59,9 @@ module ActiveForce
             expect(client).to have_received(:api_post).with(request_path, { records: [tree_request] }.to_json).once
           end
 
-          it 'assigns ids on tree with response' do
+          it 'updates objects on tree with response' do
             builder.send_trees
-            expect(tree).to have_received(:assign_ids).with(response.body)
+            expect(tree).to have_received(:update_objects).with(response.body)
           end
 
           context 'when successful' do
@@ -114,7 +114,7 @@ module ActiveForce
           end
           let(:trees) do
             roots.map.with_index do |_, i|
-              instance_double(Tree, object_count: 1, request: requests[i], assign_ids: nil)
+              instance_double(Tree, object_count: 1, request: requests[i], update_objects: nil)
             end
           end
 
@@ -150,7 +150,7 @@ module ActiveForce
 
             it 'assigns ids on all trees with response' do
               builder.send_trees
-              expect(trees).to all(have_received(:assign_ids).with(response.body))
+              expect(trees).to all(have_received(:update_objects).with(response.body))
             end
           end
 
@@ -179,7 +179,7 @@ module ActiveForce
 
               it 'assigns ids on all trees with response' do
                 builder.send_trees
-                expect(trees).to all(have_received(:assign_ids).with(response.body))
+                expect(trees).to all(have_received(:update_objects).with(response.body))
               end
             end
 
@@ -205,7 +205,7 @@ module ActiveForce
 
               it 'assigns ids to trees in each batch with the appropriate response' do
                 builder.send_trees
-                trees.each_with_index { |tree, i| expect(tree).to have_received(:assign_ids).with(responses[i].body) }
+                trees.each_with_index { |tree, i| expect(tree).to have_received(:update_objects).with(responses[i].body) }
               end
 
               context 'when all requests are successful' do

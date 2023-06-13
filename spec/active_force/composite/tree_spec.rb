@@ -313,7 +313,7 @@ module ActiveForce
         end
       end
 
-      describe '#assign_ids' do
+      describe '#update_objects' do
         let(:ids) { [] }
         let(:response) { Restforce::Mash.new(results: ids) }
         let(:uuid_generator) do
@@ -330,10 +330,14 @@ module ActiveForce
         let(:objects) { ([root] + root.children + root.children.pluck(:leaves)).flatten }
         let(:tree) { Tree.new(root, uuid_generator: uuid_generator) }
 
-        before { tree.assign_ids(response) }
+        before { tree.update_objects(response) }
 
         def assert_id_assigned(id_response)
           expect(tree.find_object(id_response[:referenceId]).id).to eq(id_response[:id])
+        end
+
+        def assert_marked_clean(id_response)
+          expect(tree.find_object(id_response[:referenceId]).changed?).to be(false)
         end
 
         context 'with no ids in response' do
@@ -347,6 +351,10 @@ module ActiveForce
 
           it 'assigns ids to referenced objects' do
             ids.each { |id_response| assert_id_assigned(id_response) }
+          end
+
+          it 'marks assigned objects as unchanged' do
+            ids.each { |id_response| assert_marked_clean(id_response) }
           end
 
           it 'does not assign ids to objects not referenced in response' do
@@ -364,6 +372,10 @@ module ActiveForce
             expect(objects.pluck(:id)).to all(be_present)
             ids.each { |id_response| assert_id_assigned(id_response) }
           end
+
+          it 'marks assigned objects as unchanged' do
+            ids.each { |id_response| assert_marked_clean(id_response) }
+          end
         end
 
         context 'with superset of referenced objects in response' do
@@ -374,6 +386,10 @@ module ActiveForce
           it 'assigns ids to each object' do
             expect(objects.pluck(:id)).to all(be_present)
             ids.take(objects.length).each { |id_response| assert_id_assigned(id_response) }
+          end
+
+          it 'marks all objects as unchanged' do
+            expect(objects.map(&:changed?)).to all(be(false))
           end
         end
 
@@ -386,7 +402,7 @@ module ActiveForce
         end
 
         it 'raises ExceedsLimitError if depth is greater than max depth' do
-          expect { Tree.new(tree_with_depth(max_depth + 1)).assign_ids({}) }
+          expect { Tree.new(tree_with_depth(max_depth + 1)).update_objects({}) }
             .to raise_error(ExceedsLimitsError, /max depth/)
         end
       end

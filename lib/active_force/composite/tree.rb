@@ -26,8 +26,15 @@ module ActiveForce
         objects.size
       end
 
-      def assign_ids(response)
-        response&.results&.each { |result| find_object(result&.referenceId)&.id = result.id }
+      def update_objects(response)
+        response&.results&.each do |result|
+          object = find_object(result&.referenceId)
+          if object.present?
+            object.id = result.id
+            # Mark that object is no longer dirty since it has been persisted.
+            object.changes_applied
+          end
+        end
       end
 
       def find_object(reference_id)
