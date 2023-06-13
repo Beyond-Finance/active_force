@@ -12,7 +12,7 @@ module ActiveForce
     def value_for_hash value
       case as
       when :datetime
-        value.to_fs(:iso8601)
+        value&.to_fs(:iso8601)
       else
         value
       end

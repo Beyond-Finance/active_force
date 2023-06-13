@@ -335,4 +335,25 @@ describe ActiveForce::ActiveQuery do
       it { is_expected.to be_truthy }
     end
   end
+
+  describe "#order" do
+    context 'when it is symbol' do 
+      it "should add an order condition with actual SF field name" do
+        expect(active_query.order(:field).to_s).to eq "SELECT Id FROM table_name ORDER BY Field__c"
+      end
+    end
+
+    context 'when it is string - raw soql' do
+      it "should add an order condition same as the string provided" do
+        expect(active_query.order('Field__c').to_s).to eq "SELECT Id FROM table_name ORDER BY Field__c"
+      end
+    end
+
+   context 'when it is multiple columns' do
+    it "should add an order condition with actual SF field name and the provided order type" do
+      expect(active_query.order(:other_field, field: :desc).to_s).to eq "SELECT Id FROM table_name ORDER BY Other_Field, Field__c DESC"
+    end
+   end
+    
+  end
 end
