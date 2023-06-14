@@ -29,11 +29,12 @@ module ActiveForce
       def update_objects(response)
         response&.results&.each do |result|
           object = find_object(result&.referenceId)
-          if object.present?
-            object.id = result.id
-            # Mark that object is no longer dirty since it has been persisted.
-            object.changes_applied
-          end
+          next if object.blank?
+
+          object.id = result.id
+          update_relationships(object)
+          # Mark that object is no longer dirty since it has been persisted.
+          object.changes_applied
         end
       end
 
@@ -55,8 +56,9 @@ module ActiveForce
         return if subrequest.blank?
 
         check_depth(depth)
-        object.traversable_children.each do |relationship_name, children|
-          subrequest[relationship_name] = { records: children.map { |child| traverse(child, depth + 1) }.compact }
+        object.traversable_children.map do |relationship_name, relationship|
+          child_subrequests = relationship.objects.map { |child| traverse(child, depth + 1) }.compact
+          subrequest[relationship_name] = { records: child_subrequests }
         end
         record_object(reference_id, object)
         subrequest
@@ -75,6 +77,10 @@ module ActiveForce
 
       def check_depth(depth)
         raise ExceedsLimitsError, "Tree with root #{root} exceeds max depth of #{max_depth}" if depth > max_depth
+      end
+
+      def update_relationships(object)
+        object.traversable_children.each_value { |relationship| relationship.assign_inverse(object) }
       end
     end
   end

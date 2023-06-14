@@ -40,7 +40,7 @@ module CompositeSupport
     field :is_favorite, from: 'IsFavorite__c', as: :boolean
 
     belongs_to :parent, model: Parent
-    has_many :leaves, model: 'CompositeSupport::Leaf', relationship_name: 'Leaves__r'
+    has_many :leaves, model: 'CompositeSupport::Leaf', relationship_name: 'Leaves__r', inverse_of: :child
 
     def self.with_leaves(*leaves)
       new.tap { |c| c.leaves = leaves }

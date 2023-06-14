@@ -124,6 +124,94 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe 'has_many#assign_inverse' do
+    it 'assigns the given owner to the belongs_to method of the target based on the model name' do
+      target = Comment.new
+      owner = Post.new
+      association = owner.class.associations[:comments]
+      association.assign_inverse(owner, target)
+      expect(target.post).to eq(owner)
+    end
+
+    it 'raises NoMethodError if no such belongs_to method exists' do
+      target = Custom.new
+      owner = HasManyWithoutBelongsTo.new
+      association = owner.class.associations[:custom]
+      expect { association.assign_inverse(owner, target) }.to raise_error(NoMethodError)
+    end
+
+    context 'with namespaced models' do
+      it 'assigns the given owner to the belongs_to method of the target based on the model name' do
+        target = Foo::Opportunity.new
+        owner = Foo::Account.new
+        association = owner.class.associations[:opportunities]
+        association.assign_inverse(owner, target)
+        expect(target.account).to eq(owner)
+      end
+    end
+
+    context 'with `inverse_of` option' do
+      it 'assigns the given owner to the inverse_of method' do
+        target = Account.new
+        owner = Owner.new
+        association = owner.class.associations[:accounts]
+        association.assign_inverse(owner, target)
+        expect(target.owner).to eq(owner)
+      end
+
+      it 'raises NoMethodError if no appropriate belongs_to method exists on the target' do
+        target = Custom.new
+        owner = HasManyWithoutBelongsTo.new
+        association = owner.class.associations[:custom_inverse]
+        expect { association.assign_inverse(owner, target) }.to raise_error(NoMethodError)
+      end
+    end
+  end
+
+  describe 'has_one#assign_inverse' do
+    it 'assigns the given owner to the belongs_to method of the target based on the model name' do
+      target = HasOneChild.new
+      owner = HasOneParent.new
+      association = owner.class.associations[:has_one_child]
+      association.assign_inverse(owner, target)
+      expect(target.has_one_parent).to eq(owner)
+    end
+
+    it 'raises NoMethodError if no such belongs_to method exists' do
+      target = Custom.new
+      owner = HasOneWithoutBelongsTo.new
+      association = owner.class.associations[:custom]
+      expect { association.assign_inverse(owner, target) }.to raise_error(NoMethodError)
+    end
+
+    context 'with namespaced models' do
+      it 'assigns the given owner to the belongs_to method of the target based on the model name' do
+        target = Foo::Attachment.new
+        owner = Foo::Lead.new
+        association = owner.class.associations[:attachment]
+        association.assign_inverse(owner, target)
+        expect(target.lead).to eq(owner)
+      end
+    end
+
+    context 'with `inverse_of` option' do
+      it 'assigns the given owner to the inverse_of method' do
+        target = Foo::Attachment.new
+        owner = Foo::Lead.new
+        association = owner.class.associations[:fancy_attachment]
+        association.assign_inverse(owner, target)
+        expect(target.fancy_lead).to eq(owner)
+      end
+
+      it 'raises NoMethodError if no appropriate belongs_to method exists on the target' do
+        target = Custom.new
+        owner = HasOneWithoutBelongsTo.new
+        association = owner.class.associations[:custom_inverse]
+        expect { association.assign_inverse(owner, target) }.to raise_error(NoMethodError)
+      end
+    end
+  end
+
   describe "has_one_query" do
     it "should respond to relation method" do
       expect(has_one_parent).to respond_to(:has_one_child)
@@ -395,6 +483,18 @@ describe ActiveForce::SObject do
         Comment.belongs_to :post, model: 'Post'
         expect { comment.post.id }.to_not raise_error
       end
+    end
+  end
+
+  describe 'belongs_to#assign_inverse' do
+    # We are keeping belongs_to as non-invertible.
+
+    it 'does not assign owner to target' do
+      owner = HasOneChild.new
+      target = HasOneParent.new
+      association = owner.class.associations[:has_one_parent]
+      association.assign_inverse(owner, target)
+      expect(target.has_one_child).to be_nil
     end
   end
 end

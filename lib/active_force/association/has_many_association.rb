@@ -10,6 +10,10 @@ module ActiveForce
 
       private
 
+      def invertible?
+        true
+      end
+
       def default_foreign_key
         infer_foreign_key_from_model parent
       end

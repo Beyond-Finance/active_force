@@ -3,6 +3,10 @@ module ActiveForce
     class HasOneAssociation < Association
       private
 
+      def invertible?
+        true
+      end
+
       def target(owner)
         apply_scope(relation_model.query, owner).find_by(foreign_key => owner.id)
       end

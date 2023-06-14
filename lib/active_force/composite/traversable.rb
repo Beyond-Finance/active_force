@@ -12,6 +12,20 @@ module ActiveForce
     # that return loaded association records that may have been updated or newly built.
     #
     module Traversable
+      Relationship = Struct.new(:association) do
+        def objects
+          @objects ||= Set.new
+        end
+
+        def add_objects(new_objects)
+          objects.merge(new_objects)
+        end
+
+        def assign_inverse(owner)
+          objects.each { |target| association&.assign_inverse(owner, target) }
+        end
+      end
+
       def traversable_root?
         traversable_parents.blank?
       end
@@ -29,7 +43,7 @@ module ActiveForce
       def loaded_relationships(*association_classes)
         loaded_associations(association_classes).each_with_object({}) do |(name, association), result|
           objects = [association_cache[name]].flatten.compact
-          (result[association.relationship_name] ||= Set.new).merge(objects)
+          (result[association.relationship_name] ||= Relationship.new(association)).add_objects(objects)
         end
       end
 

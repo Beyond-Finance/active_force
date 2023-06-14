@@ -42,7 +42,7 @@ class Account < ActiveForce::SObject
   belongs_to :owner
 end
 class Owner < ActiveForce::SObject
-  has_many :accounts
+  has_many :accounts, inverse_of: :owner
 end
 class Custom < ActiveForce::SObject; end
 class EnforcedTableName < ActiveForce::SObject
@@ -60,11 +60,23 @@ class HasOneParent < ActiveForce::SObject
   has_one :has_one_child, model: HasOneChild
 end
 
+class HasOneWithoutBelongsTo < ActiveForce::SObject
+  has_one :custom, model: Custom
+  has_one :custom_inverse, model: Custom, inverse_of: :invalid
+end
+
+class HasManyWithoutBelongsTo < ActiveForce::SObject
+  has_one :custom, model: Custom
+  has_one :custom_inverse, model: Custom, inverse_of: :invalid
+end
+
 module Foo
   class Bar < ActiveForce::SObject; end
   class Opportunity < ActiveForce::SObject
     field :account_id, from: 'AccountId'
     field :partner_account_id, from: 'Partner_Account_Id__c'
+
+    belongs_to :account
   end
   class Account < ActiveForce::SObject
     has_many :opportunities, model: Foo::Opportunity
@@ -72,7 +84,7 @@ module Foo
   end
   class Lead < ActiveForce::SObject
     has_one :attachment, model: 'Foo::Attachment'
-    has_one :fancy_attachment, model: 'Foo::Attachment', foreign_key: :fancy_lead_id
+    has_one :fancy_attachment, model: 'Foo::Attachment', foreign_key: :fancy_lead_id, inverse_of: :fancy_lead
   end
   class Attachment < ActiveForce::SObject
     field :lead_id, from: 'Lead_Id__c'

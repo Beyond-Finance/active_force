@@ -324,10 +324,13 @@ module ActiveForce
         end
         let(:root) do
           CompositeSupport::Parent.with_children(
-            CompositeSupport::Child.with_leaves(CompositeSupport::Leaf.new)
-          )
+            CompositeSupport::Child.with_leaves(CompositeSupport::Leaf.new, CompositeSupport::Leaf.new)
+          ).tap do |parent|
+            # So that we have a has_one association.
+            parent.friend = CompositeSupport::Friend.new(name: 'test')
+          end
         end
-        let(:objects) { ([root] + root.children + root.children.pluck(:leaves)).flatten }
+        let(:objects) { ([root, root.friend] + root.children + root.children.pluck(:leaves)).flatten }
         let(:tree) { Tree.new(root, uuid_generator: uuid_generator) }
 
         before { tree.update_objects(response) }
@@ -357,6 +360,17 @@ module ActiveForce
             ids.each { |id_response| assert_marked_clean(id_response) }
           end
 
+          it 'updates associated parent ids of child records' do
+            expect(root.friend.parent).to eq(root)
+            expect(root.friend.parent_id).to eq('id1')
+            expect(root.children.pluck(:parent)).to all(eq(root))
+            expect(root.children.pluck(:parent_id)).to all(eq('id1'))
+          end
+
+          it 'does not update associated parents if parent id is not in response' do
+            expect(root.children.pluck(:leaves).flatten.pluck(:child_id)).to all(be_nil)
+          end
+
           it 'does not assign ids to objects not referenced in response' do
             assigned = ids.map { |id| tree.find_object(id[:referenceId]) }
             expect((objects - assigned).pluck(:id)).to all(be_blank)
@@ -376,6 +390,12 @@ module ActiveForce
           it 'marks assigned objects as unchanged' do
             ids.each { |id_response| assert_marked_clean(id_response) }
           end
+
+          it 'updates associated parent ids of child records' do
+            expect(root.friend.parent_id).to eq(root.id)
+            expect(root.children.pluck(:parent_id)).to all(eq(root.id))
+            root.children.each { |child| expect(child.leaves.pluck(:child_id)).to all(eq(child.id)) }
+          end
         end
 
         context 'with superset of referenced objects in response' do
@@ -390,6 +410,12 @@ module ActiveForce
 
           it 'marks all objects as unchanged' do
             expect(objects.map(&:changed?)).to all(be(false))
+          end
+
+          it 'updates associated parent ids of child records' do
+            expect(root.friend.parent_id).to eq(root.id)
+            expect(root.children.pluck(:parent_id)).to all(eq(root.id))
+            root.children.each { |child| expect(child.leaves.pluck(:child_id)).to all(eq(child.id)) }
           end
         end
 

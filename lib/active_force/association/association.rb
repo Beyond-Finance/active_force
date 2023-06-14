@@ -26,6 +26,10 @@ module ActiveForce
         options[:relationship_name] || default_relationship_name
       end
 
+      def inverse_name
+        options[:inverse_of] || default_inverse_name
+      end
+
       ###
       # Does this association's relation_model represent
       # +sfdc_table_name+? Examples of +sfdc_table_name+
@@ -47,12 +51,22 @@ module ActiveForce
         end
       end
 
+      def assign_inverse(owner, target)
+        return unless invertible?
+
+        target&.public_send("#{inverse_name}=", owner)
+      end
+
       private
 
       attr_reader :parent
 
       def loadable?(owner)
         owner&.persisted?
+      end
+
+      def invertible?
+        false
       end
 
       def target(_owner)
@@ -76,6 +90,10 @@ module ActiveForce
         pluralized = table_name.chomp('__c').pluralize
         suffix = table_name.end_with?('__c') ? '__r' : ''
         pluralized.concat(suffix)
+      end
+
+      def default_inverse_name
+        parent.name.demodulize.underscore
       end
 
       def define_assignment_method
