@@ -240,6 +240,52 @@ When using rails, you can generate a model with all the fields you have on your 
 
     rails g active_force:model <table name>
 
+### Composite
+
+Salesforce's API provides various features for submitting multiple operations in a single request.  Below are the features that ActiveForce supports.  Note that the Restforce client also provides methods for using the [Composite](https://github.com/restforce/restforce#composite-api) and [Composite Batch](https://github.com/restforce/restforce#composite-batch-api) APIs.
+
+#### sObject Trees
+
+An [sObject Tree](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite_sobject_tree.htm) request creates one or more trees of the same root object type and their child records up to 5 levels deep.  Child records are those associated by `has_one` or `has_many`.  Note that this only creates new records; it does not update existing ones.
+
+For example, this will create `Root`, `Child`, and `Leaf` records with the correct associations in a single API request.
+
+```ruby
+leaf = Leaf.new(some_field: 'text')
+
+child1 = Child.new
+child1.leaf = leaf # Child: has_one :leaf
+
+child2 = Child.new
+
+root = Root.new(is_something: true)
+root.children = [child1, child2] # Root: has_many :children
+
+Root.create_tree(root)
+```
+
+You can pass in a single model instance like above or you can pass in an array of them.
+
+```ruby
+result = Model.create_tree([model1, model2, model3])
+result.success?
+result.error_responses
+```
+
+`#success?` will be true if all requests succeeded (in this case there would be at most one request).  `#error_responses` will be an array of `Restforce::Mash`es of any failed [response bodies](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/responses_composite_sobject_tree.htm).
+
+There is also a bang alternative `create_tree!` that will raise a `ActiveForce::Composite::FailedRequestError` if the request fails.
+
+```ruby
+Model.create_tree!([model1, model2, model3])
+```
+
+All create operations defined in a single request will either all succeed or all fail. A single request can create up to 200 total objects. If any tree has more than 200 objects or if there are more than 200 root objects, `create_tree` will raise a `ActiveForce::Composite::ExceedsLimitsError`. By default, if given more than 200 objects over any number of trees, it will raise the same error.  If you want to create more than 200 objects, you can pass the `allow_multiple_requests` option. This will batch trees in requests so that they stay under that 200 object limit.  This, however, does not guarantee that all trees will either fail or succeed together.
+
+```ruby
+Model.create_tree(instance, allow_multiple_requests: true)
+```
+
 ## Contributing
 
 1. Fork it

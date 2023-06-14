@@ -2,6 +2,8 @@
 
 ## Not released
 
+- Composite sObject Trees (https://github.com/Beyond-Finance/active_force/pull/42)
+
 ## 0.15.1
 
 - Revert new `pluck` implementation due to compatibility issues (https://github.com/Beyond-Finance/active_force/pull/60)
