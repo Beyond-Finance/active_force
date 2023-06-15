@@ -327,6 +327,7 @@ module ActiveForce
             CompositeSupport::Child.with_leaves(CompositeSupport::Leaf.new, CompositeSupport::Leaf.new)
           ).tap do |parent|
             # So that we have a has_one association.
+            parent.title = 'title'
             parent.friend = CompositeSupport::Friend.new(name: 'test')
           end
         end
@@ -346,6 +347,18 @@ module ActiveForce
         context 'with no ids in response' do
           it 'does not assign any ids' do
             expect(objects.pluck(:id)).to all(be_blank)
+          end
+        end
+
+        context 'when given error results' do
+          let(:ids) { [{ referenceId: 'refId1', errors: [{ message: 'error' }] }] }
+
+          it 'does not update ids of referenced records' do
+            expect(root.id).to be_blank
+          end
+
+          it 'does not mark referenced records as unchanged' do
+            expect(root.changed?).to be(true)
           end
         end
 
