@@ -41,6 +41,9 @@ module CompositeSupport
 
     belongs_to :parent, model: Parent
     has_many :leaves, model: 'CompositeSupport::Leaf', relationship_name: 'Leaves__r', inverse_of: :child
+    has_many :friends, model: 'CompositeSupport::Friend', relationship_name: 'Friends'
+    has_many :other_children, model: 'CompositeSupport::OtherChild', relationship_name: 'Friends',
+                              inverse_of: :other_child
 
     def self.with_leaves(*leaves)
       new.tap { |c| c.leaves = leaves }
@@ -51,18 +54,22 @@ module CompositeSupport
     self.table_name = 'OtherChild__c'
 
     field :parent_id, from: 'Parent_Id__c'
+    field :other_child_id
     field :name, from: 'Name'
 
     belongs_to :parent, model: Parent
+    belongs_to :other_child, model: Child, foreign_key: :other_child_id
   end
 
   class Friend < ActiveForce::SObject
     self.table_name = 'Friend'
 
     field :parent_id
+    field :child_id
     field :name, from: 'Name'
 
     belongs_to :parent, model: Parent
+    belongs_to :child, model: Child
   end
 
   class Leaf < ActiveForce::SObject

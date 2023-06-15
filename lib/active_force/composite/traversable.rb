@@ -3,7 +3,6 @@
 require 'active_force/association/belongs_to_association'
 require 'active_force/association/has_many_association'
 require 'active_force/association/has_one_association'
-require 'set'
 
 module ActiveForce
   module Composite
@@ -12,17 +11,23 @@ module ActiveForce
     # that return loaded association records that may have been updated or newly built.
     #
     module Traversable
-      Relationship = Struct.new(:association) do
+      class Relationship
         def objects
-          @objects ||= Set.new
+          object_association_map.keys
         end
 
-        def add_objects(new_objects)
-          objects.merge(new_objects)
+        def add_association(association, objects)
+          object_association_map.merge!((objects || []).uniq.map { |object| [object, association] }.to_h)
         end
 
         def assign_inverse(owner)
-          objects.each { |target| association&.assign_inverse(owner, target) }
+          object_association_map.each { |target, association| association&.assign_inverse(owner, target) }
+        end
+
+        private
+
+        def object_association_map
+          @object_association_map ||= {}
         end
       end
 
@@ -43,7 +48,7 @@ module ActiveForce
       def loaded_relationships(*association_classes)
         loaded_associations(association_classes).each_with_object({}) do |(name, association), result|
           objects = [association_cache[name]].flatten.compact
-          (result[association.relationship_name] ||= Relationship.new(association)).add_objects(objects)
+          (result[association.relationship_name] ||= Relationship.new).add_association(association, objects)
         end
       end
 

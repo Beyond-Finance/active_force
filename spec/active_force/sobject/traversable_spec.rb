@@ -57,18 +57,8 @@ module ActiveForce
         leaf = CompositeSupport::Leaf.new
         leaf.child = child
         leaf.other_child = other_child
-        expected = { 'Child_Id__r' => Set[child], 'OtherChild_Id__r' => Set[other_child] }
+        expected = { 'Child_Id__r' => [child], 'OtherChild_Id__r' => [other_child] }
         expect(leaf.traversable_parents.transform_values(&:objects)).to eq(expected)
-      end
-
-      it 'includes association with each relationship' do
-        child = CompositeSupport::Child.new
-        other_child = CompositeSupport::OtherChild.new
-        leaf = CompositeSupport::Leaf.new
-        leaf.child = child
-        leaf.other_child = other_child
-        expect(leaf.traversable_parents.all? { |rel_name, rel| rel_name == rel.association.relationship_name })
-          .to be(true)
       end
 
       it 'combines values if associations have the same relationship name' do
@@ -77,7 +67,7 @@ module ActiveForce
         leaf = CompositeSupport::Leaf.new
         leaf.child = child
         leaf.child_alt = alt_child
-        expect(leaf.traversable_parents.transform_values(&:objects)).to eq({ 'Child_Id__r' => Set[child, alt_child] })
+        expect(leaf.traversable_parents.transform_values(&:objects)).to eq({ 'Child_Id__r' => [child, alt_child] })
       end
     end
 
@@ -106,20 +96,9 @@ module ActiveForce
         parent = CompositeSupport::Parent.with_children(children)
         parent.other_children = other_children
         parent.friend = friend
-        expected = { 'Children__r' => Set[*children], 'OtherChildren__r' => Set[*other_children],
-                     'Friends' => Set[friend] }
+        expected = { 'Children__r' => children, 'OtherChildren__r' => other_children,
+                     'Friends' => [friend] }
         expect(parent.traversable_children.transform_values(&:objects)).to eq(expected)
-      end
-
-      it 'includes association with each relationship' do
-        children = [CompositeSupport::Child.new]
-        friend = CompositeSupport::Friend.new
-        other_children = 2.times.map { CompositeSupport::OtherChild.new }
-        parent = CompositeSupport::Parent.with_children(children)
-        parent.other_children = other_children
-        parent.friend = friend
-        expect(parent.traversable_children.all? { |rel_name, rel| rel_name == rel.association.relationship_name })
-          .to be(true)
       end
 
       it 'combines values if associations have the same relationship name' do
@@ -127,7 +106,7 @@ module ActiveForce
         favorite_child = CompositeSupport::Child.new
         parent = CompositeSupport::Parent.with_children(child)
         parent.favorite_child = favorite_child
-        expected = { 'Children__r' => Set[child, favorite_child] }
+        expected = { 'Children__r' => [child, favorite_child] }
         expect(parent.traversable_children.transform_values(&:objects)).to eq(expected)
       end
     end

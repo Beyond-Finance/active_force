@@ -427,6 +427,22 @@ module ActiveForce
           end
         end
 
+        context 'when parent has children with different associations that have the same relationship name' do
+          let(:root) do
+            CompositeSupport::Child.new.tap do |child|
+              child.friends = [CompositeSupport::Friend.new]
+              child.other_children = [CompositeSupport::OtherChild.new]
+            end
+          end
+          let(:objects) { [[root] + root.friends + root.other_children].flatten }
+          let(:ids) { [{ referenceId: 'refId1', id: 'id1' }] }
+
+          it 'updates the associated parent ids of the child records' do
+            expect(root.friends.pluck(:child_id)).to all(eq(root.id))
+            expect(root.other_children.pluck(:other_child_id)).to all(eq(root.id))
+          end
+        end
+
         it 'raises ExceedsLimitError if depth is greater than max depth' do
           expect { Tree.new(tree_with_depth(max_depth + 1)).update_objects({}) }
             .to raise_error(ExceedsLimitsError, /max depth/)
