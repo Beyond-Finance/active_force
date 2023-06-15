@@ -318,7 +318,7 @@ module ActiveForce
         let(:response) { Restforce::Mash.new(results: ids) }
         let(:uuid_generator) do
           double('uuid_generator').tap do |mock|
-            sequence = ids.map { |x| x[:referenceId] } + 5.times.map { SecureRandom.uuid }
+            sequence = ids.map { |x| x.try(:[], :referenceId) } + objects.map { SecureRandom.uuid }
             allow(mock).to receive(:uuid).and_return(*sequence)
           end
         end
@@ -345,6 +345,14 @@ module ActiveForce
         end
 
         context 'with no ids in response' do
+          it 'does not assign any ids' do
+            expect(objects.pluck(:id)).to all(be_blank)
+          end
+        end
+
+        context 'with nil result in response' do
+          let(:ids) { [nil] }
+
           it 'does not assign any ids' do
             expect(objects.pluck(:id)).to all(be_blank)
           end

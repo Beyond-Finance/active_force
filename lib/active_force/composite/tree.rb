@@ -28,7 +28,7 @@ module ActiveForce
 
       def update_objects(response)
         response&.results&.each do |result|
-          next if result.blank? || result.try(:id).blank?
+          next if result.try(:id).blank?
 
           object = find_object(result.referenceId)
 
