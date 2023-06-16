@@ -96,6 +96,20 @@ describe ActiveForce::SObject do
         it 'sets percent field upon object instantiation' do
           expect(subject.new(**instantiation_attributes)[:percent]).to eq(percent)
         end
+
+        context 'when the override to default value is the same as the default value' do
+          let(:percent) { 50.0 }
+
+          it 'sends percent to salesforce' do
+            expect(client).to receive(:create!)
+                          .with(anything, hash_including('Percent_Label' => percent))
+            subject.create(**instantiation_attributes)
+          end
+
+          it 'sets percent field upon object instantiation' do
+            expect(subject.new(**instantiation_attributes)[:percent]).to eq(percent)
+          end
+        end
       end
     end
 
