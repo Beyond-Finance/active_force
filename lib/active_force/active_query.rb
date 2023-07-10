@@ -94,14 +94,15 @@ module ActiveForce
 
     def includes(*relations)
       relations.each do |relation|
-        association = sobject.associations[relation]
-        fields Association::EagerLoadProjectionBuilder.build association
-        # downcase the key and downcase when we do the comparison so we don't do any more crazy string manipulation
-        association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+        if relation.is_a?(Hash)
+          process_hash_relation(relation)
+        else
+          process_single_relation(relation)
+        end
       end
       self
     end
-
+    
     def none
       @records = []
       where(id: '1'*18).where(id: '0'*18)
@@ -117,6 +118,29 @@ module ActiveForce
     end
 
     private
+
+    def process_hash_relation(relation)
+      relation.each do |key, value|
+        association = sobject.associations[key]
+        fields Association::EagerLoadProjectionBuilder.build(association)
+        association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+        process_nested_value(value, association)
+      end
+    end
+    
+    def process_nested_value(value, association)
+      if value.is_a?(Hash)
+        association.options[:model].camelize.constantize.includes(value)
+      elsif value.is_a?(Array)
+        association.options[:model].camelize.constantize.includes(*value)
+      end
+    end
+    
+    def process_single_relation(relation)
+      association = sobject.associations[relation]
+      fields Association::EagerLoadProjectionBuilder.build(association)
+      association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+    end
 
     def build_condition(args, other=[])
       case args
