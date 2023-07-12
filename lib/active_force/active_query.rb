@@ -122,19 +122,14 @@ module ActiveForce
     def process_hash_relation(relation)
       relation.each do |key, value|
         association = sobject.associations[key]
-        fields Association::EagerLoadProjectionBuilder.build(association)
+        relationship_name = association.sfdc_association_field
+        query = Query.new relationship_name
+        query.fields association.options[:model].camelize.constantize.includes(*value).fields
+        fields  ["(#{query.to_s})"]
         association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-        process_nested_value(value, association)
       end
     end
     
-    def process_nested_value(value, association)
-      if value.is_a?(Hash)
-        association.options[:model].camelize.constantize.includes(value)
-      elsif value.is_a?(Array)
-        association.options[:model].camelize.constantize.includes(*value)
-      end
-    end
     
     def process_single_relation(relation)
       association = sobject.associations[relation]
