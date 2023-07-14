@@ -95,9 +95,9 @@ module ActiveForce
     def includes(*relations)
       relations.each do |relation|
         if relation.is_a?(Hash)
-          process_hash_relation(relation)
+          hash_relation(relation)
         else
-          process_single_relation(relation)
+          single_relation(relation)
         end
       end
       self
@@ -119,19 +119,27 @@ module ActiveForce
 
     private
 
-    def process_hash_relation(relation)
+    def hash_relation(relation)
       relation.each do |key, value|
         association = sobject.associations[key]
-        relationship_name = association.sfdc_association_field
-        query = Query.new relationship_name
-        query.fields association.options[:model].camelize.constantize.includes(*value).fields
-        fields  ["(#{query.to_s})"]
-        association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+        sub_query = Query.new association.sfdc_association_field
+        sub_query.fields association.relation_model.fields
+
+        sub_query_association_mapping = {}
+        sub_query_association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+
+        value = value.is_a?(Array) ? value : [value]
+        value.each do |v|
+          nested_association = association.options[:model].camelize.constantize.associations[v]
+          sub_query.fields.push(Association::EagerLoadProjectionBuilder.build(nested_association).join(','))
+          sub_query_association_mapping[nested_association.sfdc_association_field.downcase] = nested_association.relation_name
+        end
+        fields ["(#{sub_query.to_s})"]
+        association_mapping.merge!(sub_query_association_mapping)
       end
     end
-    
-    
-    def process_single_relation(relation)
+
+    def single_relation(relation)
       association = sobject.associations[relation]
       fields Association::EagerLoadProjectionBuilder.build(association)
       association_mapping[association.sfdc_association_field.downcase] = association.relation_name
