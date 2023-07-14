@@ -2,12 +2,12 @@ module ActiveForce
   module Association
     class RelationModelBuilder
       class << self
-        def build(association, value, association_mapping)
+        def build(association, value, association_mapping = {})
           new(association, value, association_mapping).build_relation_model
         end
       end
 
-      def initialize(association, value, association_mapping)
+      def initialize(association, value, association_mapping = {})
         @association = association
         @value = value
         @association_mapping = association_mapping
@@ -31,7 +31,7 @@ module ActiveForce
     class AbstractBuildFrom
       attr_reader :association, :value, :association_mapping
 
-      def initialize(association, value, association_mapping)
+      def initialize(association, value, association_mapping = {})
         @association = association
         @value = value
         @association_mapping = association_mapping
@@ -44,7 +44,6 @@ module ActiveForce
 
     class BuildFromHash < AbstractBuildFrom
       def call
-        binding.pry
         association.build(value, association_mapping)
       end
     end
