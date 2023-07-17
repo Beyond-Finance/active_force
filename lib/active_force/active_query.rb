@@ -122,9 +122,15 @@ module ActiveForce
     def hash_relation(relation)
       relation.each do |key, value|
         association = sobject.associations[key]
-        sub_query = build_relation_from_hash(association, value) 
-        fields ["(#{sub_query[:query].to_s})"]
-        association_mapping.merge!(sub_query[:association_mapping])
+        association_name = association.class.name.split('::').last
+        if association_name == 'HasMany' || association_name == 'HasOne'
+          nested_includes = value.is_a?(Array) ? value : [value]
+          sub_query = build_relation_from_hash(association, nested_includes) 
+          fields ["(#{sub_query[:query].to_s})"]
+          association_mapping.merge!(sub_query[:association_mapping])
+        else
+          raise "Invalid nested include #{association}"
+        end
       end
     end
 
@@ -134,8 +140,6 @@ module ActiveForce
 
       sub_query_association_mapping = {}
       sub_query_association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-
-      nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
       nested_includes.each do |nested_include|
         case nested_include
         when Symbol
