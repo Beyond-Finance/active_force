@@ -122,21 +122,36 @@ module ActiveForce
     def hash_relation(relation)
       relation.each do |key, value|
         association = sobject.associations[key]
-        sub_query = Query.new association.sfdc_association_field
-        sub_query.fields association.relation_model.fields
+        sub_query = build_relation_from_hash(association, value) 
+        fields ["(#{sub_query[:query].to_s})"]
+        association_mapping.merge!(sub_query[:association_mapping])
+      end
+    end
 
-        sub_query_association_mapping = {}
-        sub_query_association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+    def build_relation_from_hash(association, nested_includes)
+      sub_query = Query.new association.sfdc_association_field
+      sub_query.fields association.relation_model.fields
 
-        value = value.is_a?(Array) ? value : [value]
-        value.each do |v|
-          nested_association = association.options[:model].camelize.constantize.associations[v]
+      sub_query_association_mapping = {}
+      sub_query_association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+
+      nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
+      nested_includes.each do |nested_include|
+        case nested_include
+        when Symbol
+          nested_association = association.options[:model].camelize.constantize.associations[nested_include]
           sub_query.fields.push(Association::EagerLoadProjectionBuilder.build(nested_association).join(','))
           sub_query_association_mapping[nested_association.sfdc_association_field.downcase] = nested_association.relation_name
+        when Hash
+          nested_include.each do |key, value|
+            nested_association = association.options[:model].camelize.constantize.associations[key]
+            nested_sub_query = build_relation_from_hash(nested_association, value)
+            sub_query.fields.push("(#{nested_sub_query[:query].to_s})")
+            sub_query_association_mapping.merge!(nested_sub_query[:association_mapping])
+          end
         end
-        fields ["(#{sub_query.to_s})"]
-        association_mapping.merge!(sub_query_association_mapping)
       end
+      { query: sub_query, association_mapping: sub_query_association_mapping}
     end
 
     def single_relation(relation)
