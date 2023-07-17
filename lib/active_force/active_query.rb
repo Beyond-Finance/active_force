@@ -132,12 +132,15 @@ module ActiveForce
       relation.each do |key, value|
         association = sobject.associations[key]
         association_name = association.class.name.split('::').last
+
         if ['HasManyAssociation', 'HasOneAssociation'].include?(association_name)
           sub_query = build_hash_relation(association, value)
           fields << "(#{sub_query[:query]})"
           association_mapping.merge!(sub_query[:association_mapping])
         else
-          raise "Invalid nested include #{association}"
+          sub_query = build_hash_relation_for_belongs_to(association.sfdc_association_field, association, value)
+          fields.concat(sub_query[:query_fields])
+          association_mapping.merge!(sub_query[:association_mapping])
         end
       end
     end
@@ -148,11 +151,13 @@ module ActiveForce
     
       sub_query_association_mapping = { association.sfdc_association_field.downcase => association.relation_name }
       nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
+
       nested_includes.each do |nested_include|
         case nested_include
         when Symbol
           nested_association = association.options[:model].camelize.constantize.associations[nested_include]
-          sub_query.fields << Association::EagerLoadProjectionBuilder.build(nested_association).join(',')
+          nested_fields = Association::EagerLoadProjectionBuilder.build(nested_association).join(',')
+          sub_query.fields.concat(nested_fields)
           sub_query_association_mapping[nested_association.sfdc_association_field.downcase] = nested_association.relation_name
         when Hash
           nested_include.each do |key, value|
@@ -166,10 +171,46 @@ module ActiveForce
       { query: sub_query, association_mapping: sub_query_association_mapping }
     end
     
+    def build_hash_relation_for_belongs_to(parent_association_field, association, nested_includes)
+
+      sub_query_fields = association.relation_model.fields.map do |field|
+        "#{ parent_association_field }.#{ field }"
+      end
+    
+      sub_query_association_mapping = { association.sfdc_association_field.downcase => association.relation_name }
+
+      nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
+
+      nested_includes.each do |nested_include|
+        case nested_include
+        when Symbol
+          nested_association = association.options[:model].camelize.constantize.associations[nested_include]
+          nested_association_class = nested_association.options[:model].camelize.constantize
+          association_field_name = nested_association_class.custom_table? ? nested_association.sfdc_association_field : nested_association_class.table_name
+          nested_fields = nested_association.relation_model.fields.map do |field|
+            "#{parent_association_field}.#{ association_field_name }.#{ field }"
+          end
+          sub_query_fields.concat(nested_fields)
+          sub_query_association_mapping[association_field_name.downcase] = nested_association.relation_name
+        when Hash
+          nested_include.each do |key, value|
+            nested_association = association.options[:model].camelize.constantize.associations[nested_include]
+            nested_association_class = nested_association.options[:model].camelize.constantize
+            association_field_name = nested_association_class.custom_table? ? nested_association.sfdc_association_field : nested_association_class.table_name
+            new_parent_association_field = "#{parent_association_field}.#{association_field_name}"
+            build_hash_relation_for_belongs_to(new_parent_association_field, nested_association, value)
+          end
+        end
+      end
+      { query_fields: sub_query_fields, association_mapping: sub_query_association_mapping }
+    end
+
     def single_relation(relation)
       association = sobject.associations[relation]
       fields Association::EagerLoadProjectionBuilder.build(association)
-      association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+      association_class = association.options[:model].camelize.constantize
+      association_field_name = association_class.custom_table? ? association.sfdc_association_field : association_class.table_name
+      association_mapping[association_field_name.downcase] = association.relation_name
     end
 
     def build_condition(args, other=[])
