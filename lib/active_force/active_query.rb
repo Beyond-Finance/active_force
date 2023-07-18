@@ -158,7 +158,11 @@ module ActiveForce
         when Hash
           nested_include.each do |key, value|
             nested_association = association.relation_model.associations[key]
-            build_hash_relation(nested_association, value)
+            if ['HasManyAssociation', 'HasOneAssociation'].include?(nested_association.class.name.split('::').last)
+              sub_query.fields.concat(build_hash_relation(nested_association, value))
+            else
+              sub_query.fields.concat(build_hash_relation_for_belongs_to(nested_association.sfdc_association_field, nested_association, value))
+            end
           end
         end
       end
@@ -185,7 +189,7 @@ module ActiveForce
           association_mapping[association_field_name.downcase] = nested_association.relation_name
         when Hash
           nested_include.each do |key, value|
-            nested_association = association.relation_model.associations[nested_include]
+            nested_association = association.relation_model.associations[key]
             association_field_name = nested_association.relation_model.custom_table? ? nested_association.sfdc_association_field : nested_association.relation_model.table_name
             new_parent_association_field = "#{parent_association_field}.#{association_field_name}"
             build_hash_relation_for_belongs_to(new_parent_association_field, nested_association, value)
