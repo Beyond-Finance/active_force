@@ -2,6 +2,8 @@
 
 ## Not released
 
+- Fix `default` in models when default value is overridden by the same value, it is still sent to salesforce
+
 ## 0.15.1
 
 - Revert new `pluck` implementation due to compatibility issues (https://github.com/Beyond-Finance/active_force/pull/60)
