@@ -57,11 +57,8 @@ module ActiveForce
 
     class BelongsToAssociationProjectionBuilder < AbstractProjectionBuilder
       def projections
-        association_class = association.options[:model].camelize.constantize
-        association_field_name = association_class.custom_table? ? association.sfdc_association_field : association_class.table_name
-
         association.relation_model.fields.map do |field|
-          "#{ association_field_name }.#{ field }"
+          "#{ association.sfdc_association_field }.#{ field }"
         end
       end
     end
