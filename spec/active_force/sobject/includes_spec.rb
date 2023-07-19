@@ -286,5 +286,60 @@ module ActiveForce
         end
       end
     end
+
+    describe '.includes with nested associations' do
+
+      context 'with custom objects' do
+        it 'formulates the correct SOQL query' do
+          soql = Quota.includes(prez_clubs: :club_members).where(id: '123').to_s
+          expect(soql).to eq "SELECT Id, Bar_Id__c, (SELECT Id, QuotaId, (SELECT Id, MemberId FROM ClubMembers__r) FROM PrezClubs__r) FROM Quota__c WHERE (Bar_Id__c = '123')"
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'PrezClubs__r' => build_restforce_collection([
+              {'Id' => '213', 'QuotaId' => '123', 'ClubMembers__r' => build_restforce_collection([
+                {'Id' => '213', 'MemberId' => '123'},
+                {'Id' => '214', 'MemberId' => '123'}
+              ])},
+              {'Id' => '214', 'QuotaId' => '123', 'ClubMembers__r' => build_restforce_collection([
+                {'Id' => '213', 'MemberId' => '123'},
+                {'Id' => '214', 'MemberId' => '123'}
+              ])}
+            ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          account = Quota.includes(prez_clubs: :club_members).find '123'
+          expect(account.prez_clubs).to be_an Array
+          expect(account.prez_clubs.all? { |o| o.is_a? PrezClub }).to eq true
+          expect(account.prez_clubs.first.club_members).to be_an Array
+          expect(account.prez_clubs.first.club_members.all? { |o| o.is_a? ClubMember }).to eq true
+        end
+      end
+
+      context 'with namespaced sobjects' do
+        it 'formulates the correct SOQL query' do
+          soql = Salesforce::Account.includes({partner_opportunities: :owner}).where(id: '123').to_s
+          expect(soql).to eq "SELECT Id, Business_Partner__c, (SELECT Id, OwnerId, AccountId, Business_Partner__c, Owner.Id FROM Opportunities) FROM Account WHERE (Id = '123')"
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'opportunities' => build_restforce_collection([
+              {'Id' => '213', 'AccountId' => '123', 'OwnerId' => '321', 'Business_Partner__c' => '123', 'Owner' => {'Id' => '321'}},
+              {'Id' => '214', 'AccountId' => '123', 'OwnerId' => '321', 'Business_Partner__c' => '123', 'Owner' => {'Id' => '321'}}            ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          account = Salesforce::Account.includes({partner_opportunities: :owner}).find '123'
+          expect(account.partner_opportunities).to be_an Array
+          expect(account.partner_opportunities.all? { |o| o.is_a? Salesforce::Opportunity }).to eq true
+          expect(account.partner_opportunities.first.owner).to be_a Salesforce::User
+          expect(account.partner_opportunities.first.owner.id).to eq '321'
+        end
+      end
+    end
+
   end
 end

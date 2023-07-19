@@ -26,6 +26,11 @@ end
 class PrezClub < ActiveForce::SObject
   field :quota_id, from: 'QuotaId'
   belongs_to :quota
+  has_many :club_members
+end
+
+class ClubMember < ActiveForce::SObject
+  field :member_id, from: 'MemberId'
 end
 class Quota < ActiveForce::SObject
   field :id, from: 'Bar_Id__c'

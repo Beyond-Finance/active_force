@@ -94,11 +94,11 @@ module ActiveForce
 
     def includes(*relations)
       relations.each do |relation|
-        if relation.is_a?(Hash)
-          raise "More than 5 levels of nested includes are not supported" if nested_hash?(relation)
-          hash_relation(relation)
-        else
-          single_relation(relation)
+        case relation
+        when Symbol
+          build_includes(relation)
+        when Hash
+          build_hash_includes(relation)
         end
       end
       self
@@ -120,33 +120,30 @@ module ActiveForce
 
     private
 
-    def nested_hash?(value, depth = 0)
-      return false unless value.is_a?(Hash)
-    
-      return true if depth == 4 # 5 levels of nesting not supported
-    
-      value.values.any? { |v| nested_hash?(v, depth + 1) }
+    def build_includes(relation)
+      association = sobject.associations[relation]
+      fields Association::EagerLoadProjectionBuilder.build(association)
+      association_mapping[association.sfdc_association_field.downcase] = association.relation_name
     end
 
-    def hash_relation(relation)
+    def build_hash_includes(relation)
       relation.each do |key, value|
         association = sobject.associations[key]
-        association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-
         association_name = association.class.name.split('::').last
-
-        if ['HasManyAssociation', 'HasOneAssociation'].include?(association_name)
-          fields build_hash_relation(association, value)
-        else
-          fields build_hash_relation_for_belongs_to(association.sfdc_association_field, association, value)
+        case association_name
+        when 'HasManyAssociation', 'HasOneAssociation'
+          fields build_relation(association, value)
+        when 'BelongsToAssociation'
+          fields build_relation_for_belongs_to(association.sfdc_association_field, association, value)
         end
       end
     end
 
-    def build_hash_relation(association, nested_includes)
+    def build_relation(association, nested_includes)
       sub_query = Query.new(association.sfdc_association_field)
       sub_query.fields(association.relation_model.fields)
-    
+      association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+
       nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
 
       nested_includes.each do |nested_include|
@@ -159,9 +156,9 @@ module ActiveForce
           nested_include.each do |key, value|
             nested_association = association.relation_model.associations[key]
             if ['HasManyAssociation', 'HasOneAssociation'].include?(nested_association.class.name.split('::').last)
-              sub_query.fields.concat(build_hash_relation(nested_association, value))
+              sub_query.fields.concat(build_relation(nested_association, value))
             else
-              sub_query.fields.concat(build_hash_relation_for_belongs_to(nested_association.sfdc_association_field, nested_association, value))
+              sub_query.fields.concat(build_relation_for_belongs_to(nested_association.sfdc_association_field, nested_association, value))
             end
           end
         end
@@ -169,12 +166,13 @@ module ActiveForce
       ["(#{sub_query.to_s})"]
     end
     
-    def build_hash_relation_for_belongs_to(parent_association_field, association, nested_includes)
+    def build_relation_for_belongs_to(parent_association_field, association, nested_includes)
 
       sub_query_fields = association.relation_model.fields.map do |field|
         "#{ parent_association_field }.#{ field }"
       end
-    
+      association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+
       nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
 
       nested_includes.each do |nested_include|
@@ -192,17 +190,11 @@ module ActiveForce
             nested_association = association.relation_model.associations[key]
             association_field_name = nested_association.relation_model.custom_table? ? nested_association.sfdc_association_field : nested_association.relation_model.table_name
             new_parent_association_field = "#{parent_association_field}.#{association_field_name}"
-            build_hash_relation_for_belongs_to(new_parent_association_field, nested_association, value)
+            build_relation_for_belongs_to(new_parent_association_field, nested_association, value)
           end
         end
       end
       sub_query_fields
-    end
-
-    def single_relation(relation)
-      association = sobject.associations[relation]
-      fields Association::EagerLoadProjectionBuilder.build(association)
-      association_mapping[association.sfdc_association_field.downcase] = association.relation_name
     end
 
     def build_condition(args, other=[])
