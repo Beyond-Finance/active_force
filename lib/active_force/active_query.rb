@@ -130,9 +130,11 @@ module ActiveForce
         association = sobject.associations[key]
         case association
         when ActiveForce::Association::BelongsToAssociation
-          fields build_relation_for_belongs_to(association, value)
+          build_relation_for_belongs_to(association, value)
         else
-          fields build_relation(association, value)
+          nested_query = build_relation(association, value)
+          fields nested_query[:fields]
+          association_mapping.merge!(nested_query[:association_mapping])
         end
       end
     end
@@ -141,6 +143,7 @@ module ActiveForce
     
     def build_relation(association, nested_includes)
       sub_query = ActiveQuery.new(association.relation_model, association.sfdc_association_field)
+      sub_query.association_mapping[association.sfdc_association_field.downcase] = association.relation_name
 
       nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
 
@@ -152,7 +155,7 @@ module ActiveForce
           sub_query.build_hash_includes(nested_include)
         end
       end
-      ["(#{sub_query.to_s})"]
+      { fields: ["(#{sub_query.to_s})"], association_mapping: sub_query.association_mapping }
     end
     
     # TODO: need to make this work for nested belongsTo associations
@@ -171,7 +174,6 @@ module ActiveForce
           build_hash_includes(nested_include)
         end
       end
-      fields
     end
 
     def build_condition(args, other=[])
