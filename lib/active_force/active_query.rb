@@ -96,7 +96,8 @@ module ActiveForce
       relations.each do |relation|
         case relation
         when Symbol
-          build_includes(relation)
+          association = sobject.associations[relation]
+          build_includes(association)
         when Hash
           build_hash_includes(relation)
         end
@@ -119,17 +120,22 @@ module ActiveForce
     end
 
 
-    def build_includes(relation, model = sobject)
-      association = model.associations[relation]
+    def build_includes(association)
       fields Association::EagerLoadProjectionBuilder.build(association)
       association_mapping[association.sfdc_association_field.downcase] = association.relation_name
     end
 
-    def build_hash_includes(relation)
+    def build_hash_includes(relation, current_sobject = sobject, parent_association_field = nil)
       relation.each do |key, value|
-        association = sobject.associations[key]
+        association = current_sobject.associations[key]
         case association
         when ActiveForce::Association::BelongsToAssociation
+          if parent_association_field.present?
+            association.options[:parent_association_field] = "#{parent_association_field}.#{association.sfdc_association_field}"
+          else
+            association.options[:parent_association_field] = association.sfdc_association_field
+          end
+          build_includes(association)
           build_relation_for_belongs_to(association, value)
         else
           nested_query = build_relation(association, value)
@@ -150,7 +156,8 @@ module ActiveForce
       nested_includes.each do |nested_include|
         case nested_include
         when Symbol
-          sub_query.build_includes(nested_include, association.relation_model)         
+          nested_association = association.relation_model.associations[nested_include]
+          sub_query.build_includes(nested_association)         
         when Hash
           sub_query.build_hash_includes(nested_include)
         end
@@ -158,20 +165,23 @@ module ActiveForce
       { fields: ["(#{sub_query.to_s})"], association_mapping: sub_query.association_mapping }
     end
     
-    # TODO: need to make this work for nested belongsTo associations
-    # e.g. parent__r.name ==> this is working
-    # e.g. parent__r.child__r.name ==> this is not working ( it is taking as child__r.name and adding to main query)
-    def build_relation_for_belongs_to(association, nested_includes)  
-      build_includes(association.relation_name)
- 
+    def build_relation_for_belongs_to(association, nested_includes) 
       nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
 
       nested_includes.each do |nested_include|
         case nested_include
         when Symbol
-          build_includes(nested_include, association.relation_model)
+          nested_association = association.relation_model.associations[nested_include]
+          # for standart types, we need to use the table name instead of the relationship field name if the query is nested
+          nested_association.options[:relationship_name] = nested_association.relation_model.table_name unless nested_association.relation_model.custom_table?
+          if association.options[:parent_association_field].present?
+            nested_association.options[:parent_association_field] = "#{association.options[:parent_association_field]}.#{ nested_association.sfdc_association_field }"
+          else
+            nested_association.options[:parent_association_field] = nested_association.sfdc_association_field
+          end
+          build_includes(nested_association)
         when Hash
-          build_hash_includes(nested_include)
+          build_hash_includes(nested_include, association.relation_model, association.sfdc_association_field)
         end
       end
     end
