@@ -130,9 +130,9 @@ module ActiveForce
         association = sobject.associations[key]
         case association
         when ActiveForce::Association::BelongsToAssociation
-          fields.concat(build_relation_for_belongs_to(association, value))
+          fields build_relation_for_belongs_to(association, value)
         else
-          fields.concat(build_relation(association, value))
+          fields build_relation(association, value)
         end
       end
     end
@@ -155,7 +155,9 @@ module ActiveForce
       ["(#{sub_query.to_s})"]
     end
     
-    # TODO: need to make this work for nested belongs to fields
+    # TODO: need to make this work for nested belongsTo associations
+    # e.g. parent__r.name ==> this is working
+    # e.g. parent__r.child__r.name ==> this is not working ( it is taking as child__r.name and adding to main query)
     def build_relation_for_belongs_to(association, nested_includes)  
       build_includes(association.relation_name)
  
