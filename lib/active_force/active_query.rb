@@ -155,9 +155,7 @@ module ActiveForce
       sub_query = ActiveQuery.new(association.relation_model, association.sfdc_association_field)
       sub_query.association_mapping[association.sfdc_association_field.downcase] = association.relation_name
 
-      nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
-
-      nested_includes.each do |nested_include|
+      [nested_includes].flatten.each do |nested_include|
         case nested_include
         when Symbol
           nested_association = association.relation_model.associations[nested_include]
@@ -166,21 +164,17 @@ module ActiveForce
           sub_query.build_hash_includes(nested_include)
         end
       end
-      { fields: ["(#{sub_query.to_s})"], association_mapping: sub_query.association_mapping }
+      { fields: ["(#{sub_query})"], association_mapping: sub_query.association_mapping }
     end
 
     
     def build_relation_for_belongs_to(association, nested_includes) 
       nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
 
-      nested_includes.each do |nested_include|
+      [nested_includes].flatten.each do |nested_include|
         case nested_include
         when Symbol
           nested_association = association.relation_model.associations[nested_include]
-          
-          # for standart types, we need to use the table name instead of the relationship field name if the query is nested
-          nested_association.options[:relationship_name] = nested_association.relation_model.table_name unless nested_association.relation_model.custom_table?
-
           set_parent_association_field(nested_association, association.options[:parent_association_field])
           build_includes(nested_association)
         when Hash
