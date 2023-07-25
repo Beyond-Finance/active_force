@@ -27,11 +27,39 @@ class PrezClub < ActiveForce::SObject
   field :quota_id, from: 'QuotaId'
   belongs_to :quota
   has_many :club_members
+  has_one :club_owner
 end
 
-class ClubMember < ActiveForce::SObject
-  field :member_id, from: 'MemberId'
+class Club < ActiveForce::SObject
+  has_many :book_clubs
+  has_many :prez_clubs
 end
+
+class BookClub < ActiveForce::SObject
+  field :name, from: 'Name'
+  field :location, from: 'Location'
+  has_many :club_members
+  has_many :books
+end
+class ClubMember < ActiveForce::SObject
+  field :name, from: 'Name'
+  field :email, from: 'Email'
+  has_one :membership
+end
+
+class Book < ActiveForce::SObject
+  field :title, from: 'Title'
+  field :author, from: 'Author'
+end
+class Membership < ActiveForce::SObject
+  field :type, from: 'Type'
+  field :club_member_id, from: 'Club_Member_Id__c'
+end
+
+class ClubOwner < ActiveForce::SObject
+  field :name, from: 'Name'
+end
+
 class Quota < ActiveForce::SObject
   field :id, from: 'Bar_Id__c'
   has_many :prez_clubs
