@@ -106,7 +106,7 @@ module ActiveForce
       end
       self
     end
-    
+
     def none
       @records = []
       where(id: '1'*18).where(id: '0'*18)
@@ -145,7 +145,7 @@ module ActiveForce
     end
 
     private
-    
+
     def set_parent_association_field(association, parent_association_field)
       if parent_association_field.present?
         belongs_to_association_mapping[association.sfdc_association_field] = "#{parent_association_field}.#{association.sfdc_association_field}"
@@ -163,7 +163,7 @@ module ActiveForce
         when Symbol
           nested_association = association.relation_model.associations[nested_include]
           raise InvalidAssociationError, "Association named #{nested_include} was not found on #{association.relation_model}" if nested_association.nil?
-          sub_query.build_includes(nested_association)         
+          sub_query.build_includes(nested_association)
         when Hash
           sub_query.build_hash_includes(nested_include)
         end
@@ -171,8 +171,8 @@ module ActiveForce
       { fields: ["(#{sub_query})"], association_mapping: sub_query.association_mapping }
     end
 
-    
-    def build_relation_for_belongs_to(association, nested_includes) 
+
+    def build_relation_for_belongs_to(association, nested_includes)
       nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
 
       [nested_includes].flatten.each do |nested_include|

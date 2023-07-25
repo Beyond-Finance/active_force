@@ -360,7 +360,7 @@ module ActiveForce
             'Id' => '123',
             'BookClubs__r' => build_restforce_collection([
               {
-                'Id' => '213', 
+                'Id' => '213',
                 'Name' => 'abc',
                 'Location' => 'abc_location',
                 'ClubMembers__r' => build_restforce_collection([{'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com'},{'Id' => '214', 'Name' => 'def', 'Email' => 'def@af.com'}]),
@@ -405,7 +405,7 @@ module ActiveForce
             'Id' => '123',
             'BookClubs__r' => build_restforce_collection([
               {
-                'Id' => '213', 
+                'Id' => '213',
                 'Name' => 'abc',
                 'Location' => 'abc_location',
                 'ClubMembers__r' => build_restforce_collection([
@@ -463,7 +463,7 @@ module ActiveForce
             ]),
             'BookClubs__r' => build_restforce_collection([
               {
-                'Id' => '213', 
+                'Id' => '213',
                 'Name' => 'abc',
                 'Location' => 'abc_location',
                 'ClubMembers__r' => build_restforce_collection([
