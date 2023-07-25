@@ -19,7 +19,7 @@ module ActiveForce
   class ActiveQuery < Query
     extend Forwardable
 
-    attr_reader :sobject, :association_mapping
+    attr_reader :sobject, :association_mapping, :belongs_to_association_mapping
 
     def_delegators :sobject, :sfdc_client, :build, :table_name, :mappings
     def_delegators :to_a, :each, :map, :inspect, :pluck, :each_with_object
@@ -27,6 +27,7 @@ module ActiveForce
     def initialize (sobject, custom_table_name = nil)
       @sobject = sobject
       @association_mapping = {}
+      @belongs_to_association_mapping = {}
       super custom_table_name || table_name
       fields sobject.fields
     end
@@ -120,8 +121,8 @@ module ActiveForce
     end
 
 
-    def build_includes(association)
-      fields Association::EagerLoadProjectionBuilder.build(association)
+    def build_includes(association, parent_association_field = nil)
+      fields Association::EagerLoadProjectionBuilder.build(association, parent_association_field)
       association_mapping[association.sfdc_association_field.downcase] = association.relation_name
     end
 
@@ -131,7 +132,7 @@ module ActiveForce
         case association
         when ActiveForce::Association::BelongsToAssociation
           set_parent_association_field(association, parent_association_field)
-          build_includes(association)
+          build_includes(association, belongs_to_association_mapping[association.sfdc_association_field])
           build_relation_for_belongs_to(association, value)
         else
           nested_query = build_relation(association, value)
@@ -145,9 +146,9 @@ module ActiveForce
     
     def set_parent_association_field(association, parent_association_field)
       if parent_association_field.present?
-        association.options[:parent_association_field] = "#{parent_association_field}.#{association.sfdc_association_field}"
+        belongs_to_association_mapping[association.sfdc_association_field] = "#{parent_association_field}.#{association.sfdc_association_field}"
       else
-        association.options[:parent_association_field] = association.sfdc_association_field
+        belongs_to_association_mapping[association.sfdc_association_field] = association.sfdc_association_field
       end
     end
 
@@ -175,8 +176,9 @@ module ActiveForce
         case nested_include
         when Symbol
           nested_association = association.relation_model.associations[nested_include]
-          set_parent_association_field(nested_association, association.options[:parent_association_field])
-          build_includes(nested_association)
+          parent_association_field = belongs_to_association_mapping[association.sfdc_association_field]
+          set_parent_association_field(nested_association, parent_association_field)
+          build_includes(nested_association, parent_association_field)
         when Hash
           build_hash_includes(nested_include, association.relation_model, association.sfdc_association_field)
         end
