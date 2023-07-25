@@ -4,7 +4,7 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
-
+  class InvalidAssociationError < StandardError; end
   class RecordNotFound < StandardError
     attr_reader :table_name, :conditions
 
@@ -98,6 +98,7 @@ module ActiveForce
         case relation
         when Symbol
           association = sobject.associations[relation]
+          raise InvalidAssociationError, "Association named #{relation} was not found on #{sobject}" if association.nil?
           build_includes(association)
         when Hash
           build_hash_includes(relation)
@@ -129,6 +130,7 @@ module ActiveForce
     def build_hash_includes(relation, current_sobject = sobject, parent_association_field = nil)
       relation.each do |key, value|
         association = current_sobject.associations[key]
+        raise InvalidAssociationError, "Association named #{key} was not found on #{current_sobject}" if association.nil?
         case association
         when ActiveForce::Association::BelongsToAssociation
           set_parent_association_field(association, parent_association_field)
@@ -160,6 +162,7 @@ module ActiveForce
         case nested_include
         when Symbol
           nested_association = association.relation_model.associations[nested_include]
+          raise InvalidAssociationError, "Association named #{nested_include} was not found on #{association.relation_model}" if nested_association.nil?
           sub_query.build_includes(nested_association)         
         when Hash
           sub_query.build_hash_includes(nested_include)
@@ -175,11 +178,14 @@ module ActiveForce
       [nested_includes].flatten.each do |nested_include|
         case nested_include
         when Symbol
+          binding.pry
           nested_association = association.relation_model.associations[nested_include]
+          raise InvalidAssociationError, "Association named #{nested_include} was not found on #{association.relation_model}" if nested_association.nil?
           parent_association_field = belongs_to_association_mapping[association.sfdc_association_field]
           set_parent_association_field(nested_association, parent_association_field)
-          build_includes(nested_association, parent_association_field)
+          build_includes(nested_association, belongs_to_association_mapping[nested_association.sfdc_association_field])
         when Hash
+          binding.pry
           build_hash_includes(nested_include, association.relation_model, association.sfdc_association_field)
         end
       end

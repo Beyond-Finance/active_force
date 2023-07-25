@@ -285,6 +285,12 @@ module ActiveForce
           expect(account.owner.id).to eq '321'
         end
       end
+
+      context 'when invalid associations are passed' do
+        it 'raises an error' do
+          expect { Quota.includes(:invalid).find('123') }.to raise_error(ActiveForce::InvalidAssociationError, 'Association named invalid was not found on Quota')
+        end
+      end
     end
 
     describe '.includes with nested associations' do
@@ -511,6 +517,12 @@ module ActiveForce
           expect(club.book_clubs.first.books.first.id).to eq '213'
           expect(club.book_clubs.first.books.first.title).to eq 'Foo'
           expect(club.book_clubs.first.books.first.author).to eq 'author1'
+        end
+      end
+
+      context 'when invalid nested associations are passed' do
+        it 'raises an error' do
+          expect { Quota.includes(prez_clubs: :invalid).find('123') }.to raise_error(ActiveForce::InvalidAssociationError, 'Association named invalid was not found on PrezClub')
         end
       end
     end
