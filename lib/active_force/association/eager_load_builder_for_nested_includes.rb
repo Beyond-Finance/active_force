@@ -65,7 +65,7 @@ module ActiveForce
         sub_query = Query.new(association.sfdc_association_field)
         sub_query.fields association.relation_model.fields
         association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-        nested_includes_query = self.build(nested_includes, association.relation_model)
+        nested_includes_query = self.class.build(nested_includes, association.relation_model)
         sub_query.fields nested_includes_query[:fields]
         { fields: ["(#{sub_query})"], association_mapping: nested_includes_query[:association_mapping] }
       end
@@ -77,7 +77,7 @@ module ActiveForce
         else
           current_parent_association_field = association.sfdc_association_field
         end
-        self.build(nested_includes, association.relation_model, current_parent_association_field)
+        self.class.build(nested_includes, association.relation_model, current_parent_association_field)
       end
     end
   end
