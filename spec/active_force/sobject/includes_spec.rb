@@ -288,7 +288,7 @@ module ActiveForce
 
       context 'when invalid associations are passed' do
         it 'raises an error' do
-          expect { Quota.includes(:invalid).find('123') }.to raise_error(ActiveForce::InvalidAssociationError, 'Association named invalid was not found on Quota')
+          expect { Quota.includes(:invalid).find('123') }.to raise_error(ActiveForce::Association::InvalidAssociationError, 'Association named invalid was not found on Quota')
         end
       end
     end
@@ -522,7 +522,7 @@ module ActiveForce
 
       context 'when invalid nested associations are passed' do
         it 'raises an error' do
-          expect { Quota.includes(prez_clubs: :invalid).find('123') }.to raise_error(ActiveForce::InvalidAssociationError, 'Association named invalid was not found on PrezClub')
+          expect { Quota.includes(prez_clubs: :invalid).find('123') }.to raise_error(ActiveForce::Association::InvalidAssociationError, 'Association named invalid was not found on PrezClub')
         end
       end
     end

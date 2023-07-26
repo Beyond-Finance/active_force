@@ -94,16 +94,9 @@ module ActiveForce
     end
 
     def includes(*relations)
-      relations.each do |relation|
-        case relation
-        when Symbol
-          association = sobject.associations[relation]
-          raise InvalidAssociationError, "Association named #{relation} was not found on #{sobject}" if association.nil?
-          build_includes(association)
-        when Hash
-          build_hash_includes(relation)
-        end
-      end
+      includes_query = Association::EagerLoadBuilderForNestedIncludes.build(relations, sobject)
+      fields includes_query[:fields]
+      association_mapping.merge!(includes_query[:association_mapping])
       self
     end
 
@@ -121,75 +114,7 @@ module ActiveForce
       super build_order_by args
     end
 
-
-    def build_includes(association, parent_association_field = nil)
-      fields Association::EagerLoadProjectionBuilder.build(association, parent_association_field)
-      association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-    end
-
-    def build_hash_includes(relation, current_sobject = sobject, parent_association_field = nil)
-      relation.each do |key, value|
-        association = current_sobject.associations[key]
-        raise InvalidAssociationError, "Association named #{key} was not found on #{current_sobject}" if association.nil?
-        case association
-        when ActiveForce::Association::BelongsToAssociation
-          set_parent_association_field(association, parent_association_field)
-          build_includes(association, belongs_to_association_mapping[association.sfdc_association_field])
-          build_relation_for_belongs_to(association, value)
-        else
-          nested_query = build_relation(association, value)
-          fields nested_query[:fields]
-          association_mapping.merge!(nested_query[:association_mapping])
-        end
-      end
-    end
-
     private
-
-    def set_parent_association_field(association, parent_association_field)
-      if parent_association_field.present?
-        belongs_to_association_mapping[association.sfdc_association_field] = "#{parent_association_field}.#{association.sfdc_association_field}"
-      else
-        belongs_to_association_mapping[association.sfdc_association_field] = association.sfdc_association_field
-      end
-    end
-
-    def build_relation(association, nested_includes)
-      sub_query = ActiveQuery.new(association.relation_model, association.sfdc_association_field)
-      sub_query.association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-
-      [nested_includes].flatten.each do |nested_include|
-        case nested_include
-        when Symbol
-          nested_association = association.relation_model.associations[nested_include]
-          raise InvalidAssociationError, "Association named #{nested_include} was not found on #{association.relation_model}" if nested_association.nil?
-          sub_query.build_includes(nested_association)
-        when Hash
-          sub_query.build_hash_includes(nested_include)
-        end
-      end
-      { fields: ["(#{sub_query})"], association_mapping: sub_query.association_mapping }
-    end
-
-
-    def build_relation_for_belongs_to(association, nested_includes)
-      nested_includes = nested_includes.is_a?(Array) ? nested_includes : [nested_includes]
-
-      [nested_includes].flatten.each do |nested_include|
-        case nested_include
-        when Symbol
-          binding.pry
-          nested_association = association.relation_model.associations[nested_include]
-          raise InvalidAssociationError, "Association named #{nested_include} was not found on #{association.relation_model}" if nested_association.nil?
-          parent_association_field = belongs_to_association_mapping[association.sfdc_association_field]
-          set_parent_association_field(nested_association, parent_association_field)
-          build_includes(nested_association, belongs_to_association_mapping[nested_association.sfdc_association_field])
-        when Hash
-          binding.pry
-          build_hash_includes(nested_include, association.relation_model, association.sfdc_association_field)
-        end
-      end
-    end
 
     def build_condition(args, other=[])
       case args

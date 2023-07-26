@@ -59,8 +59,13 @@ module ActiveForce
 
     class BelongsToAssociationProjectionBuilder < AbstractProjectionBuilder
       def projections
+        association_field = if parent_association_field.present?
+                              "#{ parent_association_field }.#{ association.sfdc_association_field }"
+                            else
+                              association.sfdc_association_field
+                            end
         association.relation_model.fields.map do |field|
-          "#{ parent_association_field || association.sfdc_association_field }.#{ field }"
+          "#{ association_field }.#{ field }"
         end
       end
     end
