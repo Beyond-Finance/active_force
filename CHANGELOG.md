@@ -2,6 +2,8 @@
 
 ## Not released
 
+- Support to fetch multi-level associations during eager load (https://github.com/Beyond-Finance/active_force/pull/62)
+
 ## 0.15.1
 
 - Revert new `pluck` implementation due to compatibility issues (https://github.com/Beyond-Finance/active_force/pull/60)
