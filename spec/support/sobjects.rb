@@ -10,6 +10,7 @@ end
 class Post < ActiveForce::SObject
   self.table_name = "Post__c"
   field :title
+  field :blog_id, from: "BlogId"
   has_many :comments
   has_many :impossible_comments, model: Comment, scoped_as: ->{ where('1 = 0') }
   has_many :reply_comments, model: Comment, scoped_as: ->(post){ where(body: "RE: #{post.title}").order('CreationDate DESC') }
@@ -17,6 +18,13 @@ class Post < ActiveForce::SObject
   has_many :poster_comments, { foreign_key: :poster_id, model: Comment }
   has_one :last_comment, model: Comment, scoped_as: -> { where.not(body: nil).order('CreatedDate DESC') }
   has_one :repeat_comment, model: Comment, scoped_as: ->(post) { where(body: post.title) }
+  belongs_to :blog
+end
+
+class Blog < ActiveForce::SObject
+  field :name, from: 'Name'
+  field :link, from: 'Link__c'
+  has_many :posts
 end
 class Territory < ActiveForce::SObject
   field :quota_id, from: "Quota__c"

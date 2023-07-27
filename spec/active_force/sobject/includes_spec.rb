@@ -298,7 +298,14 @@ module ActiveForce
       context 'with custom objects' do
         it 'formulates the correct SOQL query' do
           soql = Quota.includes(prez_clubs: :club_members).where(id: '123').to_s
-          expect(soql).to eq "SELECT Id, Bar_Id__c, (SELECT Id, QuotaId, (SELECT Id, Name, Email FROM ClubMembers__r) FROM PrezClubs__r) FROM Quota__c WHERE (Bar_Id__c = '123')"
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id, Bar_Id__c,
+              (SELECT Id, QuotaId,
+                (SELECT Id, Name, Email FROM ClubMembers__r)
+              FROM PrezClubs__r)
+            FROM Quota__c
+            WHERE (Bar_Id__c = '123')
+          SOQL
         end
 
         it 'builds the associated objects and caches them' do
@@ -330,7 +337,13 @@ module ActiveForce
       context 'with namespaced sobjects' do
         it 'formulates the correct SOQL query' do
           soql = Salesforce::Account.includes({partner_opportunities: :owner}).where(id: '123').to_s
-          expect(soql).to eq "SELECT Id, Business_Partner__c, (SELECT Id, OwnerId, AccountId, Business_Partner__c, Owner.Id FROM Opportunities) FROM Account WHERE (Id = '123')"
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id, Business_Partner__c,
+              (SELECT Id, OwnerId, AccountId, Business_Partner__c, Owner.Id
+              FROM Opportunities)
+            FROM Account
+            WHERE (Id = '123')
+          SOQL
         end
 
         it 'builds the associated objects and caches them' do
@@ -352,7 +365,15 @@ module ActiveForce
       context 'an array association nested within a hash association' do
         it 'formulates the correct SOQL query' do
           soql = Club.includes(book_clubs: [:club_members, :books]).where(id: '123').to_s
-          expect(soql).to eq "SELECT Id, (SELECT Id, Name, Location, (SELECT Id, Name, Email FROM ClubMembers__r), (SELECT Id, Title, Author FROM Books__r) FROM BookClubs__r) FROM Club__c WHERE (Id = '123')"
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id,
+            (SELECT Id, Name, Location,
+              (SELECT Id, Name, Email FROM ClubMembers__r),
+              (SELECT Id, Title, Author FROM Books__r)
+            FROM BookClubs__r)
+            FROM Club__c
+            WHERE (Id = '123')
+          SOQL
         end
 
         it 'builds the associated objects and caches them' do
@@ -397,7 +418,16 @@ module ActiveForce
       context 'a hash association nested within a hash association' do
         it 'formulates the correct SOQL query' do
           soql = Club.includes(book_clubs: {club_members: :membership}).where(id: '123').to_s
-          expect(soql).to eq "SELECT Id, (SELECT Id, Name, Location, (SELECT Id, Name, Email, (SELECT Id, Type, Club_Member_Id__c FROM Membership__r) FROM ClubMembers__r) FROM BookClubs__r) FROM Club__c WHERE (Id = '123')"
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id,
+            (SELECT Id, Name, Location,
+              (SELECT Id, Name, Email,
+                (SELECT Id, Type, Club_Member_Id__c FROM Membership__r)
+              FROM ClubMembers__r)
+            FROM BookClubs__r)
+            FROM Club__c
+            WHERE (Id = '123')
+          SOQL
         end
 
         it 'builds the associated objects and caches them' do
@@ -445,7 +475,20 @@ module ActiveForce
       context 'mulitple nested associations' do
         it 'formulates the correct SOQL query' do
           soql = Club.includes({prez_clubs: {club_members: :membership}}, {book_clubs: [:club_members, :books]}).where(id: '123').to_s
-          expect(soql).to eq "SELECT Id, (SELECT Id, QuotaId, (SELECT Id, Name, Email, (SELECT Id, Type, Club_Member_Id__c FROM Membership__r) FROM ClubMembers__r) FROM PrezClubs__r), (SELECT Id, Name, Location, (SELECT Id, Name, Email FROM ClubMembers__r), (SELECT Id, Title, Author FROM Books__r) FROM BookClubs__r) FROM Club__c WHERE (Id = '123')"
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id,
+            (SELECT Id, QuotaId,
+              (SELECT Id, Name, Email,
+                (SELECT Id, Type, Club_Member_Id__c FROM Membership__r)
+              FROM ClubMembers__r)
+            FROM PrezClubs__r),
+            (SELECT Id, Name, Location,
+              (SELECT Id, Name, Email FROM ClubMembers__r),
+              (SELECT Id, Title, Author FROM Books__r)
+            FROM BookClubs__r)
+            FROM Club__c
+            WHERE (Id = '123')
+          SOQL
         end
 
         it 'builds the associated objects and caches them' do
@@ -517,6 +560,48 @@ module ActiveForce
           expect(club.book_clubs.first.books.first.id).to eq '213'
           expect(club.book_clubs.first.books.first.title).to eq 'Foo'
           expect(club.book_clubs.first.books.first.author).to eq 'author1'
+        end
+      end
+
+      context 'nested belongs-to association' do
+        it 'formulates the correct SOQL query' do
+          soql = Comment.includes(post: :blog).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id, PostId, PosterId__c, FancyPostId, Body__c,
+              PostId.Id, PostId.Title__c, PostId.BlogId,
+                PostId.BlogId.Id, PostId.BlogId.Name, PostId.BlogId.Link__c
+            FROM Comment__c
+            WHERE (Id = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'PostId' => '321',
+            'PosterId__c' => '432',
+            'FancyPostId' => '543',
+            'Body__c' => 'body',
+            'PostId' => {
+              'Id' => '321',
+              'Title__c' => 'title',
+              'BlogId' => '432',
+              'BlogId' => {
+                'Id' => '432',
+                'Name' => 'name',
+                'Link__c' => 'link'
+              }
+            }
+          })]
+          allow(client).to receive(:query).once.and_return response
+          comment = Comment.includes(post: :blog).find '123'
+          expect(comment.post).to be_a Post
+          expect(comment.post.id).to eq '321'
+          expect(comment.post.title).to eq 'title'
+          expect(comment.post.blog).to be_a Blog
+          expect(comment.post.blog.id).to eq '432'
+          expect(comment.post.blog.name).to eq 'name'
+          expect(comment.post.blog.link).to eq 'link'
         end
       end
 

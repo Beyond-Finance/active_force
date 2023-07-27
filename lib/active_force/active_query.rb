@@ -4,7 +4,6 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
-  class InvalidAssociationError < StandardError; end
   class RecordNotFound < StandardError
     attr_reader :table_name, :conditions
 

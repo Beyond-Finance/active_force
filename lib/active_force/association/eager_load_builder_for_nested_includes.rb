@@ -14,7 +14,7 @@ module ActiveForce
       attr_reader :relations, :current_sobject, :association_mapping, :parent_association_field, :fields
 
       def initialize(relations, current_sobject, parent_association_field = nil)
-        @relations = relations
+        @relations = [relations].flatten
         @current_sobject = current_sobject
         @association_mapping = {}
         @parent_association_field = parent_association_field
@@ -23,7 +23,7 @@ module ActiveForce
 
 
       def projections
-        [relations].flatten.each do |relation|
+        relations.each do |relation|
           case relation
           when Symbol
             association = current_sobject.associations[relation]
