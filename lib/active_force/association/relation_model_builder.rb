@@ -2,19 +2,20 @@ module ActiveForce
   module Association
     class RelationModelBuilder
       class << self
-        def build(association, value)
-          new(association, value).build_relation_model
+        def build(association, value, association_mapping = {})
+          new(association, value, association_mapping).build_relation_model
         end
       end
 
-      def initialize(association, value)
+      def initialize(association, value, association_mapping = {})
         @association = association
         @value = value
+        @association_mapping = association_mapping
       end
 
       def build_relation_model
         klass = resolve_class
-        klass.new(@association, @value).call
+        klass.new(@association, @value, @association_mapping).call
       end
 
       private
@@ -28,11 +29,12 @@ module ActiveForce
     end
 
     class AbstractBuildFrom
-      attr_reader :association, :value
+      attr_reader :association, :value, :association_mapping
 
-      def initialize(association, value)
+      def initialize(association, value, association_mapping = {})
         @association = association
         @value = value
+        @association_mapping = association_mapping
       end
 
       def call
@@ -42,13 +44,13 @@ module ActiveForce
 
     class BuildFromHash < AbstractBuildFrom
       def call
-        association.build value
+        association.build(value, association_mapping)
       end
     end
 
     class BuildFromArray < AbstractBuildFrom
       def call
-        value.map { |mash| association.build mash }
+        value.map { |mash| association.build(mash, association_mapping) }
       end
     end
 

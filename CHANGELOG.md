@@ -2,7 +2,8 @@
 
 ## Not released
 
-- Fix `default` in models when default value is overridden by the same value, it is still sent to salesforce
+- Fix `default` in models when default value is overridden by the same value, it is still sent to salesforce (https://github.com/Beyond-Finance/active_force/pull/61)
+- Support to fetch multi-level associations during eager load (https://github.com/Beyond-Finance/active_force/pull/62)
 
 ## 0.15.1
 
