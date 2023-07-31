@@ -227,9 +227,13 @@ module ActiveForce
     end
 
     def attributes_for_create
-      @attributes.each_value.select { |value| value.is_a?(ActiveModel::Attribute::UserProvidedDefault) }
-                            .map(&:name)
-                            .concat(changed)
+      default_attributes.concat(changed)
+    end
+
+    def default_attributes
+      @attributes.each_value.select do |value| 
+        value.is_a?(ActiveModel::Attribute::UserProvidedDefault) || value.instance_values["original_attribute"].is_a?(ActiveModel::Attribute::UserProvidedDefault)
+      end.map(&:name)
     end
 
     def attributes_for_update
