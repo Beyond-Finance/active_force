@@ -16,7 +16,11 @@ module ActiveForce
       end
 
       def default_relationship_name
-        parent.mappings[foreign_key].gsub(/__c\z/, '__r')
+        if !parent.custom_table? && !relation_model.custom_table?
+          relation_model.table_name
+        else
+          parent.mappings[foreign_key].gsub(/__c\z/, '__r')
+        end
       end
 
       def default_foreign_key

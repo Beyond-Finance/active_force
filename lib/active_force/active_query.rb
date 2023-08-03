@@ -4,7 +4,6 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
-
   class RecordNotFound < StandardError
     attr_reader :table_name, :conditions
 
@@ -19,15 +18,16 @@ module ActiveForce
   class ActiveQuery < Query
     extend Forwardable
 
-    attr_reader :sobject, :association_mapping
+    attr_reader :sobject, :association_mapping, :belongs_to_association_mapping
 
     def_delegators :sobject, :sfdc_client, :build, :table_name, :mappings
     def_delegators :to_a, :each, :map, :inspect, :pluck, :each_with_object
 
-    def initialize sobject
+    def initialize (sobject, custom_table_name = nil)
       @sobject = sobject
       @association_mapping = {}
-      super table_name
+      @belongs_to_association_mapping = {}
+      super custom_table_name || table_name
       fields sobject.fields
     end
 
@@ -91,12 +91,9 @@ module ActiveForce
     end
 
     def includes(*relations)
-      relations.each do |relation|
-        association = sobject.associations[relation]
-        fields Association::EagerLoadProjectionBuilder.build association
-        # downcase the key and downcase when we do the comparison so we don't do any more crazy string manipulation
-        association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-      end
+      includes_query = Association::EagerLoadBuilderForNestedIncludes.build(relations, sobject)
+      fields includes_query[:fields]
+      association_mapping.merge!(includes_query[:association_mapping])
       self
     end
 

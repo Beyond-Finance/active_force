@@ -386,7 +386,7 @@ describe ActiveForce::SObject do
     it 'allows passing a foreign key' do
       Comment.belongs_to :post, foreign_key: :fancy_post_id
       allow(comment).to receive(:fancy_post_id).and_return "2"
-      expect(client).to receive(:query).with("SELECT Id, Title__c FROM Post__c WHERE (Id = '2') LIMIT 1")
+      expect(client).to receive(:query).with("SELECT Id, Title__c, BlogId FROM Post__c WHERE (Id = '2') LIMIT 1")
       comment.post
       Comment.belongs_to :post # reset association to original value
     end

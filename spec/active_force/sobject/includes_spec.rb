@@ -285,6 +285,331 @@ module ActiveForce
           expect(account.owner.id).to eq '321'
         end
       end
+
+      context 'when invalid associations are passed' do
+        it 'raises an error' do
+          expect { Quota.includes(:invalid).find('123') }.to raise_error(ActiveForce::Association::InvalidAssociationError, 'Association named invalid was not found on Quota')
+        end
+      end
+    end
+
+    describe '.includes with nested associations' do
+
+      context 'with custom objects' do
+        it 'formulates the correct SOQL query' do
+          soql = Quota.includes(prez_clubs: :club_members).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id, Bar_Id__c,
+              (SELECT Id, QuotaId,
+                (SELECT Id, Name, Email FROM ClubMembers__r)
+              FROM PrezClubs__r)
+            FROM Quota__c
+            WHERE (Bar_Id__c = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'PrezClubs__r' => build_restforce_collection([
+              {'Id' => '213', 'QuotaId' => '123', 'ClubMembers__r' => build_restforce_collection([
+                {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com'},
+                {'Id' => '214', 'Name' => 'def', 'Email' => 'def@af.com'}
+              ])},
+              {'Id' => '214', 'QuotaId' => '123', 'ClubMembers__r' => build_restforce_collection([
+                {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com'},
+                {'Id' => '214', 'Name' => 'def', 'Email' => 'def@af.com'}
+              ])}
+            ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          account = Quota.includes(prez_clubs: :club_members).find '123'
+          expect(account.prez_clubs).to be_an Array
+          expect(account.prez_clubs.all? { |o| o.is_a? PrezClub }).to eq true
+          expect(account.prez_clubs.first.club_members).to be_an Array
+          expect(account.prez_clubs.first.club_members.all? { |o| o.is_a? ClubMember }).to eq true
+          expect(account.prez_clubs.first.club_members.first.id).to eq '213'
+          expect(account.prez_clubs.first.club_members.first.name).to eq 'abc'
+          expect(account.prez_clubs.first.club_members.first.email).to eq 'abc@af.com'
+        end
+      end
+
+      context 'with namespaced sobjects' do
+        it 'formulates the correct SOQL query' do
+          soql = Salesforce::Account.includes({partner_opportunities: :owner}).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id, Business_Partner__c,
+              (SELECT Id, OwnerId, AccountId, Business_Partner__c, Owner.Id
+              FROM Opportunities)
+            FROM Account
+            WHERE (Id = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'opportunities' => build_restforce_collection([
+              {'Id' => '213', 'AccountId' => '123', 'OwnerId' => '321', 'Business_Partner__c' => '123', 'Owner' => {'Id' => '321'}},
+              {'Id' => '214', 'AccountId' => '123', 'OwnerId' => '321', 'Business_Partner__c' => '123', 'Owner' => {'Id' => '321'}}            ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          account = Salesforce::Account.includes({partner_opportunities: :owner}).find '123'
+          expect(account.partner_opportunities).to be_an Array
+          expect(account.partner_opportunities.all? { |o| o.is_a? Salesforce::Opportunity }).to eq true
+          expect(account.partner_opportunities.first.owner).to be_a Salesforce::User
+          expect(account.partner_opportunities.first.owner.id).to eq '321'
+        end
+      end
+
+      context 'an array association nested within a hash association' do
+        it 'formulates the correct SOQL query' do
+          soql = Club.includes(book_clubs: [:club_members, :books]).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id,
+            (SELECT Id, Name, Location,
+              (SELECT Id, Name, Email FROM ClubMembers__r),
+              (SELECT Id, Title, Author FROM Books__r)
+            FROM BookClubs__r)
+            FROM Club__c
+            WHERE (Id = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'BookClubs__r' => build_restforce_collection([
+              {
+                'Id' => '213',
+                'Name' => 'abc',
+                'Location' => 'abc_location',
+                'ClubMembers__r' => build_restforce_collection([{'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com'},{'Id' => '214', 'Name' => 'def', 'Email' => 'def@af.com'}]),
+                'Books__r' => build_restforce_collection([{'Id' => '213', 'Title' => 'Foo', 'Author' => 'author1'},{'Id' => '214', 'Title' => 'Bar', 'Author' => 'author2'}]),
+              },
+              {
+                'Id' => '214',
+                'Name' => 'def',
+                'Location' => 'def_location',
+                'ClubMembers__r' => build_restforce_collection([{'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com'},{'Id' => '214', 'Name' => 'def', 'Email' => 'def@af.com'}]),
+                'Books__r' => build_restforce_collection([{'Id' => '213', 'Title' => 'Foo', 'Author' => 'author1'},{'Id' => '214', 'Title' => 'Bar', 'Author' => 'author2'}]),
+              }
+            ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          club = Club.includes(book_clubs: [:club_members, :books]).find(id: '123')
+          expect(club.book_clubs).to be_an Array
+          expect(club.book_clubs.all? { |o| o.is_a? BookClub }).to eq true
+          expect(club.book_clubs.first.name).to eq 'abc'
+          expect(club.book_clubs.first.location).to eq 'abc_location'
+          expect(club.book_clubs.first.club_members).to be_an Array
+          expect(club.book_clubs.first.club_members.all? { |o| o.is_a? ClubMember }).to eq true
+          expect(club.book_clubs.first.club_members.first.id).to eq '213'
+          expect(club.book_clubs.first.club_members.first.name).to eq 'abc'
+          expect(club.book_clubs.first.club_members.first.email).to eq 'abc@af.com'
+          expect(club.book_clubs.first.books).to be_an Array
+          expect(club.book_clubs.first.books.all? { |o| o.is_a? Book }).to eq true
+          expect(club.book_clubs.first.books.first.id).to eq '213'
+          expect(club.book_clubs.first.books.first.title).to eq 'Foo'
+          expect(club.book_clubs.first.books.first.author).to eq 'author1'
+        end
+      end
+
+      context 'a hash association nested within a hash association' do
+        it 'formulates the correct SOQL query' do
+          soql = Club.includes(book_clubs: {club_members: :membership}).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id,
+            (SELECT Id, Name, Location,
+              (SELECT Id, Name, Email,
+                (SELECT Id, Type, Club_Member_Id__c FROM Membership__r)
+              FROM ClubMembers__r)
+            FROM BookClubs__r)
+            FROM Club__c
+            WHERE (Id = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'BookClubs__r' => build_restforce_collection([
+              {
+                'Id' => '213',
+                'Name' => 'abc',
+                'Location' => 'abc_location',
+                'ClubMembers__r' => build_restforce_collection([
+                  {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '111', 'Type' => 'Gold'}])},
+                  {'Id' => '214', 'Name' => 'abc', 'Email' => 'abc@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '222', 'Type' => 'Silver'}])},
+                ]),
+              },
+              {
+                'Id' => '214',
+                'Name' => 'def',
+                'Location' => 'def_location',
+                'ClubMembers__r' => build_restforce_collection([
+                  {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '111', 'Type' => 'Gold'}])},
+                  {'Id' => '214', 'Name' => 'abc', 'Email' => 'abc@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '222', 'Type' => 'Silver'}])},
+                ]),
+              }
+            ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          club = Club.includes(book_clubs: {club_members: :membership}).find(id: '123')
+          expect(club.book_clubs).to be_an Array
+          expect(club.book_clubs.all? { |o| o.is_a? BookClub }).to eq true
+          expect(club.book_clubs.first.id).to eq '213'
+          expect(club.book_clubs.first.name).to eq 'abc'
+          expect(club.book_clubs.first.location).to eq 'abc_location'
+          expect(club.book_clubs.first.club_members).to be_an Array
+          expect(club.book_clubs.first.club_members.all? { |o| o.is_a? ClubMember }).to eq true
+          expect(club.book_clubs.first.club_members.first.id).to eq '213'
+          expect(club.book_clubs.first.club_members.first.name).to eq 'abc'
+          expect(club.book_clubs.first.club_members.first.email).to eq 'abc@af.com'
+          expect(club.book_clubs.first.club_members.first.membership).to be_a Membership
+          expect(club.book_clubs.first.club_members.first.membership.id).to eq '111'
+          expect(club.book_clubs.first.club_members.first.membership.type).to eq 'Gold'
+        end
+      end
+
+      context 'mulitple nested associations' do
+        it 'formulates the correct SOQL query' do
+          soql = Club.includes({prez_clubs: {club_members: :membership}}, {book_clubs: [:club_members, :books]}).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id,
+            (SELECT Id, QuotaId,
+              (SELECT Id, Name, Email,
+                (SELECT Id, Type, Club_Member_Id__c FROM Membership__r)
+              FROM ClubMembers__r)
+            FROM PrezClubs__r),
+            (SELECT Id, Name, Location,
+              (SELECT Id, Name, Email FROM ClubMembers__r),
+              (SELECT Id, Title, Author FROM Books__r)
+            FROM BookClubs__r)
+            FROM Club__c
+            WHERE (Id = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'PrezClubs__r' => build_restforce_collection([
+              {'Id' => '213', 'QuotaId' => '123', 'ClubMembers__r' => build_restforce_collection([
+                {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '111', 'Type' => 'Gold'}])},
+                {'Id' => '214', 'Name' => 'def', 'Email' => 'def@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '222', 'Type' => 'Silver'}])},
+              ])},
+              {'Id' => '214', 'QuotaId' => '123', 'ClubMembers__r' => build_restforce_collection([
+                {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '111', 'Type' => 'Gold'}])},
+                {'Id' => '214', 'Name' => 'def', 'Email' => 'def@af.com', 'Membership__r' => build_restforce_collection([{'Id' => '222', 'Type' => 'Silver'}])},
+              ])}
+            ]),
+            'BookClubs__r' => build_restforce_collection([
+              {
+                'Id' => '213',
+                'Name' => 'abc',
+                'Location' => 'abc_location',
+                'ClubMembers__r' => build_restforce_collection([
+                  {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com'},
+                  {'Id' => '214', 'Name' => 'abc', 'Email' => 'abc@af.com'},
+                ]),
+                'Books__r' => build_restforce_collection([
+                  {'Id' => '213', 'Title' => 'Foo', 'Author' => 'author1'},
+                  {'Id' => '214', 'Title' => 'Bar', 'Author' => 'author2'},
+                ])
+              },
+              {
+                'Id' => '214',
+                'Name' => 'def',
+                'Location' => 'def_location',
+                'ClubMembers__r' => build_restforce_collection([
+                  {'Id' => '213', 'Name' => 'abc', 'Email' => 'abc@af.com'},
+                  {'Id' => '214', 'Name' => 'abc', 'Email' => 'abc@af.com'},
+                ]),
+                'Books__r' => build_restforce_collection([
+                  {'Id' => '213', 'Title' => 'Foo', 'Author' => 'author1'},
+                  {'Id' => '214', 'Title' => 'Bar', 'Author' => 'author2'},
+                ])
+              }
+            ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          club = Club.includes({prez_clubs: {club_members: :membership}}, {book_clubs: [:club_members, :books]}).find(id: '123')
+          expect(club.prez_clubs).to be_an Array
+          expect(club.prez_clubs.all? { |o| o.is_a? PrezClub }).to eq true
+          expect(club.prez_clubs.first.club_members).to be_an Array
+          expect(club.prez_clubs.first.club_members.all? { |o| o.is_a? ClubMember }).to eq true
+          expect(club.prez_clubs.first.club_members.first.id).to eq '213'
+          expect(club.prez_clubs.first.club_members.first.name).to eq 'abc'
+          expect(club.prez_clubs.first.club_members.first.email).to eq 'abc@af.com'
+          expect(club.prez_clubs.first.club_members.first.membership).to be_a Membership
+          expect(club.prez_clubs.first.club_members.first.membership.id).to eq '111'
+          expect(club.prez_clubs.first.club_members.first.membership.type).to eq 'Gold'
+          expect(club.book_clubs).to be_an Array
+          expect(club.book_clubs.all? { |o| o.is_a? BookClub }).to eq true
+          expect(club.book_clubs.first.id).to eq '213'
+          expect(club.book_clubs.first.name).to eq 'abc'
+          expect(club.book_clubs.first.location).to eq 'abc_location'
+          expect(club.book_clubs.first.club_members).to be_an Array
+          expect(club.book_clubs.first.club_members.all? { |o| o.is_a? ClubMember }).to eq true
+          expect(club.book_clubs.first.club_members.first.id).to eq '213'
+          expect(club.book_clubs.first.club_members.first.name).to eq 'abc'
+          expect(club.book_clubs.first.club_members.first.email).to eq 'abc@af.com'
+          expect(club.book_clubs.first.books).to be_an Array
+          expect(club.book_clubs.first.books.all? { |o| o.is_a? Book }).to eq true
+          expect(club.book_clubs.first.books.first.id).to eq '213'
+          expect(club.book_clubs.first.books.first.title).to eq 'Foo'
+          expect(club.book_clubs.first.books.first.author).to eq 'author1'
+        end
+      end
+
+      context 'nested belongs-to association' do
+        it 'formulates the correct SOQL query' do
+          soql = Comment.includes(post: :blog).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id, PostId, PosterId__c, FancyPostId, Body__c,
+              PostId.Id, PostId.Title__c, PostId.BlogId,
+                PostId.BlogId.Id, PostId.BlogId.Name, PostId.BlogId.Link__c
+            FROM Comment__c
+            WHERE (Id = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'PostId' => '321',
+            'PosterId__c' => '432',
+            'FancyPostId' => '543',
+            'Body__c' => 'body',
+            'PostId' => {
+              'Id' => '321',
+              'Title__c' => 'title',
+              'BlogId' => '432',
+              'BlogId' => {
+                'Id' => '432',
+                'Name' => 'name',
+                'Link__c' => 'link'
+              }
+            }
+          })]
+          allow(client).to receive(:query).once.and_return response
+          comment = Comment.includes(post: :blog).find '123'
+          expect(comment.post).to be_a Post
+          expect(comment.post.id).to eq '321'
+          expect(comment.post.title).to eq 'title'
+          expect(comment.post.blog).to be_a Blog
+          expect(comment.post.blog.id).to eq '432'
+          expect(comment.post.blog.name).to eq 'name'
+          expect(comment.post.blog.link).to eq 'link'
+        end
+      end
+
+      context 'when invalid nested associations are passed' do
+        it 'raises an error' do
+          expect { Quota.includes(prez_clubs: :invalid).find('123') }.to raise_error(ActiveForce::Association::InvalidAssociationError, 'Association named invalid was not found on PrezClub')
+        end
+      end
     end
   end
 end

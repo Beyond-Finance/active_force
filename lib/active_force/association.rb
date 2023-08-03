@@ -4,6 +4,7 @@ require 'active_force/association/relation_model_builder'
 require 'active_force/association/has_many_association'
 require 'active_force/association/has_one_association'
 require 'active_force/association/belongs_to_association'
+require 'active_force/association/eager_load_builder_for_nested_includes'
 
 module ActiveForce
   module Association

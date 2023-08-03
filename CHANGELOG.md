@@ -4,6 +4,11 @@
 
 - Fix bug with has_many queries due to query method chaining mutating in-place (https://github.com/Beyond-Finance/active_force/pull/10)
 
+## 0.16.0
+
+- Fix `default` in models when default value is overridden by the same value, it is still sent to salesforce (https://github.com/Beyond-Finance/active_force/pull/61)
+- Support to fetch multi-level associations during eager load (https://github.com/Beyond-Finance/active_force/pull/62)
+
 ## 0.15.1
 
 - Revert new `pluck` implementation due to compatibility issues (https://github.com/Beyond-Finance/active_force/pull/60)

@@ -68,7 +68,7 @@ module ActiveForce
           if association_mapping.has_key?(column.downcase)
             column = association_mapping[column.downcase]
           end
-          sobject.write_value column, value
+          sobject.write_value column, value, association_mapping
         end
       end
       sobject.clear_changes_information
@@ -173,10 +173,10 @@ module ActiveForce
       self
     end
 
-    def write_value key, value
+    def write_value key, value, association_mapping = {}
       if association = self.class.find_association(key.to_sym)
         field = association.relation_name
-        value = Association::RelationModelBuilder.build(association, value)
+        value = Association::RelationModelBuilder.build(association, value, association_mapping)
       elsif key.to_sym.in?(mappings.keys)
         # key is a field name
         field = key
@@ -227,9 +227,13 @@ module ActiveForce
     end
 
     def attributes_for_create
-      @attributes.each_value.select { |value| value.is_a?(ActiveModel::Attribute::UserProvidedDefault) }
-                            .map(&:name)
-                            .concat(changed)
+      default_attributes.concat(changed)
+    end
+
+    def default_attributes
+      @attributes.each_value.select do |value| 
+        value.is_a?(ActiveModel::Attribute::UserProvidedDefault) || value.instance_values["original_attribute"].is_a?(ActiveModel::Attribute::UserProvidedDefault)
+      end.map(&:name)
     end
 
     def attributes_for_update

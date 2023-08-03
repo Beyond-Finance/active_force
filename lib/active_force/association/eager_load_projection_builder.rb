@@ -2,31 +2,33 @@ module ActiveForce
   module Association
     class EagerLoadProjectionBuilder
       class << self
-        def build(association)
-          new(association).projections
+        def build(association, parent_association_field = nil)
+          new(association, parent_association_field).projections
         end
       end
 
-      attr_reader :association
+      attr_reader :association, :parent_association_field
 
-      def initialize(association)
+      def initialize(association, parent_association_field = nil)
         @association = association
+        @parent_association_field = parent_association_field
       end
 
       def projections
         klass = association.class.name.split('::').last
         builder_class = ActiveForce::Association.const_get "#{klass}ProjectionBuilder"
-        builder_class.new(association).projections
+        builder_class.new(association, parent_association_field).projections
       rescue NameError
         raise "Don't know how to build projections for #{klass}"
       end
     end
 
     class AbstractProjectionBuilder
-      attr_reader :association
+      attr_reader :association, :parent_association_field
 
-      def initialize(association)
+      def initialize(association, parent_association_field = nil)
         @association = association
+        @parent_association_field = parent_association_field
       end
 
       def projections
@@ -57,8 +59,13 @@ module ActiveForce
 
     class BelongsToAssociationProjectionBuilder < AbstractProjectionBuilder
       def projections
+        association_field = if parent_association_field.present?
+                              "#{ parent_association_field }.#{ association.sfdc_association_field }"
+                            else
+                              association.sfdc_association_field
+                            end
         association.relation_model.fields.map do |field|
-          "#{ association.sfdc_association_field }.#{ field }"
+          "#{ association_field }.#{ field }"
         end
       end
     end
