@@ -2,6 +2,8 @@
 
 ## Not released
 
+- Fix bug with has_many queries due to query method chaining mutating in-place (https://github.com/Beyond-Finance/active_force/pull/10)
+
 ## 0.16.0
 
 - Fix `default` in models when default value is overridden by the same value, it is still sent to salesforce (https://github.com/Beyond-Finance/active_force/pull/61)
