@@ -2,6 +2,8 @@
 
 ## Not released
 
+## 0.17.0
+
 - Fix bug with has_many queries due to query method chaining mutating in-place (https://github.com/Beyond-Finance/active_force/pull/10)
 
 ## 0.16.0
