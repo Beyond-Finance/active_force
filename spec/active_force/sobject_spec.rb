@@ -182,6 +182,20 @@ describe ActiveForce::SObject do
         it 'sets percent field upon object instantiation' do
           expect(subject.new(**instantiation_attributes)[:percent]).to eq(percent)
         end
+
+        context 'when the override to default value is the same as the default value' do
+          let(:percent) { 50.0 }
+
+          it 'sends percent to salesforce' do
+            expect(client).to receive(:create!)
+                          .with(anything, hash_including('Percent_Label' => percent))
+            subject.create(**instantiation_attributes)
+          end
+
+          it 'sets percent field upon object instantiation' do
+            expect(subject.new(**instantiation_attributes)[:percent]).to eq(percent)
+          end
+        end
       end
     end
 
@@ -387,18 +401,67 @@ describe ActiveForce::SObject do
     end
   end
 
-  describe "#count" do
-    let(:count_response){ [Restforce::Mash.new(expr0: 1)] }
+  describe '.count' do
+    let(:response) { [Restforce::Mash.new(expr0: 1)] }
 
-    it "responds to count" do
-      expect(Whizbang).to respond_to(:count)
+    before do
+      allow(client).to receive(:query).and_return(response)
     end
 
-    it "sends the query to the client" do
-      expect(client).to receive(:query).and_return(count_response)
+    it 'sends the correct query to the client' do
+      expected = 'SELECT count(Id) FROM Whizbang__c'
+      Whizbang.count
+      expect(client).to have_received(:query).with(expected)
+    end
+
+    it 'returns the result from the response' do
       expect(Whizbang.count).to eq(1)
     end
 
+    it 'works with .where' do
+      expected = 'SELECT count(Id) FROM Whizbang__c WHERE (Boolean_Label = true)'
+      Whizbang.where(boolean: true).count
+      expect(client).to have_received(:query).with(expected)
+    end
+  end
+
+  describe '.sum' do
+    let(:response) { [Restforce::Mash.new(expr0: 22)] }
+
+    before do
+      allow(client).to receive(:query).and_return(response)
+    end
+
+    it 'raises ArgumentError if given blank' do
+      expect { Whizbang.sum(nil) }.to raise_error(ArgumentError, 'field is required')
+    end
+
+    it 'raises ArgumentError if given invalid field' do
+      expect { Whizbang.sum(:invalid) }
+        .to raise_error(ArgumentError, /field 'invalid' does not exist on Whizbang/i)
+    end
+
+    it 'sends the correct query to the client' do
+      expected = 'SELECT sum(Percent_Label) FROM Whizbang__c'
+      Whizbang.sum(:percent)
+      expect(client).to have_received(:query).with(expected)
+    end
+
+    it 'works when given a string field' do
+      expected = 'SELECT sum(Percent_Label) FROM Whizbang__c'
+      Whizbang.sum('percent')
+      expect(client).to have_received(:query).with(expected)
+    end
+
+    it 'returns the result from the response' do
+      expect(Whizbang.sum(:percent)).to eq(22)
+    end
+
+    it 'works with .where' do
+      expected = 'SELECT sum(Percent_Label) FROM Whizbang__c WHERE (Boolean_Label = true)'
+      Whizbang.where(boolean: true).sum(:percent)
+      expect(client).to have_received(:query).with(expected)
+    end
   end
 
   describe "#find_by" do

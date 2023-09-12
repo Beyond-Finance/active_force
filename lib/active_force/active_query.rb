@@ -4,7 +4,6 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
-
   class RecordNotFound < StandardError
     attr_reader :table_name, :conditions
 
@@ -19,15 +18,16 @@ module ActiveForce
   class ActiveQuery < Query
     extend Forwardable
 
-    attr_reader :sobject, :association_mapping
+    attr_reader :sobject, :association_mapping, :belongs_to_association_mapping
 
     def_delegators :sobject, :sfdc_client, :build, :table_name, :mappings
     def_delegators :to_a, :each, :map, :inspect, :pluck, :each_with_object
 
-    def initialize sobject
+    def initialize (sobject, custom_table_name = nil)
       @sobject = sobject
       @association_mapping = {}
-      super table_name
+      @belongs_to_association_mapping = {}
+      super custom_table_name || table_name
       fields sobject.fields
     end
 
@@ -42,36 +42,34 @@ module ActiveForce
     alias_method :all, :to_a
 
     def count
-      super
-      sfdc_client.query(to_s).first.expr0
+      sfdc_client.query(super.to_s).first.expr0
     end
 
     def sum field
-      super(mappings[field])
-      sfdc_client.query(to_s).first.expr0
+      raise ArgumentError, 'field is required' if field.blank?
+      raise ArgumentError, "field '#{field}' does not exist on #{sobject}" unless mappings.key?(field.to_sym)
+
+      sfdc_client.query(super(mappings.fetch(field.to_sym)).to_s).first.expr0
     end
 
     def limit limit
-      super
-      limit == 1 ? to_a.first : self
+      limit == 1 ? super.to_a.first : super
     end
 
     def not args=nil, *rest
       return self if args.nil?
+
       super build_condition args, rest
-      self
     end
 
     def where args=nil, *rest
       return self if args.nil?
-      return clone_self_and_clear_cache.where(args, *rest) if @decorated_records.present?
       super build_condition args, rest
-      self
     end
 
-    def select *fields
-      fields.map! { |field| mappings[field] }
-      super *fields
+    def select *selected_fields
+      selected_fields.map! { |field| mappings[field] }
+      super *selected_fields
     end
 
     def find!(id)
@@ -93,18 +91,17 @@ module ActiveForce
     end
 
     def includes(*relations)
-      relations.each do |relation|
-        association = sobject.associations[relation]
-        fields Association::EagerLoadProjectionBuilder.build association
-        # downcase the key and downcase when we do the comparison so we don't do any more crazy string manipulation
-        association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-      end
+      includes_query = Association::EagerLoadBuilderForNestedIncludes.build(relations, sobject)
+      fields includes_query[:fields]
+      association_mapping.merge!(includes_query[:association_mapping])
       self
     end
 
     def none
-      @records = []
-      where(id: '1'*18).where(id: '0'*18)
+      clone_and_set_instance_variables(
+        records: [],
+        conditions: [build_condition(id: '1' * 18), build_condition(id: '0' * 18)]
+      )
     end
 
     def loaded?
@@ -208,13 +205,6 @@ module ActiveForce
       sfdc_client.query(self.to_s)
     end
 
-    def clone_self_and_clear_cache
-      new_query = self.clone
-      new_query.instance_variable_set(:@decorated_records, nil)
-      new_query.instance_variable_set(:@records, nil)
-      new_query
-    end
-
     def build_order_by(args)
       args.map do |arg|
         case arg
@@ -231,6 +221,5 @@ module ActiveForce
     def order_type(type)
       type == :desc ? 'DESC' : 'ASC'
     end
-
   end
 end

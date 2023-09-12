@@ -192,6 +192,21 @@ It is also possible to eager load associations:
 Comment.includes(:post)
 ```
 
+It is possible to eager load multi level associations
+
+In order to utilize multi level eager loads, the API version should be set to 58.0 or higher when instantiating a Restforce client 
+
+```ruby
+Restforce.new({api_version: '58.0'})
+```
+
+Examples:
+
+```ruby
+Comment.includes(post: :owner)
+Comment.includes({post: {owner: :account}})
+```
+
 ### Aggregates
 
 Summing the values of a column:
