@@ -1,6 +1,7 @@
 require 'active_model'
 require 'active_force/active_query'
 require 'active_force/association'
+require 'active_force/bulk'
 require 'active_force/mapping'
 require 'yaml'
 require 'forwardable'
@@ -19,6 +20,7 @@ module ActiveForce
     extend ActiveModel::Callbacks
     include ActiveModel::Serializers::JSON
     extend ActiveForce::Association
+    extend ActiveForce::Bulk
 
 
     define_model_callbacks :build, :create, :update, :save, :destroy
@@ -231,7 +233,7 @@ module ActiveForce
     end
 
     def default_attributes
-      @attributes.each_value.select do |value| 
+      @attributes.each_value.select do |value|
         value.is_a?(ActiveModel::Attribute::UserProvidedDefault) || value.instance_values["original_attribute"].is_a?(ActiveModel::Attribute::UserProvidedDefault)
       end.map(&:name)
     end
