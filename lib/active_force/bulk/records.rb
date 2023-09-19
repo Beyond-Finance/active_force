@@ -16,7 +16,7 @@ module ActiveForce
       end
 
       def self.parse(records)
-        headers = records.first.keys.sort
+        headers = records.first.keys.sort.map(&:to_s)
         data = records.map { |r| r.sort.pluck(-1) }
         new(headers: headers, data: data)
       end

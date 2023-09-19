@@ -3,7 +3,7 @@ require 'active_force/bulk/records'
 
 module ActiveForce
   module Bulk
-    def run_bulk_insert_job(attributes)
+    def bulk_insert_all(attributes)
       run_bulk_job(:insert, attributes)
     end
 
