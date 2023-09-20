@@ -1,7 +1,7 @@
 module ActiveForce
   module Bulk
     class Job
-      attr_reader :operation, :records, :state, :options, :object, :contentUrl
+      attr_reader :operation, :records, :state, :options, :object, :content_url
       attr_accessor :id
 
       STATES = {
@@ -14,21 +14,21 @@ module ActiveForce
         Deleted: 'Deleted'
       }.freeze
 
-      OPERATIONS = %i[insert delete hardDelete update upsert]
+      OPERATIONS = %w[insert delete hardDelete update upsert]
 
-      def initialize(operation:, object:, id: nil, records: nil, options: {})
+      def initialize(operation:, object:, id: nil, records: nil)
         @operation = operation
         @object = object
         @id = id
         @records = records
         @state = nil
-        @contentUrl = nil
+        @content_url = nil
         @options = options
         initialize_state_methods
       end
 
-      def create(options={})
-        request_body = create_job_default_options.merge(options).merge(object: object)
+      def create
+        request_body = default_job_options.merge(operation: operation, object: object)
         response = client.post("#{ingest_path}/", request_body)
         update_attributes_from(response)
         response
@@ -36,14 +36,15 @@ module ActiveForce
 
       def upload
         headers = {"Content-Type": 'text/csv'}
-        response = client.put(contentUrl, records.to_csv, headers)
+        response = client.put(content_url, records.to_csv, headers)
         response
       end
 
-      def run!
-        create
-        upload
-        run
+      def self.run(...)
+        job = new(...)
+        job.create
+        job.upload
+        job.run
       end
 
       def failed_results
@@ -85,10 +86,6 @@ module ActiveForce
         "/services/data/v#{client.options[:api_version]}/jobs/ingest"
       end
 
-      def upload_path
-        "/services/data/v#{client.options[:api_version]}/jobs/ingest/#{id}/batches"
-      end
-
       def client
         @client ||= ActiveForce.sfdc_client
       end
@@ -99,12 +96,6 @@ module ActiveForce
           contentType: 'CSV',
           lineEnding: 'LF',
         }
-      end
-
-      def create_job_default_options
-        {
-          operation: 'insert',
-        }.merge(default_job_options)
       end
 
       def state(value)
@@ -119,7 +110,7 @@ module ActiveForce
         return unless response.body.present?
 
         %i[id state object operation contentUrl].each do |attr|
-          self.send("#{attr}=", response.body[attr.to_s]) if response.body[attr.to_s].present?
+          self.send("#{attr.underscore}=", response.body[attr.to_s]) if response.body[attr.to_s].present?
         end
       end
 
