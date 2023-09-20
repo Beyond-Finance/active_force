@@ -45,6 +45,7 @@ module ActiveForce
         job.create
         job.upload
         job.run
+        job
       end
 
       def failed_results
@@ -79,7 +80,7 @@ module ActiveForce
       end
 
       private
-      attr_writer :state, :object, :operation, :contentUrl
+      attr_writer :state, :object, :operation, :content_url
 
 
       def ingest_path
@@ -110,7 +111,7 @@ module ActiveForce
         return unless response.body.present?
 
         %i[id state object operation contentUrl].each do |attr|
-          self.send("#{attr.underscore}=", response.body[attr.to_s]) if response.body[attr.to_s].present?
+          self.send("#{attr.to_s.underscore}=", response.body[attr.to_s]) if response.body[attr.to_s].present?
         end
       end
 
