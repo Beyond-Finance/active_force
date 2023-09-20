@@ -11,6 +11,10 @@ module ActiveForce
       run_bulk_job(:update, attributes)
     end
 
+    def bulk_delete_all(attributes)
+      run_bulk_job(:delete, attributes)
+    end
+
     private
 
     def run_bulk_job(operation, attributes)

@@ -14,10 +14,10 @@ module ActiveForce
         Deleted: 'Deleted'
       }.freeze
 
-      OPERATIONS = %w[insert delete hardDelete update upsert]
+      OPERATIONS = %i[insert delete hardDelete update upsert]
 
       def initialize(operation:, object:, id: nil, records: nil)
-        @operation = operation
+        @operation = operation.to_sym
         @object = object
         @id = id
         @records = records
