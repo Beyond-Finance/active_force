@@ -1,8 +1,7 @@
 require 'spec_helper'
 
+# Set up a new SObject to test the mixin.
 class FooBarSObject < ActiveForce::SObject
-  #extend ActiveForce::Bulk
-
   field :id, from: 'Id'
   field :baz_id, from: 'Baz_id__c'
 end
