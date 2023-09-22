@@ -17,6 +17,9 @@ describe ActiveForce::Bulk do
   end
 
   let(:job) { double(ActiveForce::Bulk::Job) }
+  before do
+    allow(job).to receive(:result)
+  end
 
   describe '::bulk_insert_all' do
     before do
