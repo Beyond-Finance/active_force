@@ -313,6 +313,24 @@ describe ActiveForce::SObject do
         expect(Whizbang.create(text: 'some text')).to be_instance_of(Whizbang)
       end
     end
+
+    describe 'self.update' do
+      it 'uses the client to update the correct record' do
+        expect(client).to receive(:update!)
+          .with(Whizbang.table_name, { 'Id' => '12345678', 'Text_Label' => 'my text', 'Updated_From__c' => 'Rails' })
+          .and_return(true)
+        Whizbang.update('12345678', text: 'my text')
+      end
+    end
+
+    describe 'self.update!' do
+      it 'uses the client to update the correct record' do
+        expect(client).to receive(:update!)
+          .with(Whizbang.table_name, { 'Id' => '123456789', 'Text_Label' => 'some other text', 'Updated_From__c' => 'Rails' })
+          .and_return(true)
+        Whizbang.update('123456789', text: 'some other text')
+      end
+    end
   end
 
   describe '.count' do
