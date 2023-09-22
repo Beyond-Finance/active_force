@@ -24,7 +24,7 @@ module ActiveForce
         job.info
         sleep(0.002) # short sleep so we can end our poll loop more quickly
       end
-      job
+      job.result
     end
 
     def translate_to_sf(attributes)

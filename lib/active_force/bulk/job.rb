@@ -1,3 +1,5 @@
+require 'active_force/bulk/job_result'
+
 module ActiveForce
   module Bulk
     class Job
@@ -38,6 +40,10 @@ module ActiveForce
         headers = {"Content-Type": 'text/csv'}
         response = client.put(content_url, records.to_csv, headers)
         response
+      end
+
+      def result
+        ActiveForce::Bulk::JobResult.new(job: self)
       end
 
       def self.run(...)
