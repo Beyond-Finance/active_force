@@ -194,7 +194,7 @@ Comment.includes(:post)
 
 It is possible to eager load multi level associations
 
-In order to utilize multi level eager loads, the API version should be set to 58.0 or higher when instantiating a Restforce client 
+In order to utilize multi level eager loads, the API version should be set to 58.0 or higher when instantiating a Restforce client
 
 ```ruby
 Restforce.new({api_version: '58.0'})
@@ -212,8 +212,8 @@ Comment.includes({post: {owner: :account}})
 Summing the values of a column:
 ```ruby
 Transaction.where(offer_id: 'ABD832024').sum(:amount)
-#=> This will query "SELECT SUM(Amount__c) 
-#                    FROM Transaction__c 
+#=> This will query "SELECT SUM(Amount__c)
+#                    FROM Transaction__c
 #                    WHERE offer_id = 'ABD832024'"
 ```
 
@@ -248,6 +248,20 @@ accounts = Account.where(web_enabled: 1).limit(2)
 # This finds the records from the RestForce API, and then decorate all results
 with data from another API, and will only query the other API once.
 ```
+
+#### Bulk Jobs
+
+Convenience class methods have been added to `ActiveForce::SObject` to make it possible to utilize the Salesforce Bulk API v2.0.
+The methods are: `bulk_insert_all`, `bulk_update_all`, & `bulk_delete_all`.  They all expect input as an Array of attributes as a Hash:
+```
+[
+  { id: '11111111', attribute1: 'value1', attribute2: 'value2'},
+  { id: '22222222', attribute1: 'value3', attribute2: 'value4'},
+]
+```
+The attributes will be mapped back to what's expected on the SF side automatically. The response is a `ActiveForce::Bulk::JobResult` object
+which can access `successful` & `failed` results, has some `stats`, and the original `job` object that was used to create and process the
+Bulk job.
 
 ### Model generator
 
