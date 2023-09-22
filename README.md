@@ -249,7 +249,7 @@ accounts = Account.where(web_enabled: 1).limit(2)
 with data from another API, and will only query the other API once.
 ```
 
-#### Bulk Jobs
+### Bulk Jobs
 
 For more information about usage and limits of the Salesforce Bulk API see the [docs][4].
 
