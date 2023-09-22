@@ -69,11 +69,11 @@ module ActiveForce
       end
 
       def run
-        state(STATES[:UploadComplete])
+        change_state(STATES[:UploadComplete])
       end
 
       def abort
-        state(STATES[:Aborted])
+        change_state(STATES[:Aborted])
       end
 
       def delete
@@ -105,7 +105,7 @@ module ActiveForce
         }
       end
 
-      def state(value)
+      def change_state(value)
         request_body = {state: value}
         headers = {"Content-Type": "application/json"}
         response = client.patch("#{ingest_path}/#{id}", request_body, headers)
