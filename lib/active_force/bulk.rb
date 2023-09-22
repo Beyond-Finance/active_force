@@ -18,7 +18,7 @@ module ActiveForce
     private
 
     def run_bulk_job(operation, attributes)
-      records = Records.parse(translate_to_sf(attributes))
+      records = Records.parse_from_attributes(translate_to_sf(attributes))
       job = Job.run(operation: operation, object: self.table_name, records: records)
       until job.finished? do
         job.info

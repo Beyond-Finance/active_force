@@ -14,8 +14,8 @@ describe ActiveForce::Bulk::Records do
       expect(subject.to_csv).to eq "header1,header2\nvalue1,value2\nvalue3,value4\n"
     end
   end
-  describe '::parse' do
-    subject { described_class.parse(attributes) }
+  describe '::parse_from_attributes' do
+    subject { described_class.parse_from_attributes(attributes) }
     let(:attributes) do
       [
         { header1: 'value1', header2: 'value2'},

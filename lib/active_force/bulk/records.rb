@@ -15,7 +15,7 @@ module ActiveForce
         end
       end
 
-      def self.parse(records)
+      def self.parse_from_attributes(records)
         headers = records.first.keys.sort.map(&:to_s)
         data = records.map { |r| r.sort.pluck(-1) }
         new(headers: headers, data: data)
