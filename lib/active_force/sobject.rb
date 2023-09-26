@@ -129,6 +129,14 @@ module ActiveForce
       new(args).create!
     end
 
+    def self.update(id, attributes)
+      new(attributes.merge(id: id)).update
+    end
+
+    def self.update!(id, attributes)
+      new(attributes.merge(id: id)).update!
+    end
+
     def save!
       run_callbacks :save do
         if persisted?
@@ -231,7 +239,7 @@ module ActiveForce
     end
 
     def default_attributes
-      @attributes.each_value.select do |value| 
+      @attributes.each_value.select do |value|
         value.is_a?(ActiveModel::Attribute::UserProvidedDefault) || value.instance_values["original_attribute"].is_a?(ActiveModel::Attribute::UserProvidedDefault)
       end.map(&:name)
     end
