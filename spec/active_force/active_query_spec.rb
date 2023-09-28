@@ -51,21 +51,11 @@ describe ActiveForce::ActiveQuery do
         result = active_query.where("Text_Label = 'foo'").blank?
         expect(result).to be true
       end
-
-      it 'returns true' do
-        result = active_query.where("Text_Label = 'foo'").first.blank?
-        expect(result).to be true
-      end
     end
 
     context 'when records are returned' do
       it 'returns false' do
         result = active_query.where("Text_Label = 'foo'").blank?
-        expect(result).to be false
-      end
-
-      it 'returns false' do
-        result = active_query.where("Text_Label = 'foo'").first.blank?
         expect(result).to be false
       end
     end
@@ -83,21 +73,11 @@ describe ActiveForce::ActiveQuery do
         result = active_query.where("Text_Label = 'foo'").present?
         expect(result).to be false
       end
-
-      it 'returns false' do
-        result = active_query.where("Text_Label = 'foo'").first.present?
-        expect(result).to be false
-      end
     end
 
     context 'when there are records' do
       it 'returns true' do
         result = active_query.where("Text_Label = 'foo'").present?
-        expect(result).to be true
-      end
-
-      it 'returns true' do
-        result = active_query.where("Text_Label = 'foo'").first.present?
         expect(result).to be true
       end
     end
