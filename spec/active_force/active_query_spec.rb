@@ -18,7 +18,6 @@ describe ActiveForce::ActiveQuery do
     ]
   end
 
-
   before do
     allow(active_query).to receive(:sfdc_client).and_return client
     allow(active_query).to receive(:build).and_return Object.new
@@ -37,6 +36,70 @@ describe ActiveForce::ActiveQuery do
     it "should decorate the array of objects" do
       expect(sobject).to receive(:decorate)
       active_query.where("Text_Label = 'foo'").to_a
+    end
+  end
+
+  describe '#blank? delegation' do
+    before do
+      allow(client).to receive(:query).and_return(api_result)
+    end
+
+    context 'when there are no records' do
+      let(:api_result) { [] }
+
+      it 'returns true' do
+        result = active_query.where("Text_Label = 'foo'").blank?
+        expect(result).to be true
+      end
+
+      it 'returns true' do
+        result = active_query.where("Text_Label = 'foo'").first.blank?
+        expect(result).to be true
+      end
+    end
+
+    context 'when records are returned' do
+      it 'returns false' do
+        result = active_query.where("Text_Label = 'foo'").blank?
+        expect(result).to be false
+      end
+
+      it 'returns false' do
+        result = active_query.where("Text_Label = 'foo'").first.blank?
+        expect(result).to be false
+      end
+    end
+  end
+
+  describe '#present? delgation' do
+    before do
+      allow(client).to receive(:query).and_return(api_result)
+    end
+
+    context 'when there are no records' do
+      let(:api_result) { [] }
+
+      it 'returns false' do
+        result = active_query.where("Text_Label = 'foo'").present?
+        expect(result).to be false
+      end
+
+      it 'returns false' do
+        result = active_query.where("Text_Label = 'foo'").first.present?
+        expect(result).to be false
+      end
+    end
+
+    context 'when there are records' do
+      it 'returns true' do
+        result = active_query.where("Text_Label = 'foo'").present?
+        expect(result).to be true
+      end
+
+      it 'returns true' do
+        result = active_query.where("Text_Label = 'foo'").first.present?
+        expect(result).to be true
+      end
     end
   end
 
