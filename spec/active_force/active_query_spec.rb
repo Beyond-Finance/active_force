@@ -83,6 +83,28 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
+  describe '#any? delegation' do
+    before do
+      allow(client).to receive(:query).and_return(api_result)
+    end
+
+    context 'when there are no records' do
+      let(:api_result) { [] }
+
+      it 'returns true' do
+        result = active_query.where("Text_Label = 'foo'").any?
+        expect(result).to be false
+      end
+    end
+
+    context 'when records are returned' do
+      it 'returns false' do
+        result = active_query.where("Text_Label = 'foo'").any?
+        expect(result).to be true
+      end
+    end
+  end
+
   describe "select only some field using mappings" do
     it "should return a query only with selected field" do
       new_query = active_query.select(:field)
