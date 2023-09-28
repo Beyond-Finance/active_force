@@ -71,7 +71,7 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
-  describe '#present? delgation' do
+  describe '#present? delegation' do
     before do
       allow(client).to receive(:query).and_return(api_result)
     end
