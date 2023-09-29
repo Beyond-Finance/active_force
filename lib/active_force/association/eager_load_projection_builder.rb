@@ -1,5 +1,6 @@
 module ActiveForce
   module Association
+    class InvalidEagerLoadAssociation < StandardError; end
     class EagerLoadProjectionBuilder
       class << self
         def build(association, parent_association_field = nil)
@@ -34,6 +35,13 @@ module ActiveForce
       def projections
         raise "Must define #{self.class.name}#projections"
       end
+
+      def apply_association_scope(query)
+        return query unless association.scoped?
+        raise InvalidEagerLoadAssociation, "Cannot use scopes that expect arguments: #{association.relation_name}" if association.scoped_as.arity.positive?
+
+        query.instance_exec(&association.scoped_as)
+      end
     end
 
     class HasManyAssociationProjectionBuilder < AbstractProjectionBuilder
@@ -43,17 +51,17 @@ module ActiveForce
       # to be pluralized
       def projections
         relationship_name = association.sfdc_association_field
-        query = Query.new relationship_name
+        query = ActiveQuery.new(association.relation_model, relationship_name)
         query.fields association.relation_model.fields
-        ["(#{query.to_s})"]
+        ["(#{apply_association_scope(query).to_s})"]
       end
     end
 
     class HasOneAssociationProjectionBuilder < AbstractProjectionBuilder
       def projections
-        query = Query.new association.sfdc_association_field
+        query = ActiveQuery.new(association.relation_model, association.sfdc_association_field)
         query.fields association.relation_model.fields
-        ["(#{query.to_s})"]
+        ["(#{apply_association_scope(query).to_s})"]
       end
     end
 
