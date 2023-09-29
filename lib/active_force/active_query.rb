@@ -21,9 +21,9 @@ module ActiveForce
     attr_reader :sobject, :association_mapping, :belongs_to_association_mapping
 
     def_delegators :sobject, :sfdc_client, :build, :table_name, :mappings
-    def_delegators :to_a, :each, :map, :inspect, :pluck, :each_with_object
+    def_delegators :to_a, :blank?, :present?, :any?, :each, :map, :inspect, :pluck, :each_with_object
 
-    def initialize (sobject, custom_table_name = nil)
+    def initialize(sobject, custom_table_name = nil)
       @sobject = sobject
       @association_mapping = {}
       @belongs_to_association_mapping = {}

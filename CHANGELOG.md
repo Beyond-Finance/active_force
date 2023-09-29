@@ -2,6 +2,7 @@
 
 ## Not released
 
+- Adding `.blank?`, `.present?`, and `.any?` delegators to `ActiveQuery`. (https://github.com/Beyond-Finance/active_force/pull/68)
 - Adding `update` and `update!` class methods on `SObject`. (https://github.com/Beyond-Finance/active_force/pull/66)
 
 ## 0.17.0
