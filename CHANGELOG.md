@@ -2,6 +2,8 @@
 
 ## Not released
 
+## 0.18.0
+
 - Fix eager loading of scoped associations. (https://github.com/Beyond-Finance/active_force/pull/67)
 - Adding `.blank?`, `.present?`, and `.any?` delegators to `ActiveQuery`. (https://github.com/Beyond-Finance/active_force/pull/68)
 - Adding `update` and `update!` class methods on `SObject`. (https://github.com/Beyond-Finance/active_force/pull/66)
