@@ -81,8 +81,8 @@ module ActiveForce
       limit 1
     end
 
-    def last
-      order("Id DESC").limit(1)
+    def last(limit = 1)
+      order("Id DESC").limit(limit)
     end
 
     def join object_query
