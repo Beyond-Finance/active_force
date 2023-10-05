@@ -168,14 +168,30 @@ describe ActiveForce::Query do
   end
 
   describe '.last' do
-    it 'should return the query for the last record' do
-      expect(query.last.to_s).to eq 'SELECT Id, name, etc FROM table_name ORDER BY Id DESC LIMIT 1'
+    context 'without any argument' do
+      it 'should return the query for the last record' do
+        expect(query.last.to_s).to eq 'SELECT Id, name, etc FROM table_name ORDER BY Id DESC LIMIT 1'
+      end
+
+      it "should not update the original query" do
+        new_query = query.last
+        expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
+        expect(new_query.to_s).to eq 'SELECT Id, name, etc FROM table_name ORDER BY Id DESC LIMIT 1'
+      end
     end
 
-    it "should not update the original query" do
-      new_query = query.last
-      expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
-      expect(new_query.to_s).to eq 'SELECT Id, name, etc FROM table_name ORDER BY Id DESC LIMIT 1'
+    context 'with an argument' do
+      let(:last_argument) { 3 }
+
+      it 'should return the query for the last n records' do
+        expect(query.last(last_argument).to_s).to eq "SELECT Id, name, etc FROM table_name ORDER BY Id DESC LIMIT #{last_argument}"
+      end
+
+      it "should not update the original query" do
+        new_query = query.last last_argument
+        expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
+        expect(new_query.to_s).to eq "SELECT Id, name, etc FROM table_name ORDER BY Id DESC LIMIT #{last_argument}"
+      end
     end
   end
 

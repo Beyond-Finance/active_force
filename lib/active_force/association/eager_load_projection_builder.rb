@@ -55,6 +55,7 @@ module ActiveForce
         relationship_name = association.sfdc_association_field
         selected_fields = query_fields || association.relation_model.fields
         query = ActiveQuery.new(association.relation_model, association.sfdc_association_field).select(*selected_fields)
+
         ["(#{apply_association_scope(query).to_s})"]
       end
     end
@@ -63,6 +64,7 @@ module ActiveForce
       def projections
         selected_fields = query_fields || association.relation_model.fields
         query = ActiveQuery.new(association.relation_model, association.sfdc_association_field).select(*selected_fields)
+
         ["(#{apply_association_scope(query).to_s})"]
       end
     end
