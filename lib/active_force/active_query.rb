@@ -18,7 +18,7 @@ module ActiveForce
   class ActiveQuery < Query
     extend Forwardable
 
-    attr_reader :sobject, :association_mapping, :belongs_to_association_mapping
+    attr_reader :sobject, :association_mapping, :belongs_to_association_mapping, :nested_query_fields
 
     def_delegators :sobject, :sfdc_client, :build, :table_name, :mappings
     def_delegators :to_a, :each, :map, :inspect, :pluck, :each_with_object
@@ -29,6 +29,7 @@ module ActiveForce
       @belongs_to_association_mapping = {}
       super custom_table_name || table_name
       fields sobject.fields
+      @nested_query_fields = []
     end
 
     def to_a
@@ -68,8 +69,34 @@ module ActiveForce
     end
 
     def select *selected_fields
-      selected_fields.map! { |field| mappings[field] }
-      super *selected_fields
+      non_nested_query_fields = []
+      selected_fields.each do |field|
+        case field
+        when Symbol
+          non_nested_query_fields << mappings[field]
+        when Hash
+          populate_nested_query_fields(field)
+        when String
+          non_nested_query_fields << field
+        end
+      end
+      return self if non_nested_query_fields.blank?
+      
+      super *non_nested_query_fields 
+    end
+
+    def populate_nested_query_fields(field)
+      field.each do |key, value|
+        case value
+        when Array
+          value.map! { |a| mappings[a] }
+        when Symbol
+          field[key] = [mappings[value]]
+        when Hash
+          raise ArgumentError, 'Nested Hash is not supported in select statement, you may wish to use an Array'
+        end
+      end
+      nested_query_fields << field
     end
 
     def find!(id)
@@ -91,7 +118,7 @@ module ActiveForce
     end
 
     def includes(*relations)
-      includes_query = Association::EagerLoadBuilderForNestedIncludes.build(relations, sobject)
+      includes_query = Association::EagerLoadBuilderForNestedIncludes.build(relations, sobject, nil, nested_query_fields)
       fields includes_query[:fields]
       association_mapping.merge!(includes_query[:association_mapping])
       self
@@ -202,6 +229,7 @@ module ActiveForce
     end
 
     def result
+      binding.pry
       sfdc_client.query(self.to_s)
     end
 
