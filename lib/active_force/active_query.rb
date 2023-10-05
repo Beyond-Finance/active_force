@@ -229,7 +229,6 @@ module ActiveForce
     end
 
     def result
-      binding.pry
       sfdc_client.query(self.to_s)
     end
 
