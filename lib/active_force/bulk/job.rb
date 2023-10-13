@@ -3,7 +3,7 @@ require 'active_force/bulk/job_result'
 module ActiveForce
   module Bulk
     class Job
-      attr_reader :operation, :records, :state, :options, :object, :content_url
+      attr_reader :operation, :records, :state, :object, :content_url
       attr_accessor :id
 
       STATES = {
@@ -25,7 +25,6 @@ module ActiveForce
         @records = records
         @state = nil
         @content_url = nil
-        @options = options
         initialize_state_methods
       end
 
