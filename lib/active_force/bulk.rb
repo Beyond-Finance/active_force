@@ -3,26 +3,38 @@ require 'active_force/bulk/records'
 
 module ActiveForce
   module Bulk
-    def bulk_insert_all(attributes)
-      run_bulk_job(:insert, attributes)
+    class TimeoutError < Timeout::Error; end
+
+    def bulk_insert_all(attributes, options={})
+      run_bulk_job(:insert, attributes, options)
     end
 
-    def bulk_update_all(attributes)
-      run_bulk_job(:update, attributes)
+    def bulk_update_all(attributes, options={})
+      run_bulk_job(:update, attributes, options)
     end
 
-    def bulk_delete_all(attributes)
-      run_bulk_job(:delete, attributes)
+    def bulk_delete_all(attributes, options={})
+      run_bulk_job(:delete, attributes, options)
     end
 
     private
 
-    def run_bulk_job(operation, attributes)
+    def default_options
+      {
+        timeout: 30,
+        sleep: 0.02 # short sleep so we can end our poll loop more quickly
+      }
+    end
+
+    def run_bulk_job(operation, attributes, options)
+      runtime_options = default_options.merge(options)
       records = Records.parse_from_attributes(translate_to_sf(attributes))
       job = Job.run(operation: operation, object: self.table_name, records: records)
-      until job.finished? do
-        job.info
-        sleep(0.002) # short sleep so we can end our poll loop more quickly
+      Timeout.timeout(runtime_options[:timeout], ActiveForce::Bulk::TimeoutError) do
+        until job.finished? do
+          job.info
+          sleep(runtime_options[:sleep])
+        end
       end
       job.result
     end
