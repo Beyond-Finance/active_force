@@ -6,7 +6,7 @@ module ActiveForce
       def initialize(job:)
         @job = job
         @stats = result_from_job_info
-        @failed = failed_results unless @stats[:number_records_failed].zero?
+        @failed = failed_results
         @successful = successful_results
       end
 
@@ -18,6 +18,8 @@ module ActiveForce
       attr_writer :failed, :successful
 
       def failed_results
+        return [] if @stats[:number_records_failed].zero?
+
         response = job.failed_results
         self.failed = CSV.parse(response.body, headers: true).map(&:to_h)
       end
@@ -26,6 +28,7 @@ module ActiveForce
         response = job.successful_results
         self.successful = CSV.parse(response.body, headers: true).map(&:to_h)
       end
+
       def job_info
         job.info
       end

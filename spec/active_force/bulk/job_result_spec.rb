@@ -49,7 +49,7 @@ describe ActiveForce::Bulk::JobResult do
       expect(subject.stats[:total_processing_time]).to eq info['totalProcessingTime']
       expect(subject.stats[:number_records_processed]).to eq info['numberRecordsProcessed']
       expect(subject.stats[:number_records_failed]).to eq info['numberRecordsFailed']
-      expect(subject.failed).to be_nil
+      expect(subject.failed).to be_empty
       expect(subject.successful.size).to eq 1
     end
   end
