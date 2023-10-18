@@ -1,13 +1,14 @@
 module ActiveForce
   module Bulk
     class JobResult
-      attr_reader :job, :failed, :successful, :stats
+      attr_reader :job, :failed, :successful, :stats, :errors
 
       def initialize(job:)
         @job = job
         @stats = result_from_job_info
         @failed = failed_results
         @successful = successful_results
+        @errors = errors_from_failed_results
       end
 
       def success?
@@ -15,7 +16,13 @@ module ActiveForce
       end
 
       private
-      attr_writer :failed, :successful
+      attr_writer :errors, :failed, :successful
+
+      def errors_from_failed_results
+        return [] if @stats[:number_records_failed].zero? || self.failed.blank?
+
+        self.errors = self.failed.pluck('sf__Error').uniq
+      end
 
       def failed_results
         return [] if @stats[:number_records_failed].zero?
