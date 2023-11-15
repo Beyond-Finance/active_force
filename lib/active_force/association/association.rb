@@ -26,6 +26,14 @@ module ActiveForce
         options[:relationship_name] || relation_model.to_s.constantize.table_name
       end
 
+      def scoped_as
+        options[:scoped_as] || nil
+      end
+
+      def scoped?
+        options[:scoped_as].present?
+      end
+
       ###
       # Does this association's relation_model represent
       # +sfdc_table_name+? Examples of +sfdc_table_name+

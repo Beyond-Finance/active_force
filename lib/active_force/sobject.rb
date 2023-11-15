@@ -131,6 +131,14 @@ module ActiveForce
       new(args).create!
     end
 
+    def self.update(id, attributes)
+      new(attributes.merge(id: id)).update
+    end
+
+    def self.update!(id, attributes)
+      new(attributes.merge(id: id)).update!
+    end
+
     def save!
       run_callbacks :save do
         if persisted?

@@ -225,6 +225,13 @@ module ActiveForce
           end
         end
 
+        context 'when assocation has a scope' do
+          it 'formulates the correct SOQL query with the scope applied' do
+            soql = Post.includes(:impossible_comments).where(id: '1234').to_s
+            expect(soql).to eq "SELECT Id, Title__c, BlogId, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comments__r WHERE (1 = 0)) FROM Post__c WHERE (Id = '1234')"
+          end
+        end
+
         context 'with namespaced SObjects' do
           it 'formulates the correct SOQL query' do
             soql = Salesforce::Quota.includes(:prez_clubs).where(id: '123').to_s
@@ -286,9 +293,26 @@ module ActiveForce
         end
       end
 
+      context 'has_one' do
+        context 'when assocation has a scope' do
+          it 'formulates the correct SOQL query with the scope applied' do
+            soql = Post.includes(:last_comment).where(id: '1234').to_s
+            expect(soql).to eq "SELECT Id, Title__c, BlogId, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comment__r WHERE (NOT ((Body__c = NULL))) ORDER BY CreatedDate DESC) FROM Post__c WHERE (Id = '1234')"
+          end
+        end
+
+      end
+
       context 'when invalid associations are passed' do
-        it 'raises an error' do
-          expect { Quota.includes(:invalid).find('123') }.to raise_error(ActiveForce::Association::InvalidAssociationError, 'Association named invalid was not found on Quota')
+        context 'when the association is not defined' do
+          it 'raises an error' do
+            expect { Quota.includes(:invalid).find('123') }.to raise_error(ActiveForce::Association::InvalidAssociationError, 'Association named invalid was not found on Quota')
+          end
+        end
+        context 'when the association is scoped and accepts an argument' do
+          it 'raises and error' do
+            expect { Post.includes(:reply_comments).find('1234')}.to raise_error(ActiveForce::Association::InvalidEagerLoadAssociation)
+          end
         end
       end
     end
