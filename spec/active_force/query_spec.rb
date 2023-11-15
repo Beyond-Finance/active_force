@@ -175,7 +175,7 @@ describe ActiveForce::Query do
       query.first
     end
 
-    it 'does not query if the api has not been queried yet' do
+    it 'queries the api if it has not been queried yet' do
       query = ActiveForce::Query.new 'table_name'
       query.instance_variable_set(:@records, nil)
       expect(query).to receive(:limit)
