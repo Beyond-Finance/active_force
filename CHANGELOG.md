@@ -2,6 +2,10 @@
 
 ## Not released
 
+## 0.19.0
+
+- Bulk API methods. (https://github.com/Beyond-Finance/active_force/pull/65)
+
 ## 0.18.0
 
 - Fix eager loading of scoped associations. (https://github.com/Beyond-Finance/active_force/pull/67)
