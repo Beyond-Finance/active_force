@@ -134,7 +134,7 @@ module ActiveForce
 
       def clone_and_set_instance_variables instance_variable_hash={}
         clone = self.clone
-        { decorated_records: @decorated_records, records: @records }
+        { decorated_records: nil, records: nil }
           .merge(instance_variable_hash)
           .each { |k,v| clone.instance_variable_set("@#{k.to_s}", v) }
         clone
