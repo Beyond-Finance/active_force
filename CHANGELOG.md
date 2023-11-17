@@ -2,7 +2,7 @@
 
 ## Not released
 
-- Change `.first` to not query the API if records have already been retrieved
+- Change `.first` to not query the API if records have already been retrieved (https://github.com/Beyond-Finance/active_force/pull/73)
 
 ## 0.19.0
 
