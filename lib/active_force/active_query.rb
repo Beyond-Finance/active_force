@@ -56,6 +56,10 @@ module ActiveForce
       limit == 1 ? super.to_a.first : super
     end
 
+    def first
+      super.to_a.first
+    end
+
     def not args=nil, *rest
       return self if args.nil?
 
