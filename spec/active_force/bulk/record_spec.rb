@@ -9,11 +9,13 @@ describe ActiveForce::Bulk::Records do
       %w[value3 value4],
     ]
   end
+
   describe '#to_csv' do
     it 'returns CSV with headers' do
       expect(subject.to_csv).to eq "header1,header2\nvalue1,value2\nvalue3,value4\n"
     end
   end
+
   describe '::parse_from_attributes' do
     subject { described_class.parse_from_attributes(attributes) }
     let(:attributes) do
@@ -27,6 +29,26 @@ describe ActiveForce::Bulk::Records do
       expect(records).to be_a described_class
       expect(records.headers).to eq headers
       expect(records.data).to eq data
+    end
+
+    context 'when there are NULL values' do
+      let(:attributes) do
+        [
+          { header1: nil, header2: 'value2'},
+          { header1: 'value3', header2: nil},
+        ]
+      end
+      let(:data) do
+        [
+          %w[#N/A value2],
+          %w[value3 #N/A],
+        ]
+      end
+
+      it 'substitutes the expected SF value for NULL' do
+        records = subject
+        expect(records.data).to eq data
+      end
     end
   end
 end
