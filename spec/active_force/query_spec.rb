@@ -165,6 +165,22 @@ describe ActiveForce::Query do
       expect(query.to_s).to eq "SELECT Id, name, etc FROM table_name"
       expect(new_query.to_s).to eq 'SELECT Id, name, etc FROM table_name LIMIT 1'
     end
+
+    it "does not query if records have already been fetched" do
+      query = ActiveForce::Query.new 'table_name'
+      query.instance_variable_set(:@records, %w[foo bar])
+      query.instance_variable_set(:@decorated_records, %w[foo bar])
+      expect(query).not_to receive(:limit)
+      expect(query).to receive(:clone_and_set_instance_variables).with(size: 1, records: ['foo'], decorated_records: ['foo'])
+      query.first
+    end
+
+    it 'queries the api if it has not been queried yet' do
+      query = ActiveForce::Query.new 'table_name'
+      query.instance_variable_set(:@records, nil)
+      expect(query).to receive(:limit)
+      query.first
+    end
   end
 
   describe '.last' do
