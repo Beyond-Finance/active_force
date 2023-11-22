@@ -3,6 +3,8 @@ require 'csv'
 module ActiveForce
   module Bulk
     class Records
+      NULL_VALUE = '#N/A'.freeze
+
       attr_reader :headers, :data
       def initialize(headers:, data:)
         @headers = headers
@@ -28,7 +30,7 @@ module ActiveForce
       def self.transform_value_for_sf(value)
         case value
         when NilClass
-          '#N/A'
+          NULL_VALUE
         when Time
           value.iso8601
         else
