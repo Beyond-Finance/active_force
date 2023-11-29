@@ -2,11 +2,14 @@
 
 ## Not released
 
+<<<<<<< HEAD
 ## 0.20.0
 
 - Change `.first` to not query the API if records have already been retrieved (https://github.com/Beyond-Finance/active_force/pull/73)
 - Bugfix: Transform NULL values for SF Bulk API, which expects "#N/A" (https://github.com/Beyond-Finance/active_force/pull/74)
 
+=======
+>>>>>>> parent of 8fbd5bd (ActiveForce .first performance enhancement (#73))
 ## 0.19.0
 
 - Bulk API methods. (https://github.com/Beyond-Finance/active_force/pull/65)
