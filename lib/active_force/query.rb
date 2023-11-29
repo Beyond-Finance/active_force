@@ -78,15 +78,7 @@ module ActiveForce
     end
 
     def first
-      if @records
-        clone_and_set_instance_variables(
-          size: 1,
-          records: [@records.first],
-          decorated_records: [@decorated_records&.first]
-        )
-      else
-        limit(1)
-      end
+      limit 1
     end
 
     def last(limit = 1)
@@ -134,9 +126,9 @@ module ActiveForce
 
       def clone_and_set_instance_variables instance_variable_hash={}
         clone = self.clone
-        { decorated_records: nil, records: nil }
-          .merge(instance_variable_hash)
-          .each { |k,v| clone.instance_variable_set("@#{k.to_s}", v) }
+        clone.instance_variable_set(:@decorated_records, nil)
+        clone.instance_variable_set(:@records, nil)
+        instance_variable_hash.each { |k,v| clone.instance_variable_set("@#{k.to_s}", v) }
         clone
       end
   end

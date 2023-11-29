@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.20.1
+- Revert "ActiveForce .first performance enhancement (#73)" (https://github.com/Beyond-Finance/active_force/pull/76)
+
 ## 0.20.0
 
 - Change `.first` to not query the API if records have already been retrieved (https://github.com/Beyond-Finance/active_force/pull/73)
