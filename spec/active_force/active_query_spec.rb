@@ -473,7 +473,7 @@ describe ActiveForce::ActiveQuery do
     end
 
     it 'returns a single record when the api was already queried' do
-      active_query.to_a
+      active_query.to_a # this will simulate the api call as to_a executes the query and populates the records
       expect(active_query.first.id).to eq("0000000000AAAAABBB")
     end
 
