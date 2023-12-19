@@ -463,4 +463,22 @@ describe ActiveForce::ActiveQuery do
    end
     
   end
+
+  describe '#first' do
+    before do
+      allow(client).to receive(:query).and_return(api_result)
+      api_result.each do |instance|
+        allow(active_query).to receive(:build).with(instance, {}).and_return(double(:sobject, id: instance['Id']))
+      end
+    end
+
+    it 'returns a single record when the api was already queried' do
+      active_query.to_a # this will simulate the api call as to_a executes the query and populates the records
+      expect(active_query.first.id).to eq("0000000000AAAAABBB")
+    end
+
+    it 'returns a single record when the api was not already queried' do
+      expect(active_query.first.id).to eq("0000000000AAAAABBB")
+    end
+  end
 end
