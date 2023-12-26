@@ -46,7 +46,7 @@ module ActiveForce
         return nil if query_fields.blank?
         query_fields_with_association = query_fields.find { |nested_field| nested_field[association.relation_name].present? }
         return nil if query_fields_with_association.blank?
-        query_fields_with_association[association.relation_name]
+        query_fields_with_association[association.relation_name].map { |field| association.relation_model.mappings[field] }
       end
 
       def build_hash_includes(relation, model = current_sobject, parent_association_field = nil)

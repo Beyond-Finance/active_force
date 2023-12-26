@@ -166,7 +166,7 @@ module ActiveForce
         context 'when nested select statement' do
           it 'formulates the correct SOQL query' do
             soql = Account.select(opportunities: :id).includes(:opportunities).where(id: '123').to_s
-            expect(soql).to eq "SELECT Id, OwnerId, (SELECT Id, FROM Opportunities) FROM Account WHERE (Id = '123')"
+            expect(soql).to eq "SELECT Id, OwnerId, (SELECT Id FROM Opportunities) FROM Account WHERE (Id = '123')"
           end
         end
 

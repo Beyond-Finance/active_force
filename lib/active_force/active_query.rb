@@ -1,5 +1,6 @@
 require 'active_support/all'
 require 'active_force/query'
+require 'active_force/select_builder'
 require 'forwardable'
 
 module ActiveForce
@@ -69,34 +70,11 @@ module ActiveForce
     end
 
     def select *selected_fields
-      non_nested_query_fields = []
-      selected_fields.each do |field|
-        case field
-        when Symbol
-          non_nested_query_fields << mappings[field]
-        when Hash
-          populate_nested_query_fields(field)
-        when String
-          non_nested_query_fields << field
-        end
-      end
-      return self if non_nested_query_fields.blank?
-      
-      super *non_nested_query_fields 
-    end
+      fields_collection = ActiveForce::SelectBuilder.new(selected_fields, self).parse
+      nested_query_fields.concat(fields_collection[:nested_query_fields]) if fields_collection[:nested_query_fields]
+      return self if fields_collection[:non_nested_query_fields].blank?
 
-    def populate_nested_query_fields(field)
-      field.each do |key, value|
-        case value
-        when Array
-          value.map! { |a| mappings[a] }
-        when Symbol
-          field[key] = [mappings[value]]
-        when Hash
-          raise ArgumentError, 'Nested Hash is not supported in select statement, you may wish to use an Array'
-        end
-      end
-      nested_query_fields << field
+      super *fields_collection[:non_nested_query_fields]
     end
 
     def find!(id)
