@@ -1,8 +1,17 @@
 require 'spec_helper'
 
+class TestSObject < ActiveForce::SObject
+  def self.decorate(records)
+    records
+  end
+end
+
 describe ActiveForce::ActiveQuery do
   let(:sobject) do
-    class_double(ActiveForce::SObject, { table_name: 'table_name', fields: [], mappings: mappings, name: 'TableName' })
+    class_double(
+      TestSObject,
+      { table_name: 'table_name', fields: [], mappings: mappings, name: 'TableName' }
+    )
   end
   let(:mappings){ { id: "Id", field: "Field__c", other_field: "Other_Field" } }
   let(:client) { double('client', query: nil) }
@@ -27,6 +36,11 @@ describe ActiveForce::ActiveQuery do
     it "should return an array of objects" do
       result = active_query.where("Text_Label = 'foo'").to_a
       expect(result).to be_a Array
+    end
+
+    it "should decorate the array of objects" do
+      expect(sobject).to receive(:decorate)
+      active_query.where("Text_Label = 'foo'").to_a
     end
   end
 
