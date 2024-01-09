@@ -4,6 +4,13 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
+
+  class UnknownFieldError < StandardError
+    def initialize(object, field)
+      super("unknown field '#{field}' for #{object.name}")
+    end
+  end
+
   class RecordNotFound < StandardError
     attr_reader :table_name, :conditions
 
@@ -45,9 +52,9 @@ module ActiveForce
       sfdc_client.query(super.to_s).first.expr0
     end
 
-    def sum field
+    def sum(field)
       raise ArgumentError, 'field is required' if field.blank?
-      raise ArgumentError, "field '#{field}' does not exist on #{sobject}" unless mappings.key?(field.to_sym)
+      raise UnknownFieldError.new(sobject, field) unless mappings.key?(field.to_sym)
 
       sfdc_client.query(super(mappings.fetch(field.to_sym)).to_s).first.expr0
     end
@@ -167,7 +174,9 @@ module ActiveForce
 
     def build_conditions_from_hash(hash)
       hash.map do |key, value|
-        field = mappings.fetch(key, key&.to_s)
+        field = mappings[key]
+        raise UnknownFieldError.new(sobject, key) if field.blank?
+
         applicable_predicate(field, value)
       end
     end
