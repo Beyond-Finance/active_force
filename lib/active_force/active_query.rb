@@ -167,7 +167,8 @@ module ActiveForce
 
     def build_conditions_from_hash(hash)
       hash.map do |key, value|
-        applicable_predicate mappings[key], value
+        field = mappings.fetch(key, key&.to_s)
+        applicable_predicate(field, value)
       end
     end
 

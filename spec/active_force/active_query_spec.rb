@@ -296,6 +296,18 @@ describe ActiveForce::ActiveQuery do
         end
       end
     end
+
+    context 'when given attributes Hash with fields that do not exist on the SObject' do
+      it 'uses the given key in an eq condition' do
+        expected = 'SELECT Id FROM table_name WHERE (no_attribute = 1) AND (another_one = 2)'
+        expect(active_query.where(no_attribute: 1, 'another_one' => 2).to_s).to eq(expected)
+      end
+
+      it 'uses the given key in an in condition' do
+        expected = 'SELECT Id FROM table_name WHERE (no_attribute IN (1,2))'
+        expect(active_query.where(no_attribute: [1, 2]).to_s).to eq(expected)
+      end
+    end
   end
 
   describe '#not' do
