@@ -34,7 +34,23 @@ module ActiveForce
       def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
       def_delegators :mapping, :table, :table_name, :custom_table?, :mappings
 
+      def update(id, attributes)
+        prepare_for_update(id, attributes).update
+      end
+
+      def update!(id, attributes)
+        prepare_for_update(id, attributes).update!
+      end
+
       private
+
+      def prepare_for_update(id, attributes)
+        new(attributes.merge(id: id)).tap do |obj|
+          attributes.each do |name, value|
+            obj.public_send("#{name}_will_change!") if value.nil?
+          end
+        end
+      end
 
       ###
       # Provide each subclass with a default id field. Can be overridden
@@ -129,14 +145,6 @@ module ActiveForce
 
     def self.create! args
       new(args).create!
-    end
-
-    def self.update(id, attributes)
-      new(attributes.merge(id: id)).update
-    end
-
-    def self.update!(id, attributes)
-      new(attributes.merge(id: id)).update!
     end
 
     def save!

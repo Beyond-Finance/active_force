@@ -321,6 +321,15 @@ describe ActiveForce::SObject do
           .and_return(true)
         Whizbang.update('12345678', text: 'my text')
       end
+
+      it 'includes given nil values in the request' do
+        allow(client).to receive(:update!).and_return(true)
+        Whizbang.update('test123', text: nil, date: nil)
+        expect(client).to have_received(:update!).with(
+          Whizbang.table_name,
+          { 'Id' => 'test123', 'Text_Label' => nil, 'Date_Label' => nil, 'Updated_From__c' => 'Rails' }
+        )
+      end
     end
 
     describe 'self.update!' do
@@ -329,6 +338,15 @@ describe ActiveForce::SObject do
           .with(Whizbang.table_name, { 'Id' => '123456789', 'Text_Label' => 'some other text', 'Updated_From__c' => 'Rails' })
           .and_return(true)
         Whizbang.update('123456789', text: 'some other text')
+      end
+
+      it 'includes given nil values in the request' do
+        allow(client).to receive(:update!).and_return(true)
+        Whizbang.update!('test123', text: nil, date: nil)
+        expect(client).to have_received(:update!).with(
+          Whizbang.table_name,
+          { 'Id' => 'test123', 'Text_Label' => nil, 'Date_Label' => nil, 'Updated_From__c' => 'Rails' }
+        )
       end
     end
   end
