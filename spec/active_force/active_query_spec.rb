@@ -1,12 +1,17 @@
 require 'spec_helper'
 
+class TestSObject < ActiveForce::SObject
+  def self.decorate(records)
+    records
+  end
+end
+
 describe ActiveForce::ActiveQuery do
   let(:sobject) do
-    double("sobject", {
-      table_name: "table_name",
-      fields: [],
-      mappings: mappings
-    })
+    class_double(
+      TestSObject,
+      { table_name: 'table_name', fields: [], mappings: mappings, name: 'TableName' }
+    )
   end
   let(:mappings){ { id: "Id", field: "Field__c", other_field: "Other_Field" } }
   let(:client) { double('client', query: nil) }
@@ -296,6 +301,13 @@ describe ActiveForce::ActiveQuery do
         end
       end
     end
+
+    context 'when given attributes Hash with fields that do not exist on the SObject' do
+      it 'raises UnknownFieldError' do
+        expect { active_query.where(xyz: 1) }
+          .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'xyz' for #{sobject.name}/i)
+      end
+    end
   end
 
   describe '#not' do
@@ -329,6 +341,11 @@ describe ActiveForce::ActiveQuery do
       new_query = active_query.find_by field: 123
       expect(new_query).to be_nil
     end
+
+    it 'should raise UnknownFieldError if given invalid field' do
+      expect { active_query.find_by(invalid: true) }
+        .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'invalid' for #{sobject.name}/i)
+    end
   end
 
   describe '#find_by!' do
@@ -336,6 +353,11 @@ describe ActiveForce::ActiveQuery do
       allow(client).to receive(:query).and_return(build_restforce_collection)
       expect { active_query.find_by!(field: 123) }
         .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with {:field=>123}")
+    end
+
+    it 'should raise UnknownFieldError if given invalid field' do
+      expect { active_query.find_by!(invalid: true) }
+        .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'invalid' for #{sobject.name}/i)
     end
   end
 
