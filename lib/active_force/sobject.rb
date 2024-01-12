@@ -195,8 +195,7 @@ module ActiveForce
       if (association = self.class.find_association(key.to_sym))
         write_association_value(association, value, association_mapping)
       else
-        field = mappings.key?(key.to_sym) ? key : mappings.key(key)
-        send("#{field}=", value) if field && respond_to?(field)
+        write_field_value(key, value)
       end
     end
 
@@ -221,6 +220,16 @@ module ActiveForce
     def write_association_value(association, value, association_mapping)
       association_cache[association.relation_name] = Association::RelationModelBuilder.build(association, value,
                                                                                              association_mapping)
+    end
+
+    def write_field_value(field_key, value)
+      field = if mappings.key?(field_key.to_sym)
+                field_key
+              else
+                mappings.key(field_key)
+              end
+
+      send("#{field}=", value) if field && respond_to?(field)
     end
 
     def handle_save_error error
