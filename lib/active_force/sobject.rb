@@ -191,18 +191,13 @@ module ActiveForce
       self
     end
 
-    def write_value key, value, association_mapping = {}
-      if association = self.class.find_association(key.to_sym)
-        field = association.relation_name
-        value = Association::RelationModelBuilder.build(association, value, association_mapping)
-      elsif key.to_sym.in?(mappings.keys)
-        # key is a field name
-        field = key
+    def write_value(key, value, association_mapping = {})
+      if (association = self.class.find_association(key.to_sym))
+        write_association_value(association, value, association_mapping)
       else
-        # Assume key is an SFDC column
-        field = mappings.key(key)
+        field = mappings.key?(key.to_sym) ? key : mappings.key(key)
+        send("#{field}=", value) if field && respond_to?(field)
       end
-      send "#{field}=", value if field && respond_to?(field)
     end
 
     def [](name)
@@ -213,7 +208,7 @@ module ActiveForce
       send("#{name.to_sym}=", value)
     end
 
-   private
+    private
 
     def validate!
       unless valid?
@@ -221,6 +216,11 @@ module ActiveForce
           "Validation failed: #{errors.full_messages.join(', ')}"
         )
       end
+    end
+
+    def write_association_value(association, value, association_mapping)
+      association_cache[association.relation_name] = Association::RelationModelBuilder.build(association, value,
+                                                                                             association_mapping)
     end
 
     def handle_save_error error
