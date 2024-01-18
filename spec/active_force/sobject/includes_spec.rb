@@ -301,6 +301,45 @@ module ActiveForce
           end
         end
 
+        context 'when query returns nil for associated record' do
+          let(:response) do
+            [build_restforce_sobject({ 'Id' => '123', 'Membership__r' => nil })]
+          end
+
+          before do
+            allow(client).to receive(:query).and_return(response)
+          end
+
+          it 'the association method returns nil without making another request' do
+            member = ClubMember.includes(:membership).where(id: '123').first
+            membership = member.membership
+            expect(membership).to be_nil
+            expect(client).to have_received(:query).once
+          end
+        end
+      end
+
+      context 'when query returns an associated record' do
+        let(:response) do
+          [
+            build_restforce_sobject(
+              {
+                'Id' => '123',
+                'Membership__r' => build_restforce_collection([build_restforce_sobject({ 'Id' => '33' })])
+              }
+            )
+          ]
+        end
+
+        before do
+          allow(client).to receive(:query).and_return(response)
+        end
+
+        it 'the association method returns the record without making another request' do
+          member = ClubMember.includes(:membership).where(id: '123').first
+          expect(member.membership.id).to eq('33')
+          expect(client).to have_received(:query).once
+        end
       end
 
       context 'when invalid associations are passed' do

@@ -70,6 +70,36 @@ module ActiveForce
             end
           end
 
+          context 'with a restforce collection value' do
+            let(:value) do
+              build_restforce_collection([
+                                           build_restforce_sobject('Id' => 'first'),
+                                           build_restforce_sobject('Id' => 'second')
+                                         ])
+            end
+
+            it 'returns a child for the first value' do
+              actual = instance.build_relation_model
+              expect(actual).to be_a(HasOneChild)
+              expect(actual.id).to eq('first')
+            end
+          end
+
+          context 'with an array value' do
+            let(:value) do
+              [
+                build_restforce_sobject('Id' => 'first'),
+                build_restforce_sobject('Id' => 'second')
+              ]
+            end
+
+            it 'returns a child for the first value' do
+              actual = instance.build_relation_model
+              expect(actual).to be_a(HasOneChild)
+              expect(actual.id).to eq('first')
+            end
+          end
+
           context 'without a value' do
             let(:value){ nil }
 
