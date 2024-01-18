@@ -113,14 +113,14 @@ module ActiveForce
     end
 
     def uninitialize_attributes(attrs)
-        return if attrs.blank?
-        self.instance_variable_get(:@attributes).instance_variable_get(:@attributes).each do |key, value|
-          if attrs.include?(self.mappings.dig(value.name.to_sym))
-            self.instance_variable_get(:@attributes).instance_variable_get(:@attributes)[key] = ActiveModel::Attribute::UninitializedValue.new(value.name, value.type)
-          else
-            key
-          end
+      return if attrs.blank?
+      self.instance_variable_get(:@attributes).instance_variable_get(:@attributes).each do |key, value|
+        if attrs.include?(self.mappings.dig(value.name.to_sym))
+          self.instance_variable_get(:@attributes).instance_variable_get(:@attributes)[key] = ActiveModel::Attribute::UninitializedValue.new(value.name, value.type)
+        else
+          key
         end
+      end
     end
 
     def create
