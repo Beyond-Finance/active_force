@@ -6,7 +6,7 @@ require 'yaml'
 require 'forwardable'
 require 'logger'
 require 'restforce'
-require 'active_model/uninitialized_sobject.rb'
+require 'active_model/uninitialized_value'
 
 module ActiveForce
   class RecordInvalid < StandardError;end
@@ -64,8 +64,8 @@ module ActiveForce
       return unless mash
       sobject = new
 
-      not_selected_attributes = sobject.class.fields.reject{|key| mash.keys.include?(key)}
-      sobject.uninitialize_attributes(not_selected_attributes)
+      attributes_not_selected = sobject.class.fields.reject{|key| mash.keys.include?(key)}
+      sobject.uninitialize_attributes(attributes_not_selected)
       sobject.build_attributes = mash[:build_attributes] || mash
       sobject.run_callbacks(:build) do
         mash.each do |column, value|
@@ -114,16 +114,13 @@ module ActiveForce
 
     def uninitialize_attributes(attrs)
         return if attrs.blank?
-        attr_set = @attributes.map do |key, value|
-          if attrs.include?(self.mappings.dig(key.name.to_sym))
-            ActiveModel::Attribute::UninitializedSobject.new(key.name, key.type)
+        self.instance_variable_get(:@attributes).instance_variable_get(:@attributes).each do |key, value|
+          if attrs.include?(self.mappings.dig(value.name.to_sym))
+            self.instance_variable_get(:@attributes).instance_variable_get(:@attributes)[key] = ActiveModel::Attribute::UninitializedValue.new(value.name, value.type)
           else
             key
           end
         end
-      attrs = attr_set.instance_variable_get(:@attributes) || {}
-      new_attr_set = ActiveModel::LazyAttributeSet.new({}, {}, {}, {}, attrs)
-      self.instance_variable_set(:@attributes, new_attr_set)
     end
 
     def create
