@@ -2,6 +2,8 @@
 
 ## Not released
 
+- Add Range condition support (https://github.com/Beyond-Finance/active_force/pull/87)
+- Fix includes with has_one associations when no associated record (https://github.com/Beyond-Finance/active_force/pull/83)
 - Raise `UnknownFieldError` if `.where` is given non-existent attribute names (https://github.com/Beyond-Finance/active_force/pull/80) 
 - Fix `.update` and `.update!`: include given `nil` valued attributes in request (https://github.com/Beyond-Finance/active_force/pull/79)
 - Change `.first` to not query the API if records have already been retrieved (https://github.com/Beyond-Finance/active_force/pull/77)
