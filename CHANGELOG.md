@@ -5,6 +5,7 @@
 - Raise `UnknownFieldError` if `.where` is given non-existent attribute names (https://github.com/Beyond-Finance/active_force/pull/80) 
 - Fix `.update` and `.update!`: include given `nil` valued attributes in request (https://github.com/Beyond-Finance/active_force/pull/79)
 - Change `.first` to not query the API if records have already been retrieved (https://github.com/Beyond-Finance/active_force/pull/77)
+- Use ':decimal' type for Salesforce currency fields in model generation (#88) (https://github.com/Beyond-Finance/active_force/pull/88)
 
 ## 0.20.1
 - Revert "ActiveForce .first performance enhancement (#73)" (https://github.com/Beyond-Finance/active_force/pull/76)
