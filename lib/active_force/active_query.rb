@@ -182,10 +182,12 @@ module ActiveForce
     end
 
     def applicable_predicate(attribute, value)
-      if value.is_a? Array
-        in_predicate attribute, value
+      if value.is_a?(Array)
+        in_predicate(attribute, value)
+      elsif value.is_a?(Range)
+        range_predicate(attribute, value)
       else
-        eq_predicate attribute, value
+        eq_predicate(attribute, value)
       end
     end
 
@@ -196,6 +198,16 @@ module ActiveForce
 
     def eq_predicate(attribute, value)
       "#{attribute} = #{enclose_value value}"
+    end
+
+    def range_predicate(attribute, range)
+      conditions = []
+      conditions << "#{attribute} >= #{enclose_value(range.begin)}" unless range.begin.nil?
+      unless range.end.nil?
+        operator = range.exclude_end? ? '<' : '<='
+        conditions << "#{attribute} #{operator} #{enclose_value(range.end)}"
+      end
+      conditions.join(' AND ')
     end
 
     def enclose_value value

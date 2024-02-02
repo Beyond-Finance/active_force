@@ -153,6 +153,73 @@ describe ActiveForce::ActiveQuery do
       expect(new_query.to_s).to end_with("(Field__c = NULL)")
     end
 
+    describe 'range filter' do
+      def check_endless(query, start, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} >= #{start})")
+      end
+
+      def check_beginless_inclusive(query, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} <= #{finish})")
+      end
+
+      def check_beginless_exclusive(query, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} < #{finish})")
+      end
+
+      def check_inclusive(query, start, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} >= #{start} AND #{field} <= #{finish})")
+      end
+
+      def check_exclusive(query, start, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} >= #{start} AND #{field} < #{finish})")
+      end
+
+      def check_ranges(base_query, start, finish, &format_block)
+        formatted_start = format_block&.call(start) || start.to_s
+        formatted_finish = format_block&.call(finish) || finish.to_s
+        check_endless(base_query.where(field: start..), formatted_start)
+        check_beginless_inclusive(base_query.where(field: ..finish), formatted_finish)
+        check_beginless_exclusive(base_query.where(field: ...finish), formatted_finish)
+        check_inclusive(base_query.where(field: start..finish), formatted_start, formatted_finish)
+        check_exclusive(base_query.where(field: start...finish), formatted_start, formatted_finish)
+      end
+
+      it 'renders with Dates' do
+        check_ranges(active_query, Date.new(2024, 2, 2), Date.new(2024, 2, 28))
+      end
+
+      it 'renders with DateTimes' do
+        check_ranges(active_query, DateTime.new(2024, 1, 31, 1, 2, 3), DateTime.new(2024, 1, 31, 1, 2, 4))
+      end
+
+      it 'renders with Times' do
+        check_ranges(active_query, Time.current, Time.current + 1.hour, &:iso8601)
+      end
+
+      it 'renders with Strings' do
+        check_ranges(active_query, 'a', 'z') { |x| "'#{x}'"}
+      end
+
+      it 'renders with Integers' do
+        check_ranges(active_query, 1, 99)
+      end
+
+      it 'renders with Floats' do
+        check_ranges(active_query, 0.5, 100.89)
+      end
+
+      it 'renders with BigDecimal' do
+        check_ranges(active_query, BigDecimal('0.888'), BigDecimal('11.0003'))
+      end
+
+      it 'composes with other conditions' do
+        query = active_query.where(id: 'id1'..).where(field: 1..99).not(other_field: ['a', 'b'])
+        expect(query.to_s).to end_with(
+          "(Id >= 'id1') AND (Field__c >= 1 AND Field__c <= 99) AND (NOT ((Other_Field IN ('a','b'))))"
+          )
+      end
+    end
+
     describe 'bind parameters' do
       let(:mappings) do
         super().merge({
