@@ -213,9 +213,10 @@ describe ActiveForce::ActiveQuery do
       end
 
       it 'composes with other conditions' do
-        query = active_query.where(id: 'id1'..).where(field: 1..99).not(other_field: ['a', 'b'])
+        query = active_query.where(id: 'id1'.., field: 1..99, other_field: 'a')
+                            .not(id: 'id2')
         expect(query.to_s).to end_with(
-          "(Id >= 'id1') AND (Field__c >= 1) AND (Field__c <= 99) AND (NOT ((Other_Field IN ('a','b'))))"
+          "(Id >= 'id1') AND (Field__c >= 1) AND (Field__c <= 99) AND (Other_Field = 'a') AND (NOT ((Id = 'id2')))"
           )
       end
     end
