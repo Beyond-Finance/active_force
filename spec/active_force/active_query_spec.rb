@@ -167,11 +167,11 @@ describe ActiveForce::ActiveQuery do
       end
 
       def check_inclusive(query, start, finish, field: 'Field__c')
-        expect(query.to_s).to end_with("(#{field} >= #{start} AND #{field} <= #{finish})")
+        expect(query.to_s).to end_with("(#{field} >= #{start}) AND (#{field} <= #{finish})")
       end
 
       def check_exclusive(query, start, finish, field: 'Field__c')
-        expect(query.to_s).to end_with("(#{field} >= #{start} AND #{field} < #{finish})")
+        expect(query.to_s).to end_with("(#{field} >= #{start}) AND (#{field} < #{finish})")
       end
 
       def check_ranges(base_query, start, finish, &format_block)
@@ -215,7 +215,7 @@ describe ActiveForce::ActiveQuery do
       it 'composes with other conditions' do
         query = active_query.where(id: 'id1'..).where(field: 1..99).not(other_field: ['a', 'b'])
         expect(query.to_s).to end_with(
-          "(Id >= 'id1') AND (Field__c >= 1 AND Field__c <= 99) AND (NOT ((Other_Field IN ('a','b'))))"
+          "(Id >= 'id1') AND (Field__c >= 1) AND (Field__c <= 99) AND (NOT ((Other_Field IN ('a','b'))))"
           )
       end
     end

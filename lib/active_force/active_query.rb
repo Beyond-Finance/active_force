@@ -173,21 +173,21 @@ module ActiveForce
     end
 
     def build_conditions_from_hash(hash)
-      hash.map do |key, value|
+      hash.flat_map do |key, value|
         field = mappings[key]
         raise UnknownFieldError.new(sobject, key) if field.blank?
 
-        applicable_predicate(field, value)
+        applicable_predicates(field, value)
       end
     end
 
-    def applicable_predicate(attribute, value)
+    def applicable_predicates(attribute, value)
       if value.is_a?(Array)
-        in_predicate(attribute, value)
+        [in_predicate(attribute, value)]
       elsif value.is_a?(Range)
-        range_predicate(attribute, value)
+        range_predicates(attribute, value)
       else
-        eq_predicate(attribute, value)
+        [eq_predicate(attribute, value)]
       end
     end
 
@@ -200,14 +200,14 @@ module ActiveForce
       "#{attribute} = #{enclose_value value}"
     end
 
-    def range_predicate(attribute, range)
+    def range_predicates(attribute, range)
       conditions = []
       conditions << "#{attribute} >= #{enclose_value(range.begin)}" unless range.begin.nil?
       unless range.end.nil?
         operator = range.exclude_end? ? '<' : '<='
         conditions << "#{attribute} #{operator} #{enclose_value(range.end)}"
       end
-      conditions.join(' AND ')
+      conditions
     end
 
     def enclose_value value
