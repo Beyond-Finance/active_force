@@ -9,7 +9,7 @@ module ActiveForce
       'boolean' => :boolean,
       'double' => :float,
       'percentage' => :float,
-      'currency' => :float,
+      'currency' => :decimal,
       'date' => :date,
       'datetime' => :datetime,
       'int' => :integer,
