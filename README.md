@@ -186,6 +186,17 @@ Account.where(contact_by: 'web').or(Account.where(contact_by: 'email'))
 #                    OR (contact_by__c = 'email')"
 ```
 
+You can use Ranges to specify comparisons:
+
+```ruby
+Account.where(last_activity_date: Date.new(2023, 1, 1)...Date.new(2024, 1, 1))
+       .where(annual_revenue: 1_000..)
+#=> this will query "SELECT Id, Name...
+#                    FROM Account
+#                    WHERE (LastActivityDate >= 2023-01-01) AND (LastActivityDate < 2024-01-01)
+#                    AND (AnnualRevenue >= 1000)
+```
+
 It is also possible to eager load associations:
 
 ```ruby
