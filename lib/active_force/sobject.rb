@@ -6,7 +6,7 @@ require 'yaml'
 require 'forwardable'
 require 'logger'
 require 'restforce'
-require 'active_model/uninitialized_value'
+require 'active_model/attribute/uninitialized_value'
 
 module ActiveForce
   class RecordInvalid < StandardError;end
