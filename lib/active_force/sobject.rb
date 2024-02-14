@@ -7,6 +7,7 @@ require 'yaml'
 require 'forwardable'
 require 'logger'
 require 'restforce'
+require 'active_model/attribute/uninitialized_value'
 
 module ActiveForce
   class RecordInvalid < StandardError;end
@@ -80,6 +81,9 @@ module ActiveForce
     def self.build mash, association_mapping={}
       return unless mash
       sobject = new
+
+      attributes_not_selected = sobject.class.fields.reject{|key| mash.keys.include?(key)}
+      sobject.uninitialize_attributes(attributes_not_selected)
       sobject.build_attributes = mash[:build_attributes] || mash
       sobject.run_callbacks(:build) do
         mash.each do |column, value|
@@ -124,6 +128,17 @@ module ActiveForce
         end
       end
       self
+    end
+
+    def uninitialize_attributes(attrs)
+      return if attrs.blank?
+      self.instance_variable_get(:@attributes).instance_variable_get(:@attributes).each do |key, value|
+        if attrs.include?(self.mappings.dig(value.name.to_sym))
+          self.instance_variable_get(:@attributes).instance_variable_get(:@attributes)[key] = ActiveModel::Attribute::UninitializedValue.new(value.name, value.type)
+        else
+          key
+        end
+      end
     end
 
     def create
