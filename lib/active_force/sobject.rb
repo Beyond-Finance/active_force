@@ -1,6 +1,7 @@
 require 'active_model'
 require 'active_force/active_query'
 require 'active_force/association'
+require 'active_force/bulk'
 require 'active_force/mapping'
 require 'yaml'
 require 'forwardable'
@@ -20,6 +21,7 @@ module ActiveForce
     extend ActiveModel::Callbacks
     include ActiveModel::Serializers::JSON
     extend ActiveForce::Association
+    extend ActiveForce::Bulk
 
 
     define_model_callbacks :build, :create, :update, :save, :destroy
@@ -33,7 +35,23 @@ module ActiveForce
       def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
       def_delegators :mapping, :table, :table_name, :custom_table?, :mappings
 
+      def update(id, attributes)
+        prepare_for_update(id, attributes).update
+      end
+
+      def update!(id, attributes)
+        prepare_for_update(id, attributes).update!
+      end
+
       private
+
+      def prepare_for_update(id, attributes)
+        new(attributes.merge(id: id)).tap do |obj|
+          attributes.each do |name, value|
+            obj.public_send("#{name}_will_change!") if value.nil?
+          end
+        end
+      end
 
       ###
       # Provide each subclass with a default id field. Can be overridden
@@ -144,14 +162,6 @@ module ActiveForce
       new(args).create!
     end
 
-    def self.update(id, attributes)
-      new(attributes.merge(id: id)).update
-    end
-
-    def self.update!(id, attributes)
-      new(attributes.merge(id: id)).update!
-    end
-
     def save!
       run_callbacks :save do
         if persisted?
@@ -196,18 +206,12 @@ module ActiveForce
       self
     end
 
-    def write_value key, value, association_mapping = {}
-      if association = self.class.find_association(key.to_sym)
-        field = association.relation_name
-        value = Association::RelationModelBuilder.build(association, value, association_mapping)
-      elsif key.to_sym.in?(mappings.keys)
-        # key is a field name
-        field = key
+    def write_value(key, value, association_mapping = {})
+      if (association = self.class.find_association(key.to_sym))
+        write_association_value(association, value, association_mapping)
       else
-        # Assume key is an SFDC column
-        field = mappings.key(key)
+        write_field_value(key, value)
       end
-      send "#{field}=", value if field && respond_to?(field)
     end
 
     def [](name)
@@ -218,7 +222,7 @@ module ActiveForce
       send("#{name.to_sym}=", value)
     end
 
-   private
+    private
 
     def validate!
       unless valid?
@@ -226,6 +230,21 @@ module ActiveForce
           "Validation failed: #{errors.full_messages.join(', ')}"
         )
       end
+    end
+
+    def write_association_value(association, value, association_mapping)
+      association_cache[association.relation_name] = Association::RelationModelBuilder.build(association, value,
+                                                                                             association_mapping)
+    end
+
+    def write_field_value(field_key, value)
+      field = if mappings.key?(field_key.to_sym)
+                field_key
+              else
+                mappings.key(field_key)
+              end
+
+      send("#{field}=", value) if field && respond_to?(field)
     end
 
     def handle_save_error error

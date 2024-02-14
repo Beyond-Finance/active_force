@@ -4,6 +4,13 @@ require 'forwardable'
 
 module ActiveForce
   class PreparedStatementInvalid < ArgumentError; end
+
+  class UnknownFieldError < StandardError
+    def initialize(object, field)
+      super("unknown field '#{field}' for #{object.name}")
+    end
+  end
+
   class RecordNotFound < StandardError
     attr_reader :table_name, :conditions
 
@@ -45,15 +52,19 @@ module ActiveForce
       sfdc_client.query(super.to_s).first.expr0
     end
 
-    def sum field
+    def sum(field)
       raise ArgumentError, 'field is required' if field.blank?
-      raise ArgumentError, "field '#{field}' does not exist on #{sobject}" unless mappings.key?(field.to_sym)
+      raise UnknownFieldError.new(sobject, field) unless mappings.key?(field.to_sym)
 
       sfdc_client.query(super(mappings.fetch(field.to_sym)).to_s).first.expr0
     end
 
     def limit limit
       limit == 1 ? super.to_a.first : super
+    end
+
+    def first
+      super.to_a.first
     end
 
     def not args=nil, *rest
@@ -162,16 +173,21 @@ module ActiveForce
     end
 
     def build_conditions_from_hash(hash)
-      hash.map do |key, value|
-        applicable_predicate mappings[key], value
+      hash.flat_map do |key, value|
+        field = mappings[key]
+        raise UnknownFieldError.new(sobject, key) if field.blank?
+
+        applicable_predicates(field, value)
       end
     end
 
-    def applicable_predicate(attribute, value)
-      if value.is_a? Array
-        in_predicate attribute, value
+    def applicable_predicates(attribute, value)
+      if value.is_a?(Array)
+        [in_predicate(attribute, value)]
+      elsif value.is_a?(Range)
+        range_predicates(attribute, value)
       else
-        eq_predicate attribute, value
+        [eq_predicate(attribute, value)]
       end
     end
 
@@ -182,6 +198,16 @@ module ActiveForce
 
     def eq_predicate(attribute, value)
       "#{attribute} = #{enclose_value value}"
+    end
+
+    def range_predicates(attribute, range)
+      conditions = []
+      conditions << "#{attribute} >= #{enclose_value(range.begin)}" unless range.begin.nil?
+      unless range.end.nil?
+        operator = range.exclude_end? ? '<' : '<='
+        conditions << "#{attribute} #{operator} #{enclose_value(range.end)}"
+      end
+      conditions
     end
 
     def enclose_value value

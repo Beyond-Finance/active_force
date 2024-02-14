@@ -1,12 +1,17 @@
 require 'spec_helper'
 
+class TestSObject < ActiveForce::SObject
+  def self.decorate(records)
+    records
+  end
+end
+
 describe ActiveForce::ActiveQuery do
   let(:sobject) do
-    double("sobject", {
-      table_name: "table_name",
-      fields: [],
-      mappings: mappings
-    })
+    class_double(
+      TestSObject,
+      { table_name: 'table_name', fields: [], mappings: mappings, name: 'TableName' }
+    )
   end
   let(:mappings){ { id: "Id", field: "Field__c", other_field: "Other_Field" } }
   let(:client) { double('client', query: nil) }
@@ -146,6 +151,74 @@ describe ActiveForce::ActiveQuery do
     it "puts NULL when a field is set as nil" do
       new_query = active_query.where field: nil
       expect(new_query.to_s).to end_with("(Field__c = NULL)")
+    end
+
+    describe 'range filter' do
+      def check_endless(query, start, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} >= #{start})")
+      end
+
+      def check_beginless_inclusive(query, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} <= #{finish})")
+      end
+
+      def check_beginless_exclusive(query, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} < #{finish})")
+      end
+
+      def check_inclusive(query, start, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} >= #{start}) AND (#{field} <= #{finish})")
+      end
+
+      def check_exclusive(query, start, finish, field: 'Field__c')
+        expect(query.to_s).to end_with("(#{field} >= #{start}) AND (#{field} < #{finish})")
+      end
+
+      def check_ranges(base_query, start, finish, &format_block)
+        formatted_start = format_block&.call(start) || start.to_s
+        formatted_finish = format_block&.call(finish) || finish.to_s
+        check_endless(base_query.where(field: start..), formatted_start)
+        check_beginless_inclusive(base_query.where(field: ..finish), formatted_finish)
+        check_beginless_exclusive(base_query.where(field: ...finish), formatted_finish)
+        check_inclusive(base_query.where(field: start..finish), formatted_start, formatted_finish)
+        check_exclusive(base_query.where(field: start...finish), formatted_start, formatted_finish)
+      end
+
+      it 'renders with Dates' do
+        check_ranges(active_query, Date.new(2024, 2, 2), Date.new(2024, 2, 28))
+      end
+
+      it 'renders with DateTimes' do
+        check_ranges(active_query, DateTime.new(2024, 1, 31, 1, 2, 3), DateTime.new(2024, 1, 31, 1, 2, 4))
+      end
+
+      it 'renders with Times' do
+        check_ranges(active_query, Time.current, Time.current + 1.hour, &:iso8601)
+      end
+
+      it 'renders with Strings' do
+        check_ranges(active_query, 'a', 'z') { |x| "'#{x}'"}
+      end
+
+      it 'renders with Integers' do
+        check_ranges(active_query, 1, 99)
+      end
+
+      it 'renders with Floats' do
+        check_ranges(active_query, 0.5, 100.89)
+      end
+
+      it 'renders with BigDecimal' do
+        check_ranges(active_query, BigDecimal('0.888'), BigDecimal('11.0003'))
+      end
+
+      it 'composes with other conditions' do
+        query = active_query.where(id: 'id1'.., field: 1..99, other_field: 'a')
+                            .not(id: 'id2')
+        expect(query.to_s).to end_with(
+          "(Id >= 'id1') AND (Field__c >= 1) AND (Field__c <= 99) AND (Other_Field = 'a') AND (NOT ((Id = 'id2')))"
+          )
+      end
     end
 
     describe 'bind parameters' do
@@ -296,6 +369,13 @@ describe ActiveForce::ActiveQuery do
         end
       end
     end
+
+    context 'when given attributes Hash with fields that do not exist on the SObject' do
+      it 'raises UnknownFieldError' do
+        expect { active_query.where(xyz: 1) }
+          .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'xyz' for #{sobject.name}/i)
+      end
+    end
   end
 
   describe '#not' do
@@ -329,6 +409,11 @@ describe ActiveForce::ActiveQuery do
       new_query = active_query.find_by field: 123
       expect(new_query).to be_nil
     end
+
+    it 'should raise UnknownFieldError if given invalid field' do
+      expect { active_query.find_by(invalid: true) }
+        .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'invalid' for #{sobject.name}/i)
+    end
   end
 
   describe '#find_by!' do
@@ -336,6 +421,11 @@ describe ActiveForce::ActiveQuery do
       allow(client).to receive(:query).and_return(build_restforce_collection)
       expect { active_query.find_by!(field: 123) }
         .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with {:field=>123}")
+    end
+
+    it 'should raise UnknownFieldError if given invalid field' do
+      expect { active_query.find_by!(invalid: true) }
+        .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'invalid' for #{sobject.name}/i)
     end
   end
 
@@ -462,5 +552,23 @@ describe ActiveForce::ActiveQuery do
     end
    end
     
+  end
+
+  describe '#first' do
+    before do
+      allow(client).to receive(:query).and_return(api_result)
+      api_result.each do |instance|
+        allow(active_query).to receive(:build).with(instance, {}).and_return(double(:sobject, id: instance['Id']))
+      end
+    end
+
+    it 'returns a single record when the api was already queried' do
+      active_query.to_a # this will simulate the api call as to_a executes the query and populates the records
+      expect(active_query.first.id).to eq("0000000000AAAAABBB")
+    end
+
+    it 'returns a single record when the api was not already queried' do
+      expect(active_query.first.id).to eq("0000000000AAAAABBB")
+    end
   end
 end

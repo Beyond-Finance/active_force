@@ -50,7 +50,11 @@ module ActiveForce
 
     class BuildFromArray < AbstractBuildFrom
       def call
-        value.map { |mash| association.build(mash, association_mapping) }
+        if association.is_a?(HasOneAssociation)
+          association.build(value.first, association_mapping)
+        else
+          value.map { |mash| association.build(mash, association_mapping) }
+        end
       end
     end
 

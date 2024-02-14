@@ -321,6 +321,15 @@ describe ActiveForce::SObject do
           .and_return(true)
         Whizbang.update('12345678', text: 'my text')
       end
+
+      it 'includes given nil values in the request' do
+        allow(client).to receive(:update!).and_return(true)
+        Whizbang.update('test123', text: nil, date: nil)
+        expect(client).to have_received(:update!).with(
+          Whizbang.table_name,
+          { 'Id' => 'test123', 'Text_Label' => nil, 'Date_Label' => nil, 'Updated_From__c' => 'Rails' }
+        )
+      end
     end
 
     describe 'self.update!' do
@@ -329,6 +338,15 @@ describe ActiveForce::SObject do
           .with(Whizbang.table_name, { 'Id' => '123456789', 'Text_Label' => 'some other text', 'Updated_From__c' => 'Rails' })
           .and_return(true)
         Whizbang.update('123456789', text: 'some other text')
+      end
+
+      it 'includes given nil values in the request' do
+        allow(client).to receive(:update!).and_return(true)
+        Whizbang.update!('test123', text: nil, date: nil)
+        expect(client).to have_received(:update!).with(
+          Whizbang.table_name,
+          { 'Id' => 'test123', 'Text_Label' => nil, 'Date_Label' => nil, 'Updated_From__c' => 'Rails' }
+        )
       end
     end
   end
@@ -368,9 +386,9 @@ describe ActiveForce::SObject do
       expect { Whizbang.sum(nil) }.to raise_error(ArgumentError, 'field is required')
     end
 
-    it 'raises ArgumentError if given invalid field' do
+    it 'raises UnknownFieldError if given invalid field' do
       expect { Whizbang.sum(:invalid) }
-        .to raise_error(ArgumentError, /field 'invalid' does not exist on Whizbang/i)
+        .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'invalid' for Whizbang/i)
     end
 
     it 'sends the correct query to the client' do
@@ -401,6 +419,11 @@ describe ActiveForce::SObject do
       expect(client).to receive(:query).with("SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c WHERE (Id = 123) AND (Text_Label = 'foo') LIMIT 1")
       Whizbang.find_by id: 123, text: "foo"
     end
+
+    it 'raises UnknownFieldError if given invalid field' do
+      expect { Whizbang.find_by(xyz: 1) }
+        .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'xyz' for Whizbang/)
+    end
   end
 
   describe "#find_by!" do
@@ -408,9 +431,15 @@ describe ActiveForce::SObject do
       expect(client).to receive(:query).with("SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c WHERE (Id = 123) AND (Text_Label = 'foo') LIMIT 1").and_return([Restforce::Mash.new(Id: 123, text: 'foo')])
       Whizbang.find_by! id: 123, text: "foo"
     end
+
     it "raises if nothing found" do
       expect(client).to receive(:query).with("SELECT #{Whizbang.fields.join ', '} FROM Whizbang__c WHERE (Id = 123) AND (Text_Label = 'foo') LIMIT 1")
       expect { Whizbang.find_by! id: 123, text: "foo" }.to raise_error(ActiveForce::RecordNotFound)
+    end
+
+    it 'raises UnknownFieldError if given invalid field' do
+      expect { Whizbang.find_by!(xyz: 1) }
+        .to raise_error(ActiveForce::UnknownFieldError, /unknown field 'xyz' for Whizbang/)
     end
   end
 
