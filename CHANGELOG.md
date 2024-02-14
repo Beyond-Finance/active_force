@@ -2,12 +2,13 @@
 
 ## Not released
 
+- Uninitialized attributes will ERROR instead of returning as `nil` (https://github.com/Beyond-Finance/active_force/pull/78)
 - Add Range condition support (https://github.com/Beyond-Finance/active_force/pull/87)
+- Use ':decimal' type for Salesforce currency fields in model generation (#88) (https://github.com/Beyond-Finance/active_force/pull/88)
 - Fix includes with has_one associations when no associated record (https://github.com/Beyond-Finance/active_force/pull/83)
-- Raise `UnknownFieldError` if `.where` is given non-existent attribute names (https://github.com/Beyond-Finance/active_force/pull/80) 
+- Raise `UnknownFieldError` if `.where` is given non-existent attribute names (https://github.com/Beyond-Finance/active_force/pull/80)
 - Fix `.update` and `.update!`: include given `nil` valued attributes in request (https://github.com/Beyond-Finance/active_force/pull/79)
 - Change `.first` to not query the API if records have already been retrieved (https://github.com/Beyond-Finance/active_force/pull/77)
-- Use ':decimal' type for Salesforce currency fields in model generation (#88) (https://github.com/Beyond-Finance/active_force/pull/88)
 
 ## 0.20.1
 - Revert "ActiveForce .first performance enhancement (#73)" (https://github.com/Beyond-Finance/active_force/pull/76)
