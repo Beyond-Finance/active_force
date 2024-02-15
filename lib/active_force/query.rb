@@ -1,6 +1,6 @@
 module ActiveForce
   class Query
-    attr_reader :table
+    attr_reader :table, :query_fields
 
     def initialize table
       @table = table
