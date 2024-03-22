@@ -62,8 +62,9 @@ module ActiveForce
       private
 
       def build_relation(association, nested_includes)
-        sub_query = Query.new(association.sfdc_association_field)
-        sub_query.fields association.relation_model.fields
+        builder_class = ActiveForce::Association::EagerLoadProjectionBuilder.projection_builder_class(association)
+        projection_builder = builder_class.new(association)
+        sub_query = projection_builder.query_with_association_fields
         association_mapping[association.sfdc_association_field.downcase] = association.relation_name
         nested_includes_query = self.class.build(nested_includes, association.relation_model)
         sub_query.fields nested_includes_query[:fields]
