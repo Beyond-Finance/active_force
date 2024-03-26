@@ -11,6 +11,7 @@ class Post < ActiveForce::SObject
   self.table_name = "Post__c"
   field :title
   field :blog_id, from: "BlogId"
+  field :is_active, from: "IsActive", as: :boolean
   has_many :comments
   has_many :impossible_comments, model: Comment, scoped_as: ->{ where('1 = 0') }
   has_many :reply_comments, model: Comment, scoped_as: ->(post){ where(body: "RE: #{post.title}").order('CreationDate DESC') }
@@ -25,6 +26,7 @@ class Blog < ActiveForce::SObject
   field :name, from: 'Name'
   field :link, from: 'Link__c'
   has_many :posts
+  has_many :active_posts, model: 'Post', scoped_as: -> { where(is_active: true) }
 end
 class Territory < ActiveForce::SObject
   field :quota_id, from: "Quota__c"
@@ -149,6 +151,7 @@ module Salesforce
   end
   class Account < ActiveForce::SObject
     field :business_partner
+    has_many :opportunities, model: Opportunity
     has_many :partner_opportunities, model: Opportunity, scoped_as: ->(account){ where(business_partner: account.business_partner).includes(:owner) }
   end
 end

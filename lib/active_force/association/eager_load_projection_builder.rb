@@ -6,6 +6,13 @@ module ActiveForce
         def build(association, parent_association_field = nil)
           new(association, parent_association_field).projections
         end
+
+        def projection_builder_class(association)
+          klass = association.class.name.demodulize
+          ActiveForce::Association.const_get "#{klass}ProjectionBuilder"
+        rescue NameError
+          raise "No projection builder exists for #{klass}"
+        end
       end
 
       attr_reader :association, :parent_association_field
@@ -16,12 +23,10 @@ module ActiveForce
       end
 
       def projections
-        klass = association.class.name.split('::').last
-        builder_class = ActiveForce::Association.const_get "#{klass}ProjectionBuilder"
+        builder_class = self.class.projection_builder_class(association)
         builder_class.new(association, parent_association_field).projections
-      rescue NameError
-        raise "Don't know how to build projections for #{klass}"
       end
+
     end
 
     class AbstractProjectionBuilder
@@ -42,26 +47,28 @@ module ActiveForce
 
         query.instance_exec(&association.scoped_as)
       end
-    end
 
-    class HasManyAssociationProjectionBuilder < AbstractProjectionBuilder
       ###
       # Use ActiveForce::Query to build a subquery for the SFDC
       # relationship name. Per SFDC convention, the name needs
       # to be pluralized
-      def projections
+      def query_with_association_fields
         relationship_name = association.sfdc_association_field
         query = ActiveQuery.new(association.relation_model, relationship_name)
         query.fields association.relation_model.fields
-        ["(#{apply_association_scope(query).to_s})"]
+        apply_association_scope(query)
+      end
+    end
+
+    class HasManyAssociationProjectionBuilder < AbstractProjectionBuilder
+      def projections
+        ["(#{query_with_association_fields.to_s})"]
       end
     end
 
     class HasOneAssociationProjectionBuilder < AbstractProjectionBuilder
       def projections
-        query = ActiveQuery.new(association.relation_model, association.sfdc_association_field)
-        query.fields association.relation_model.fields
-        ["(#{apply_association_scope(query).to_s})"]
+        ["(#{query_with_association_fields.to_s})"]
       end
     end
 

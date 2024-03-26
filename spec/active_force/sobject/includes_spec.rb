@@ -228,7 +228,7 @@ module ActiveForce
         context 'when assocation has a scope' do
           it 'formulates the correct SOQL query with the scope applied' do
             soql = Post.includes(:impossible_comments).where(id: '1234').to_s
-            expect(soql).to eq "SELECT Id, Title__c, BlogId, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comments__r WHERE (1 = 0)) FROM Post__c WHERE (Id = '1234')"
+            expect(soql).to eq "SELECT Id, Title__c, BlogId, IsActive, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comments__r WHERE (1 = 0)) FROM Post__c WHERE (Id = '1234')"
           end
         end
 
@@ -297,7 +297,7 @@ module ActiveForce
         context 'when assocation has a scope' do
           it 'formulates the correct SOQL query with the scope applied' do
             soql = Post.includes(:last_comment).where(id: '1234').to_s
-            expect(soql).to eq "SELECT Id, Title__c, BlogId, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comment__r WHERE (NOT ((Body__c = NULL))) ORDER BY CreatedDate DESC) FROM Post__c WHERE (Id = '1234')"
+            expect(soql).to eq "SELECT Id, Title__c, BlogId, IsActive, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comment__r WHERE (NOT ((Body__c = NULL))) ORDER BY CreatedDate DESC) FROM Post__c WHERE (Id = '1234')"
           end
         end
 
@@ -397,9 +397,41 @@ module ActiveForce
         end
       end
 
+      context 'when the associations have scopes' do
+        it 'generates the correct SOQL query' do
+          soql = Blog.includes(active_posts: :impossible_comments).where(id: '123').to_s
+          expect(soql).to eq <<-SOQL.squish
+            SELECT Id, Name, Link__c,
+              (SELECT Id, Title__c, BlogId, IsActive,
+                (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c
+                  FROM Comments__r WHERE (1 = 0))
+                FROM Posts__r
+                WHERE (IsActive = true))
+              FROM Blog__c
+              WHERE (Id = '123')
+          SOQL
+        end
+
+        it 'builds the associated objects and caches them' do
+          response = [build_restforce_sobject({
+            'Id' => '123',
+            'Posts__r' => build_restforce_collection([
+                {'Id' => '213', 'IsActive' => true, 'Comments__r' => [{'Id' => '987'}]},
+                {'Id' => '214', 'IsActive' => true, 'Comments__r' => [{'Id' => '456'}]}
+              ])
+          })]
+          allow(client).to receive(:query).once.and_return response
+          blog = Blog.includes(active_posts: :impossible_comments).find '123'
+          expect(blog.active_posts).to be_an Array
+          expect(blog.active_posts.all? { |o| o.is_a? Post }).to eq true
+          expect(blog.active_posts.first.impossible_comments.first).to be_a Comment
+          expect(blog.active_posts.first.impossible_comments.first.id).to eq '987'
+        end
+      end
+
       context 'with namespaced sobjects' do
         it 'formulates the correct SOQL query' do
-          soql = Salesforce::Account.includes({partner_opportunities: :owner}).where(id: '123').to_s
+          soql = Salesforce::Account.includes({opportunities: :owner}).where(id: '123').to_s
           expect(soql).to eq <<-SOQL.squish
             SELECT Id, Business_Partner__c,
               (SELECT Id, OwnerId, AccountId, Business_Partner__c, Owner.Id
@@ -417,11 +449,11 @@ module ActiveForce
               {'Id' => '214', 'AccountId' => '123', 'OwnerId' => '321', 'Business_Partner__c' => '123', 'Owner' => {'Id' => '321'}}            ])
           })]
           allow(client).to receive(:query).once.and_return response
-          account = Salesforce::Account.includes({partner_opportunities: :owner}).find '123'
-          expect(account.partner_opportunities).to be_an Array
-          expect(account.partner_opportunities.all? { |o| o.is_a? Salesforce::Opportunity }).to eq true
-          expect(account.partner_opportunities.first.owner).to be_a Salesforce::User
-          expect(account.partner_opportunities.first.owner.id).to eq '321'
+          account = Salesforce::Account.includes({opportunities: :owner}).find '123'
+          expect(account.opportunities).to be_an Array
+          expect(account.opportunities.all? { |o| o.is_a? Salesforce::Opportunity }).to eq true
+          expect(account.opportunities.first.owner).to be_a Salesforce::User
+          expect(account.opportunities.first.owner.id).to eq '321'
         end
       end
 
@@ -631,7 +663,7 @@ module ActiveForce
           soql = Comment.includes(post: :blog).where(id: '123').to_s
           expect(soql).to eq <<-SOQL.squish
             SELECT Id, PostId, PosterId__c, FancyPostId, Body__c,
-              PostId.Id, PostId.Title__c, PostId.BlogId,
+              PostId.Id, PostId.Title__c, PostId.BlogId, PostId.IsActive,
                 PostId.BlogId.Id, PostId.BlogId.Name, PostId.BlogId.Link__c
             FROM Comment__c
             WHERE (Id = '123')
