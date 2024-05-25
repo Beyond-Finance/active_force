@@ -236,4 +236,11 @@ describe ActiveForce::Query do
       expect(query.where("name = 'cool'").sum(:field1).to_s).to eq "SELECT sum(field1) FROM table_name WHERE (name = 'cool')"
     end
   end
+  
+  describe ".ids" do
+    it "should return the query for plucking the ids" do
+      query_with_ids = query.where("name = 'cool'").ids
+      expect(query_with_ids.to_s).to eq "SELECT Id FROM table_name WHERE (name = 'cool')"
+    end
+  end
 end
