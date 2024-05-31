@@ -83,6 +83,10 @@ module ActiveForce
       super *selected_fields
     end
 
+    def ids
+      clone_and_set_instance_variables(query_fields: ["Id"])
+    end
+
     def find!(id)
       result = find(id)
       raise RecordNotFound.new("Couldn't find #{table_name} with id #{id}", table_name, id: id) if result.nil?

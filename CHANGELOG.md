@@ -2,6 +2,8 @@
 
 ## Not released
 
+- Add `ids` method to ActiveQuery interface (https://github.com/Beyond-Finance/active_force/pull/94)
+
 ## 0.21.1
 - Fixes #91. Applies scopes to eager-loaded associations when they are nested. (https://github.com/Beyond-Finance/active_force/pull/92)
 

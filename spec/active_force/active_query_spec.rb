@@ -117,6 +117,12 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
+  describe '#ids' do
+    it 'returns a query that selects only the Id field' do
+      expect(active_query.where(field: 123).ids.to_s).to eq "SELECT Id FROM table_name WHERE (Field__c = 123)"
+    end
+  end
+
   describe "condition mapping" do
     it "maps conditions for a .where" do
       new_query = active_query.where(field: 123)
