@@ -16,7 +16,7 @@ module ActiveForce
     }
 
     def create_model_file
-      @table_name = file_name.capitalize
+      @table_name = name
       @class_name = prepare_namespace + @table_name.gsub('__c', '')
       template "model.rb.erb", "app/models/#{@class_name.underscore}.rb" if table_exists?
     end

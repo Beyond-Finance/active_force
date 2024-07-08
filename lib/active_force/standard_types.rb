@@ -1,5 +1,5 @@
 module StandardTypes
-  STANDARD_TYPES = %w[ 
+  STANDARD_TYPES = %w[
     Account
     Asset
     AssetFeed
@@ -67,6 +67,7 @@ module StandardTypes
     ContentDocumentFeed
     ContentDocumentHistory
     ContentDocumentLink
+    ContentNote
     ContentVersion
     ContentVersionHistory
     ContentWorkspace
@@ -352,6 +353,6 @@ module StandardTypes
     WorkRewardHistory
     WorkRewardShare
     WorkThanks
-    WorkThanksShare 
+    WorkThanksShare
   ]
 end
