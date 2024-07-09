@@ -2,6 +2,8 @@
 
 ## Not released
 
+
+## 0.22.0
 - Add `ids` method to ActiveQuery interface (https://github.com/Beyond-Finance/active_force/pull/94)
 - Add missing standard type for ContentNote and fix the way the model generator handles the name input so it acts a bit more predictably. (https://github.com/Beyond-Finance/active_force/pull/95)
 
