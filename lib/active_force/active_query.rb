@@ -84,7 +84,7 @@ module ActiveForce
     end
 
     def ids
-      sfdc_client.query(super.to_s).first.pluck(:id)
+      records.pluck(:id)
     end
 
     def find!(id)
