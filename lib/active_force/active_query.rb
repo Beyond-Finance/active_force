@@ -84,7 +84,7 @@ module ActiveForce
     end
 
     def ids
-      clone_and_set_instance_variables(query_fields: ["Id"]).pluck(:Id)
+      clone_and_set_instance_variables(query_fields: ["Id"]).pluck(:id)
     end
 
     def find!(id)
