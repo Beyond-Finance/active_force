@@ -84,7 +84,7 @@ module ActiveForce
     end
 
     def ids
-      print "lol"
+      super.to_a.pluck(:id)
     end
 
     def find!(id)
