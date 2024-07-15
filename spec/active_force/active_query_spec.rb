@@ -580,7 +580,7 @@ describe ActiveForce::ActiveQuery do
       end
     end
 
-    it "should return an array of objects" do
+    it "should return an array of id strings" do
       expect(active_query.ids).to be_a Array
       expect(active_query.ids).to eq api_result.map { |r| r['Id'] }
     end
