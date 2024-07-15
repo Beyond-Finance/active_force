@@ -84,7 +84,7 @@ module ActiveForce
     end
 
     def ids
-      records.pluck(:id)
+      super.pluck(:id)
     end
 
     def find!(id)
