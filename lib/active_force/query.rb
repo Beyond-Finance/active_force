@@ -107,6 +107,10 @@ module ActiveForce
       clone_and_set_instance_variables(query_fields: ["sum(#{field})"])
     end
 
+    def ids
+      clone_and_set_instance_variables(query_fields: ["Id"])
+    end
+
     protected
       def and_conditions
         "(#{@conditions.join(') AND (')})" unless @conditions.empty?
