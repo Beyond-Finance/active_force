@@ -2,6 +2,8 @@
 
 ## Not released
 
+## 0.22.1
+- Fixes #94. Moved query logic and corrected ActiveQuery `ids` method (https://github.com/Beyond-Finance/active_force/pull/97)
 
 ## 0.22.0
 - Add `ids` method to ActiveQuery interface (https://github.com/Beyond-Finance/active_force/pull/94)
