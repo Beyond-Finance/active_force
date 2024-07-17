@@ -117,12 +117,6 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
-  describe '#ids' do
-    it 'returns a query that selects only the Id field' do
-      expect(active_query.where(field: 123).ids.to_s).to eq "SELECT Id FROM table_name WHERE (Field__c = 123)"
-    end
-  end
-
   describe "condition mapping" do
     it "maps conditions for a .where" do
       new_query = active_query.where(field: 123)
@@ -575,6 +569,20 @@ describe ActiveForce::ActiveQuery do
 
     it 'returns a single record when the api was not already queried' do
       expect(active_query.first.id).to eq("0000000000AAAAABBB")
+    end
+  end
+
+  describe "#ids" do
+    before do
+      allow(client).to receive(:query).and_return(api_result)
+      api_result.each do |instance|
+        allow(active_query).to receive(:build).with(instance, {}).and_return(build_restforce_sobject(id: instance['Id']))
+      end
+    end
+
+    it "should return an array of id strings" do
+      expect(active_query.ids).to be_a Array
+      expect(active_query.ids).to eq api_result.map { |r| r['Id'] }
     end
   end
 end
