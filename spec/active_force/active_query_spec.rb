@@ -112,9 +112,24 @@ describe ActiveForce::ActiveQuery do
 
   describe "#select" do
     context "when passed a block" do
-      it "should return an array of records" do
-        result = active_query.select { |record| record.id == '123' }
-        expect(result).to be_a Array
+      before do
+        allow(client).to receive(:query).and_return(api_result)
+      end
+
+      context "when records satisfy the block conditions" do
+        it "should return an array of records" do
+          result = active_query.select { |record| record == record }
+          expect(result).to be_a Array
+          expect(result.size).to eq 2
+        end
+      end
+
+      context "when records do not satisfy the block conditions" do
+        it "should return an empty array" do
+          result = active_query.select { |record| record != record }
+          expect(result).to be_a Array
+          expect(result.size).to eq 0
+        end
       end
     end
 
