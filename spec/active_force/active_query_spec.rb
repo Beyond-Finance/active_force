@@ -96,24 +96,33 @@ describe ActiveForce::ActiveQuery do
     context 'when there are no records' do
       let(:api_result) { [] }
 
-      it 'returns true' do
+      it 'returns false' do
         result = active_query.where("Text_Label = 'foo'").any?
         expect(result).to be false
       end
     end
 
     context 'when records are returned' do
-      it 'returns false' do
+      it 'returns true' do
         result = active_query.where("Text_Label = 'foo'").any?
         expect(result).to be true
       end
     end
   end
 
-  describe "select only some field using mappings" do
-    it "should return a query only with selected field" do
-      new_query = active_query.select(:field)
-      expect(new_query.to_s).to eq("SELECT Field__c FROM table_name")
+  describe "#select" do
+    context "when passed a block" do
+      it "should return an array of records" do
+        result = active_query.select { |record| record.id == '123' }
+        expect(result).to be_a Array
+      end
+    end
+
+    context "when passed one or more fields" do
+      it "should return a query only with selected fields" do
+        new_query = active_query.select(:field)
+        expect(new_query.to_s).to eq("SELECT Field__c FROM table_name")
+      end
     end
   end
 
