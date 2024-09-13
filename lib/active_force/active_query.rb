@@ -78,9 +78,17 @@ module ActiveForce
       super build_condition args, rest
     end
 
-    def select *selected_fields
-      selected_fields.map! { |field| mappings[field] }
-      super *selected_fields
+    def select *selected_fields, &block
+      if block
+        result = []
+        self.each do |record|
+          result << record if block.call(record)
+        end
+        result
+      else
+        selected_fields.map! { |field| mappings[field] }
+        super *selected_fields
+      end
     end
 
     def ids
