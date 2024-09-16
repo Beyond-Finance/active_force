@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.23.0
+- Partially addresses #90. `#select` accepts a block and returns an array of filtered SObjects. (https://github.com/Beyond-Finance/active_force/pull/99)
+
 ## 0.22.1
 - Fixes #94. Moved query logic and corrected ActiveQuery `ids` method (https://github.com/Beyond-Finance/active_force/pull/97)
 
