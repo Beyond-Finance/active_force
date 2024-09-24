@@ -3,8 +3,8 @@ module ActiveForce
     class InvalidEagerLoadAssociation < StandardError; end
     class EagerLoadProjectionBuilder
       class << self
-        def build(association, parent_association_field = nil)
-          new(association, parent_association_field).projections
+        def build(association, parent_association_field = nil, query_fields = nil)
+          new(association, parent_association_field, query_fields).projections
         end
 
         def projection_builder_class(association)
@@ -15,26 +15,27 @@ module ActiveForce
         end
       end
 
-      attr_reader :association, :parent_association_field
+      attr_reader :association, :parent_association_field, :query_fields
 
-      def initialize(association, parent_association_field = nil)
+      def initialize(association, parent_association_field = nil, query_fields = nil)
         @association = association
         @parent_association_field = parent_association_field
+        @query_fields = query_fields
       end
 
       def projections
         builder_class = self.class.projection_builder_class(association)
-        builder_class.new(association, parent_association_field).projections
-      end
+        builder_class.new(association, parent_association_field, query_fields).projections      end
 
     end
 
     class AbstractProjectionBuilder
-      attr_reader :association, :parent_association_field
+      attr_reader :association, :parent_association_field, :query_fields
 
-      def initialize(association, parent_association_field = nil)
+      def initialize(association, parent_association_field = nil, query_fields = nil)
         @association = association
         @parent_association_field = parent_association_field
+        @query_fields = query_fields
       end
 
       def projections
@@ -54,8 +55,8 @@ module ActiveForce
       # to be pluralized
       def query_with_association_fields
         relationship_name = association.sfdc_association_field
-        query = ActiveQuery.new(association.relation_model, relationship_name)
-        query.fields association.relation_model.fields
+        selected_fields = query_fields || association.relation_model.fields
+        query = ActiveQuery.new(association.relation_model, relationship_name).select(*selected_fields)
         apply_association_scope(query)
       end
     end
@@ -79,7 +80,8 @@ module ActiveForce
                             else
                               association.sfdc_association_field
                             end
-        association.relation_model.fields.map do |field|
+        selected_fields = query_fields || association.relation_model.fields
+        selected_fields.map do |field|
           "#{ association_field }.#{ field }"
         end
       end
