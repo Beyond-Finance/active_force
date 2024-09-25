@@ -25,8 +25,8 @@ module ActiveForce
 
       def projections
         builder_class = self.class.projection_builder_class(association)
-        builder_class.new(association, parent_association_field, query_fields).projections      end
-
+        builder_class.new(association, parent_association_field, query_fields).projections
+      end
     end
 
     class AbstractProjectionBuilder
