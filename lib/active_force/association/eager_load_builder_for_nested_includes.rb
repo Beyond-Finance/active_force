@@ -86,7 +86,7 @@ module ActiveForce
         else
           current_parent_association_field = association.sfdc_association_field
         end
-        self.class.build(nested_includes, association.relation_model, current_parent_association_field)
+        self.class.build(nested_includes, association.relation_model, current_parent_association_field, query_fields)
       end
     end
   end

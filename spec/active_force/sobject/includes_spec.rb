@@ -52,6 +52,14 @@ module ActiveForce
           it 'errors when correct format is not followed' do
             expect{Salesforce::Territory.select(:id, :quota_id, quota: {id: :quote}).includes(:quota).where(id: '123').to_s}.to raise_error ArgumentError
           end
+
+          context 'when nested includes statement' do
+            it 'formulates the correct SOQL query' do
+              soql = Comment.select(:post_id, :body, post: [:title, :is_active], blog: :name).includes(post: :blog).to_s
+
+              expect(soql).to eq "SELECT PostId, Body__c, PostId.Title__c, PostId.IsActive, PostId.BlogId.Name FROM Comment__c"
+            end
+          end
         end
 
         context 'with namespaced SObjects' do
