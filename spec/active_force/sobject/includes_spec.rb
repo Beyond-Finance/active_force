@@ -48,6 +48,10 @@ module ActiveForce
             soql = Salesforce::Territory.select(:id, :quota_id, quota: :id).includes(:quota).where(id: '123').to_s
             expect(soql).to eq "SELECT Id, QuotaId, QuotaId.Id FROM Territory WHERE (Id = '123')"
           end
+
+          it 'errors when correct format is not followed' do
+            expect{Salesforce::Territory.select(:id, :quota_id, quota: {id: :quote}).includes(:quota).where(id: '123').to_s}.to raise_error ArgumentError
+          end
         end
 
         context 'with namespaced SObjects' do
@@ -308,6 +312,13 @@ module ActiveForce
       end
 
       context 'has_one' do
+        context 'when nested select statement is present' do
+          it 'formulates the correct SOQL query' do
+            soql = ClubMember.select(:name, :email, membership: :type).includes(:membership).to_s
+            expect(soql).to eq "SELECT Name, Email, (SELECT Type FROM Membership__r) FROM ClubMember__c"
+          end
+        end
+
         context 'when assocation has a scope' do
           it 'formulates the correct SOQL query with the scope applied' do
             soql = Post.includes(:last_comment).where(id: '1234').to_s
