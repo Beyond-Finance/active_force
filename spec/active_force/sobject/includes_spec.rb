@@ -182,6 +182,13 @@ module ActiveForce
           end
         end
 
+        context 'when normal select with nested includes' do
+          it 'formulates the correct SOQL query' do
+            soql = Blog.select(:id, :link).includes(posts: :comments).to_s
+            expect(soql).to eq "SELECT Id, Link__c, (SELECT Id, Title__c, BlogId, IsActive, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comments__r) FROM Posts__r) FROM Blog__c"
+          end
+        end
+
         context 'with standard objects' do
           it 'formulates the correct SOQL query' do
             soql = Account.includes(:opportunities).where(id: '123').to_s
