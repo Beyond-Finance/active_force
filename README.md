@@ -218,6 +218,17 @@ Comment.includes(post: :owner)
 Comment.includes({post: {owner: :account}})
 ```
 
+You can also use #select with a multi level #includes.
+
+Examples:
+
+```ruby
+Comment.select(:body, post: [:title, :is_active]).includes(post: :owner)
+Comment.select(:body, account: :owner_id).includes({post: {owner: :account}})
+```
+
+The Sobject name in the #select must match the Sobject in the #includes for the fields to be filtered.
+
 ### Aggregates
 
 Summing the values of a column:

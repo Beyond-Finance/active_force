@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.23.0
+- Add support for nested select statements that are used in conjuction with nested includes (https://github.com/Beyond-Finance/active_force/pull/102)
+
 ## 0.22.1
 - Fixes #94. Moved query logic and corrected ActiveQuery `ids` method (https://github.com/Beyond-Finance/active_force/pull/97)
 
