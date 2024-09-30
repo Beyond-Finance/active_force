@@ -3,7 +3,6 @@ module ActiveForce
     extend Forwardable
 
     attr_reader :selected_fields, :nested_query_fields, :non_nested_query_fields, :query
-    def_delegators :sobject, :mappings
 
     def initialize(selected_fields, query)
       @query = query
