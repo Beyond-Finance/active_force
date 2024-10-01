@@ -43,6 +43,25 @@ module ActiveForce
           expect(territory.quota.id).to eq "321"
         end
 
+        context 'when nested select statement' do
+          it 'formulates the correct SOQL query' do
+            soql = Salesforce::Territory.select(:id, :quota_id, quota: :id).includes(:quota).where(id: '123').to_s
+            expect(soql).to eq "SELECT Id, QuotaId, QuotaId.Id FROM Territory WHERE (Id = '123')"
+          end
+
+          it 'errors when correct format is not followed' do
+            expect{Salesforce::Territory.select(:id, :quota_id, quota: {id: :quote}).includes(:quota).where(id: '123').to_s}.to raise_error ArgumentError
+          end
+
+          context 'when nested includes statement' do
+            it 'formulates the correct SOQL query' do
+              soql = Comment.select(:post_id, :body, post: [:title, :is_active], blog: :name).includes(post: :blog).to_s
+
+              expect(soql).to eq "SELECT PostId, Body__c, PostId.Title__c, PostId.IsActive, PostId.BlogId.Name FROM Comment__c"
+            end
+          end
+        end
+
         context 'with namespaced SObjects' do
           it 'queries the API for the associated record' do
             soql = Salesforce::Territory.includes(:quota).where(id: '123').to_s
@@ -156,6 +175,20 @@ module ActiveForce
       end
 
       context 'has_many' do
+        context 'when nested select statement' do
+          it 'formulates the correct SOQL query' do
+            soql = Account.select(opportunities: :id).includes(:opportunities).where(id: '123').to_s
+            expect(soql).to eq "SELECT Id, OwnerId, (SELECT Id FROM Opportunities) FROM Account WHERE (Id = '123')"
+          end
+        end
+
+        context 'when normal select with nested includes' do
+          it 'formulates the correct SOQL query' do
+            soql = Blog.select(:id, :link).includes(posts: :comments).to_s
+            expect(soql).to eq "SELECT Id, Link__c, (SELECT Id, Title__c, BlogId, IsActive, (SELECT Id, PostId, PosterId__c, FancyPostId, Body__c FROM Comments__r) FROM Posts__r) FROM Blog__c"
+          end
+        end
+
         context 'with standard objects' do
           it 'formulates the correct SOQL query' do
             soql = Account.includes(:opportunities).where(id: '123').to_s
@@ -294,6 +327,13 @@ module ActiveForce
       end
 
       context 'has_one' do
+        context 'when nested select statement is present' do
+          it 'formulates the correct SOQL query' do
+            soql = ClubMember.select(:name, :email, membership: :type).includes(:membership).to_s
+            expect(soql).to eq "SELECT Name, Email, (SELECT Type FROM Membership__r) FROM ClubMember__c"
+          end
+        end
+
         context 'when assocation has a scope' do
           it 'formulates the correct SOQL query with the scope applied' do
             soql = Post.includes(:last_comment).where(id: '1234').to_s

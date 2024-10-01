@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.24.0
+- Add support for nested select statements that are used in conjuction with nested includes (https://github.com/Beyond-Finance/active_force/pull/102)
+
 ## 0.23.0
 - Partially addresses #90. `#select` accepts a block and returns an array of filtered SObjects. (https://github.com/Beyond-Finance/active_force/pull/99)
 

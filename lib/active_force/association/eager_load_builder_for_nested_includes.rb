@@ -6,18 +6,19 @@ module ActiveForce
     class EagerLoadBuilderForNestedIncludes
 
       class << self
-        def build(relations, current_sobject, parent_association_field = nil)
-          new(relations, current_sobject, parent_association_field).projections
+        def build(relations, current_sobject, parent_association_field = nil, query_fields = nil)
+          new(relations, current_sobject, parent_association_field, query_fields).projections
         end
       end
 
-      attr_reader :relations, :current_sobject, :association_mapping, :parent_association_field, :fields
+      attr_reader :relations, :current_sobject, :association_mapping, :parent_association_field, :fields, :query_fields
 
-      def initialize(relations, current_sobject, parent_association_field = nil)
+      def initialize(relations, current_sobject, parent_association_field = nil, query_fields = nil)
         @relations = [relations].flatten
         @current_sobject = current_sobject
         @association_mapping = {}
         @parent_association_field = parent_association_field
+        @query_fields = query_fields
         @fields = []
       end
 
@@ -37,8 +38,15 @@ module ActiveForce
       end
 
       def build_includes(association)
-        fields.concat(EagerLoadProjectionBuilder.build(association, parent_association_field))
+        fields.concat(EagerLoadProjectionBuilder.build(association, parent_association_field, query_fields_for(association)))
         association_mapping[association.sfdc_association_field.downcase] = association.relation_name
+      end
+
+      def query_fields_for(association)
+        return nil if query_fields.blank?
+        query_fields_with_association = query_fields.find { |nested_field| nested_field[association.relation_name].present? }
+        return nil if query_fields_with_association.blank?
+        query_fields_with_association[association.relation_name].map { |field| association.relation_model.mappings[field] }
       end
 
       def build_hash_includes(relation, model = current_sobject, parent_association_field = nil)
@@ -63,10 +71,10 @@ module ActiveForce
 
       def build_relation(association, nested_includes)
         builder_class = ActiveForce::Association::EagerLoadProjectionBuilder.projection_builder_class(association)
-        projection_builder = builder_class.new(association)
+        projection_builder = builder_class.new(association, nil, query_fields_for(association))
         sub_query = projection_builder.query_with_association_fields
         association_mapping[association.sfdc_association_field.downcase] = association.relation_name
-        nested_includes_query = self.class.build(nested_includes, association.relation_model)
+        nested_includes_query = self.class.build(nested_includes, association.relation_model, nil, query_fields)
         sub_query.fields nested_includes_query[:fields]
         { fields: ["(#{sub_query})"], association_mapping: nested_includes_query[:association_mapping] }
       end
@@ -78,7 +86,7 @@ module ActiveForce
         else
           current_parent_association_field = association.sfdc_association_field
         end
-        self.class.build(nested_includes, association.relation_model, current_parent_association_field)
+        self.class.build(nested_includes, association.relation_model, current_parent_association_field, query_fields)
       end
     end
   end
