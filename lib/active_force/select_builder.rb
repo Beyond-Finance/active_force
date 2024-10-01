@@ -1,6 +1,5 @@
 module ActiveForce
   class SelectBuilder
-    extend Forwardable
 
     attr_reader :selected_fields, :nested_query_fields, :non_nested_query_fields, :query
 
