@@ -1,4 +1,7 @@
-version: 2
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@4.0.1
 
 references:
   default_docker_ruby_executor: &default_docker_ruby_executor
@@ -52,48 +55,15 @@ jobs:
           paths:
             - ~/active_force/active_force_index/vendor/bundle
       - run:
-          name: Install Code Climate Test Reporter
-          command: |
-            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-            chmod +x ./cc-test-reporter
-      - run:
           name: Run RSpec
           command: |
             mkdir /tmp/test-results
-            ./cc-test-reporter before-build
             TESTFILES=$(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
             bundle exec rspec $TESTFILES --profile 10 --format RspecJunitFormatter --out /tmp/test-results/rspec.xml --format progress
-      - run:
-          name: Code Climate Test Coverage
-          command: |
-            ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.$CIRCLE_NODE_INDEX.json"
-      - persist_to_workspace:
-          root: coverage
-          paths:
-            - codeclimate.*.json
-      - store_test_results:
-          path: /tmp/test-results
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: test-results
+      - codecov/upload
       - store_artifacts:
           path: coverage
-  upload-coverage:
-    working_directory: ~/active_force/active_force_index
-    docker:
-      - *default_docker_ruby_executor
-    steps:
-      - attach_workspace:
-          at: ~/active_force/active_force_index
-      - run:
-          name: Install Code Climate Test Reporter
-          command: |
-            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-            chmod +x ./cc-test-reporter
-      - run:
-          name: Combine and Upload Coverage
-          command: |
-            ./cc-test-reporter sum-coverage --output - codeclimate.*.json | ./cc-test-reporter upload-coverage --debug --input -
+
 workflows:
   version: 2
   build_and_test:
@@ -102,6 +72,3 @@ workflows:
       - rspec-test:
           requires:
             - build
-      - upload-coverage:
-          requires:
-             - rspec-test
