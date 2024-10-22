@@ -1,7 +1,10 @@
 require 'simplecov'
+require 'simplecov-cobertura'
 SimpleCov.start do
   add_filter '/vendor'
   add_filter '/spec'
+
+  formatter SimpleCov::Formatter::CoberturaFormatter
 end
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
