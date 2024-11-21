@@ -1,3 +1,11 @@
+[Copyright © 2024 Beyond Finance, LLC.]
+
+This library is available as open source under the terms of the
+MIT License (https://opensource.org/license/mit). This library is
+based on the open source code library "https://github.com/heroku/active_force" which was in turn forked from
+"https://github.com/ionia-corporation/active_force" and licensed
+under the MIT License.
+
 Copyright (c) 2013 Eloy Espinaco
 
 MIT License
