@@ -26,14 +26,15 @@ module ActiveForce
 
     define_model_callbacks :build, :create, :update, :save, :destroy
 
-    class_attribute :mappings, :table_name
+    class_attribute :mappings, :table_name_store
 
     attr_accessor :id, :title
 
     class << self
       extend Forwardable
       def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
-      def_delegators :mapping, :table, :table_name, :custom_table?, :mappings
+      def_delegators :mapping, :table, :custom_table?, :mappings
+      alias_method :table_name=, :table_name_store=
 
       def update(id, attributes)
         prepare_for_update(id, attributes).update
@@ -41,6 +42,10 @@ module ActiveForce
 
       def update!(id, attributes)
         prepare_for_update(id, attributes).update!
+      end
+
+      def table_name
+        table_name_store || mapping.table_name
       end
 
       private
@@ -63,6 +68,10 @@ module ActiveForce
 
     def self.mapping
       @mapping ||= ActiveForce::Mapping.new name
+    end
+
+    def table_name
+      table_name_store || self.class.mapping.table_name
     end
 
     def self.fields
