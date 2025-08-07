@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.25.0
+- Add support for Rails 8.x (https://github.com/Beyond-Finance/active_force/pull/108)
+
 ## 0.24.0
 - Add support for nested select statements that are used in conjuction with nested includes (https://github.com/Beyond-Finance/active_force/pull/102)
 
