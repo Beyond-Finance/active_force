@@ -375,6 +375,20 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe '.table_name' do
+
+    context 'when no explicit table name is set' do
+      it 'derives the table name from the class name' do
+        expect(Whizbang.table_name).to eq('Whizbang__c')
+      end
+    end
+    context 'when explicit table name is set' do
+      it 'returns the explicit table name' do
+        expect(Whizbang2.table_name).to eq('Whiz_bang2__c')
+      end
+    end
+  end
+
   describe '.sum' do
     let(:response) { [Restforce::Mash.new(expr0: 22)] }
 

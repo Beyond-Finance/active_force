@@ -25,8 +25,8 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 1.9.3'
 
-  spec.add_dependency 'activemodel', '~> 7.0'
-  spec.add_dependency 'activesupport', '~> 7.0'
+  spec.add_dependency 'activemodel', '>= 7.0'
+  spec.add_dependency 'activesupport', '>= 7.0'
   spec.add_dependency 'restforce',   '>= 5'
   spec.add_development_dependency 'rake', '>= 0'
   spec.add_development_dependency 'rspec', '>= 0'

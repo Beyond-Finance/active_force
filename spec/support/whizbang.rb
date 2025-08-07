@@ -28,3 +28,7 @@ class Whizbang < ActiveForce::SObject
   end
 
 end
+
+class Whizbang2 < Whizbang
+  self.table_name = 'Whiz_bang2__c'
+end
