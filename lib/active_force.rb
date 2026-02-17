@@ -9,8 +9,16 @@ module ActiveForce
 
   class << self
     attr_accessor :sfdc_client
+    attr_writer :composite_batch_query_threshold
+
+    def composite_batch_query_threshold
+      @composite_batch_query_threshold ||= 100_000
+
+      return @composite_batch_query_threshold.call if @composite_batch_query_threshold.respond_to?(:call)
+
+      @composite_batch_query_threshold
+    end
   end
 
   self.sfdc_client = Restforce.new
-
 end

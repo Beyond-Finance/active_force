@@ -557,6 +557,26 @@ describe ActiveForce::ActiveQuery do
     end
   end
 
+  describe '#result routing' do
+    after do
+      ActiveForce.instance_variable_set(:@composite_batch_query_threshold, nil)
+    end
+
+    it 'uses sfdc_client.query when SOQL is at or below the threshold' do
+      ActiveForce.composite_batch_query_threshold = 100_000
+      expect(client).to receive(:query).and_return([])
+      expect(ActiveForce::CompositeBatchQuery).not_to receive(:call)
+      active_query.where("Id = 'foo'").to_a
+    end
+
+    it 'uses CompositeBatchQuery.call when SOQL exceeds the threshold' do
+      ActiveForce.composite_batch_query_threshold = 0
+      expect(ActiveForce::CompositeBatchQuery).to receive(:call).and_return([])
+      expect(client).not_to receive(:query)
+      active_query.where("Id = 'foo'").to_a
+    end
+  end
+
   describe "#order" do
     context 'when it is symbol' do 
       it "should add an order condition with actual SF field name" do
