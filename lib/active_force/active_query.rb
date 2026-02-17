@@ -1,6 +1,7 @@
 require 'active_support/all'
 require 'active_force/query'
 require 'active_force/select_builder'
+require 'active_force/composite_batch_query'
 require 'forwardable'
 
 module ActiveForce
@@ -245,7 +246,13 @@ module ActiveForce
     end
 
     def result
-      sfdc_client.query(self.to_s)
+      soql = to_s
+
+      if soql.length >= ActiveForce.composite_batch_query_size
+        CompositeBatchQuery.call(sfdc_client, soql)
+      else
+        sfdc_client.query(soql)
+      end
     end
 
     def build_order_by(args)
