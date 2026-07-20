@@ -2,6 +2,9 @@
 
 ## Not released
 
+## 0.26.0
+- Add ability to query using Composite Batch Api (https://github.com/Beyond-Finance/active_force/pull/114)
+
 ## 0.25.0
 - Add support for Rails 8.x (https://github.com/Beyond-Finance/active_force/pull/108)
 
