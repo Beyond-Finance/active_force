@@ -293,6 +293,41 @@ When using rails, you can generate a model with all the fields you have on your 
 
     rails g active_force:model <table name>
 
+### Query notifications
+
+ActiveForce emits `query.active_force` through `ActiveSupport::Notifications` for
+logical query executions, including `count`, `sum`, and composite batch queries.
+Requiring ActiveForce does not install a logger or query detector.
+
+```ruby
+subscriber = ActiveSupport::Notifications.subscribe('query.active_force') do |*args|
+  event = ActiveSupport::Notifications::Event.new(*args)
+  # Inspect event.duration and event.payload in your development/test tooling.
+end
+
+# When no longer needed:
+ActiveSupport::Notifications.unsubscribe(subscriber)
+```
+
+The payload contains:
+
+- `soql`: the executed SOQL string, including raw values. Treat it as sensitive;
+  only log it deliberately with appropriate data handling.
+- `model`: the queried `ActiveForce::SObject` class.
+- `client_id`: the client's Ruby `object_id` (process-local identity, not credentials).
+- `transport`: `:query` or `:composite_batch`. Aggregates retain direct `:query`
+  transport regardless of the composite threshold.
+
+Failed executions include ActiveSupport's standard `exception` and
+`exception_object` fields and still raise the original exception. Consumers
+counting successful queries should exclude those events.
+
+These are **logical queries, not Salesforce API-call counts**. Restforce HTTP-cache
+hits still count; no cache-hit marker is exposed. Internal retries and later
+pagination do not emit additional events. Lazy query construction and repeated
+access to loaded records emit none. Instrumentation does not enumerate results.
+Direct Restforce calls, SOSL, writes, and Bulk APIs are outside this event.
+
 ## Contributing
 
 1. Fork it
@@ -308,3 +343,7 @@ When using rails, you can generate a model with all the fields you have on your 
  [3]: https://github.com/bkeepers/dotenv
  [4]: https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/bulk_api_2_0.htm
 
+
+## License
+
+[MIT](LICENSE.txt).
