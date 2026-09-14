@@ -309,6 +309,12 @@ end
 ActiveSupport::Notifications.unsubscribe(subscriber)
 ```
 
+Subscriber callbacks run synchronously and are not isolated from the query
+itself: if your subscriber raises, that exception replaces the query's real
+result or real exception (this is standard `ActiveSupport::Notifications`
+behavior, the same as Rails' own `sql.active_record`). Wrap any subscriber
+logic that could fail — network calls, external clients — in its own `rescue`.
+
 The payload contains:
 
 - `soql`: the executed SOQL string, including raw values. Treat it as sensitive;
