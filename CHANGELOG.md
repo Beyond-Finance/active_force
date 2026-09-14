@@ -1,7 +1,9 @@
 # Changelog
 
 ## Not released
-- Emit `query.active_force` notifications for logical query executions, including aggregates and composite batch queries, with SOQL, model, client identity, transport, and standard exception payloads. Cache hits count as logical queries, not API calls.
+
+## 0.27.0
+- Emit `query.active_force` notifications for logical query executions, including aggregates and composite batch queries, with SOQL, model, client identity, transport, and standard exception payloads. Cache hits count as logical queries, not API calls. (https://github.com/Beyond-Finance/active_force/pull/117)
 
 ## 0.26.0
 - Add ability to query using Composite Batch Api (https://github.com/Beyond-Finance/active_force/pull/114)
