@@ -52,14 +52,14 @@ module ActiveForce
     alias_method :all, :to_a
 
     def count
-      sfdc_client.query(super.to_s).first.expr0
+      execute_query(super.to_s).first.expr0
     end
 
     def sum(field)
       raise ArgumentError, 'field is required' if field.blank?
       raise UnknownFieldError.new(sobject, field) unless mappings.key?(field.to_sym)
 
-      sfdc_client.query(super(mappings.fetch(field.to_sym)).to_s).first.expr0
+      execute_query(super(mappings.fetch(field.to_sym)).to_s).first.expr0
     end
 
     def limit limit
@@ -248,10 +248,20 @@ module ActiveForce
     def result
       soql = self.to_s
 
-      if soql.length >= ActiveForce.composite_batch_query_threshold
-        CompositeBatchQuery.call(soql, sfdc_client)
-      else
-        sfdc_client.query(soql)
+      transport = soql.length >= ActiveForce.composite_batch_query_threshold ? :composite_batch : :query
+      execute_query(soql, transport)
+    end
+
+    def execute_query(soql, transport = :query)
+      client = sfdc_client
+      payload = { soql: soql, model: sobject, client_id: client.object_id, transport: transport }
+
+      ActiveSupport::Notifications.instrument('query.active_force', payload) do
+        if transport == :composite_batch
+          CompositeBatchQuery.call(soql, client)
+        else
+          client.query(soql)
+        end
       end
     end
 
