@@ -2,6 +2,7 @@ require 'active_model'
 require 'active_force/active_query'
 require 'active_force/association'
 require 'active_force/bulk'
+require 'active_force/composite_collection_delete'
 require 'active_force/mapping'
 require 'yaml'
 require 'forwardable'
@@ -32,9 +33,13 @@ module ActiveForce
 
     class << self
       extend Forwardable
-      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none
+      def_delegators :query, :not, :or, :where, :first, :last, :all, :find, :find!, :find_by, :find_by!, :sum, :count, :includes, :limit, :order, :select, :none, :delete_all
       def_delegators :mapping, :table, :custom_table?, :mappings
       alias_method :table_name=, :table_name_store=
+
+      def delete(id_or_ids)
+        CompositeCollectionDelete.call(Array(id_or_ids), sfdc_client)
+      end
 
       def update(id, attributes)
         prepare_for_update(id, attributes).update
@@ -161,6 +166,11 @@ module ActiveForce
       run_callbacks(:destroy) do
         sfdc_client.destroy! self.class.table_name, id
       end
+    end
+
+    def delete
+      self.class.delete(id)
+      self
     end
 
     def self.create args

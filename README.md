@@ -271,6 +271,36 @@ accounts = Account.where(web_enabled: 1).limit(2)
 with data from another API, and will only query the other API once.
 ```
 
+### Deleting
+
+```ruby
+Account.find('001...').destroy        # runs :destroy callbacks, one API call
+Account.find('001...').delete         # no callbacks
+
+Account.delete('001...')              #=> 1
+Account.delete(['001...', '002...'])  #=> 2
+Account.where(web_enable: false).delete_all  #=> number of records deleted
+Account.delete_all                    # deletes every record, like ActiveRecord
+```
+
+`delete` and `delete_all` skip callbacks and return the number of records deleted. An id that no
+longer exists, or never existed, counts as 0 instead of raising.
+
+The endpoint takes ids only, so it can't tell which object an id belongs to. Passing an id of a
+different object type deletes that record, unlike ActiveRecord, which scopes by table.
+
+They use the REST Composite sObject Collections endpoint, at most 200 ids per request, so
+`delete_all` on 1,000 records makes about 5 API calls. Each request is sent with `allOrNone`, so
+it deletes all of its records or none of them.
+
+ActiveRecord runs `delete_all` as a single atomic statement. Salesforce can only offer that within
+one request, so a call with more than 200 ids is not atomic as a whole. If a later request fails,
+the earlier ones stay deleted. In that case `ActiveForce::DeleteFailed` is raised, carrying
+`errors` (the Salesforce error details) and `deleted_count` (records removed before the failure).
+Calls with 200 ids or fewer are fully atomic.
+
+For large asynchronous deletes, see [Bulk Jobs](#bulk-jobs).
+
 ### Bulk Jobs
 
 For more information about usage and limits of the Salesforce Bulk API see the [docs][4].

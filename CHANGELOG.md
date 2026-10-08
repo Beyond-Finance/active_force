@@ -1,6 +1,7 @@
 # Changelog
 
 ## Not released
+- Add `delete` / `delete_all` (class, relation and instance) using the Composite sObject Collections API (https://github.com/Beyond-Finance/active_force/pull/119)
 
 ## 0.27.0
 - Emit `query.active_force` notifications for logical query executions, including aggregates and composite batch queries, with SOQL, model, client identity, transport, and standard exception payloads. Cache hits count as logical queries, not API calls. (https://github.com/Beyond-Finance/active_force/pull/117)
