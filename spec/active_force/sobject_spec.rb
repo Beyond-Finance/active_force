@@ -302,6 +302,19 @@ describe ActiveForce::SObject do
       end
     end
 
+    describe "#delete" do
+      it "deletes by id without running callbacks and returns itself" do
+        expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(['1'], client).and_return(1)
+        expect(instance).not_to receive(:run_callbacks)
+        expect(instance.delete).to eq instance
+      end
+
+      it "does not call the API for a record without an id" do
+        expect(client).not_to receive(:api_delete)
+        Whizbang.new.delete
+      end
+    end
+
     describe 'self.create' do
       before do
         expect(client).to receive(:create!)
@@ -659,6 +672,27 @@ describe ActiveForce::SObject do
         expect(instance.errors.full_messages.count).to eq(1)
         expect(instance.errors.full_messages[0]).to eq("Percent can't be blank")
       end
+    end
+  end
+
+  describe ".delete" do
+    it "deletes a single id and returns the count" do
+      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(['1'], client).and_return(1)
+      expect(Whizbang.delete('1')).to eq 1
+    end
+
+    it "deletes an array of ids" do
+      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(%w[1 2], client).and_return(2)
+      expect(Whizbang.delete(%w[1 2])).to eq 2
+    end
+  end
+
+  describe ".delete_all" do
+    it "is delegated to the query" do
+      query = instance_double(ActiveForce::ActiveQuery)
+      allow(Whizbang).to receive(:query).and_return(query)
+      expect(query).to receive(:delete_all).and_return(3)
+      expect(Whizbang.delete_all).to eq 3
     end
   end
 end

@@ -101,6 +101,12 @@ module ActiveForce
       super.pluck(:id)
     end
 
+    # Deletes every record matched by the query without running callbacks and
+    # returns the number deleted.
+    def delete_all
+      sobject.delete(ids)
+    end
+
     def find!(id)
       result = find(id)
       raise RecordNotFound.new("Couldn't find #{table_name} with id #{id}", table_name, id: id) if result.nil?
