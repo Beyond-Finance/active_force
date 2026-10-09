@@ -74,7 +74,7 @@ module ActiveForce
     end
 
     def find id
-      where("#{ @table_id } = '#{ id }'").limit 1
+      where("#{ @table_id } = #{ quote_string(id.to_s) }").limit 1
     end
 
     def first
@@ -112,6 +112,10 @@ module ActiveForce
     end
 
     protected
+      def quote_string(s)
+        "'#{s.gsub(/(['\\])/, '\\\\\\1')}'"
+      end
+
       def and_conditions
         "(#{@conditions.join(') AND (')})" unless @conditions.empty?
       end

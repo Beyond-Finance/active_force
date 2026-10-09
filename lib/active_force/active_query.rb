@@ -241,10 +241,6 @@ module ActiveForce
       end
     end
 
-    def quote_string(s)
-      "'#{s.gsub(/(['\\])/, '\\\\\\1')}'"
-    end
-
     def result
       soql = self.to_s
 
