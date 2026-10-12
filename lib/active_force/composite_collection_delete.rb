@@ -47,8 +47,9 @@ module ActiveForce
     private
 
     def delete_chunk(chunk)
-      failures = failures_for(chunk, request(chunk))
-      return chunk.size if failures.empty?
+      results = request(chunk)
+      failures = failures_for(chunk, results)
+      return confirmed_count(chunk, results) if failures.empty?
 
       # Under allOrNone a missing id rolls back the rest of the chunk, so retry
       # without the ids that are already gone.
@@ -57,10 +58,22 @@ module ActiveForce
       remaining = chunk - failures.map(&:first)
       return 0 if remaining.empty?
 
-      retry_failures = failures_for(remaining, request(remaining))
+      retry_results = request(remaining)
+      retry_failures = failures_for(remaining, retry_results)
       raise DeleteFailed.new(real_errors(retry_failures), deleted_count) if retry_failures.any?
 
-      remaining.size
+      confirmed_count(remaining, retry_results)
+    end
+
+    # Counts the results Salesforce reported as successful. When no record
+    # failed for a real reason, every one must have succeeded; a response that
+    # holds only rolled-back results is an error, not a full delete.
+    def confirmed_count(chunk, results)
+      succeeded = results.count { |result| result['success'] }
+      return succeeded if succeeded == chunk.size
+
+      unconfirmed = chunk.zip(results).reject { |_, result| result['success'] }
+      raise DeleteFailed.new(real_errors(unconfirmed), deleted_count)
     end
 
     def request(chunk)

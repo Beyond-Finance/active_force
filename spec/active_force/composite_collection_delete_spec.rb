@@ -131,6 +131,17 @@ describe ActiveForce::CompositeCollectionDelete do
           }
       end
 
+      it 'raises rather than report success when every result was rolled back' do
+        allow(sfdc_client).to receive(:api_delete)
+          .and_return(response([rolled_back('001'), rolled_back('002')]))
+
+        expect { described_class.call(%w[001 002], sfdc_client) }
+          .to raise_error(ActiveForce::DeleteFailed) { |error|
+            expect(error.deleted_count).to eq 0
+            expect(error.errors.map { |e| e['statusCode'] }).to eq %w[ALL_OR_NONE_OPERATION_ROLLED_BACK] * 2
+          }
+      end
+
       it 'reports records deleted by earlier chunks, which stay deleted' do
         ids = (1..250).map { |i| format('%018d', i) }
         calls = 0
