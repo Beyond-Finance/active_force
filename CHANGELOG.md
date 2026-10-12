@@ -1,6 +1,7 @@
 # Changelog
 
 ## Not released
+- `find` and `find!` quote the id the same way `where` quotes string values. The SOQL does not change for ids without `'` or `\`. (https://github.com/Beyond-Finance/active_force/pull/TBD)
 
 ## 0.27.0
 - Emit `query.active_force` notifications for logical query executions, including aggregates and composite batch queries, with SOQL, model, client identity, transport, and standard exception payloads. Cache hits count as logical queries, not API calls. (https://github.com/Beyond-Finance/active_force/pull/117)

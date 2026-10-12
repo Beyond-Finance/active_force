@@ -119,6 +119,29 @@ describe ActiveForce::Query do
     it "should return a query for 1 record" do
       expect(query.find(2).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (Id = '2') LIMIT 1"
     end
+
+    {
+      '15-character id' => ['001A000000abcde', "'001A000000abcde'"],
+      '18-character id' => ['001A000000abcdeAAA', "'001A000000abcdeAAA'"],
+      'nil' => [nil, "''"],
+      'integer' => [1006, "'1006'"],
+      'symbol' => [:abc, "'abc'"],
+      'uuid' => ['eb68d128-9a9b-4cd0-b98a-9abe31194c59', "'eb68d128-9a9b-4cd0-b98a-9abe31194c59'"]
+    }.each do |description, (id, literal)|
+      it "builds the same SOQL as before for a #{description}" do
+        expect(query.find(id).to_s).to eq "SELECT Id, name, etc FROM table_name WHERE (Id = #{literal}) LIMIT 1"
+      end
+    end
+
+    it "escapes single quotes in the id" do
+      expect(query.find("x' OR Name != 'y").to_s)
+        .to eq "SELECT Id, name, etc FROM table_name WHERE (Id = 'x\\' OR Name != \\'y') LIMIT 1"
+    end
+
+    it "escapes backslashes in the id" do
+      expect(query.find("x\\' OR Name != 'y").to_s)
+        .to eq "SELECT Id, name, etc FROM table_name WHERE (Id = 'x\\\\\\' OR Name != \\'y') LIMIT 1"
+    end
   end
 
   describe ".order" do

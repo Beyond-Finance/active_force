@@ -465,6 +465,11 @@ describe ActiveForce::ActiveQuery do
       expect(client).to have_received(:query).with("SELECT Id FROM #{sobject.table_name} WHERE (Id = '#{id}') LIMIT 1")
     end
 
+    it 'escapes the id in the query' do
+      active_query.find!("x' OR Id != 'y")
+      expect(client).to have_received(:query).with("SELECT Id FROM #{sobject.table_name} WHERE (Id = 'x\\' OR Id != \\'y') LIMIT 1")
+    end
+
     context 'when record is found' do
       let(:record) { build_restforce_sobject(id: id) }
 
