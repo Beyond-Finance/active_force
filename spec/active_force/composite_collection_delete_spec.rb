@@ -110,6 +110,32 @@ describe ActiveForce::CompositeCollectionDelete do
         expect(calls).to eq ['001,002,003', '001,003']
       end
 
+      it 'keeps retrying when another id disappears between attempts' do
+        calls = []
+        responses = [
+          response([success('001'), failure('002', 'ENTITY_IS_DELETED'), rolled_back('003'), rolled_back('004')]),
+          response([success('001'), failure('003', 'ENTITY_IS_DELETED'), rolled_back('004')]),
+          response([success('001'), success('004')])
+        ]
+        allow(sfdc_client).to receive(:api_delete) do |_path, params|
+          calls << params[:ids]
+          responses.shift
+        end
+
+        expect(described_class.call(%w[001 002 003 004], sfdc_client)).to eq 2
+        expect(calls).to eq ['001,002,003,004', '001,003,004', '001,004']
+      end
+
+      it 'raises if a retry hits a real failure' do
+        allow(sfdc_client).to receive(:api_delete).and_return(
+          response([failure('001', 'ENTITY_IS_DELETED'), rolled_back('002')]),
+          response([failure('002', 'DELETE_FAILED', 'has child records')])
+        )
+
+        expect { described_class.call(%w[001 002], sfdc_client) }
+          .to raise_error(ActiveForce::DeleteFailed, /has child records/)
+      end
+
       it 'returns 0 without a retry when every id is gone' do
         expect(sfdc_client).to receive(:api_delete).once
           .and_return(response([failure('001', 'ENTITY_IS_DELETED')]))

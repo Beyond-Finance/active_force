@@ -46,23 +46,21 @@ module ActiveForce
 
     private
 
+    # Under allOrNone a missing id rolls back the rest of the chunk, so retry
+    # without the ids that are already gone. Another record may disappear
+    # between attempts, so keep retrying; every pass drops at least one id, so
+    # this terminates.
     def delete_chunk(chunk)
-      results = request(chunk)
-      failures = failures_for(chunk, results)
-      return confirmed_count(chunk, results) if failures.empty?
+      loop do
+        results = request(chunk)
+        failures = failures_for(chunk, results)
+        return confirmed_count(chunk, results) if failures.empty?
 
-      # Under allOrNone a missing id rolls back the rest of the chunk, so retry
-      # without the ids that are already gone.
-      raise DeleteFailed.new(real_errors(failures), deleted_count) unless failures.all? { |_, result| missing?(result) }
+        raise DeleteFailed.new(real_errors(failures), deleted_count) unless failures.all? { |_, result| missing?(result) }
 
-      remaining = chunk - failures.map(&:first)
-      return 0 if remaining.empty?
-
-      retry_results = request(remaining)
-      retry_failures = failures_for(remaining, retry_results)
-      raise DeleteFailed.new(real_errors(retry_failures), deleted_count) if retry_failures.any?
-
-      confirmed_count(remaining, retry_results)
+        chunk -= failures.map(&:first)
+        return 0 if chunk.empty?
+      end
     end
 
     # Counts the results Salesforce reported as successful. When no record
