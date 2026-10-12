@@ -1,6 +1,8 @@
 # Changelog
 
 ## Not released
+
+## 0.27.1
 - `find` and `find!` quote the id the same way `where` quotes string values. The SOQL does not change for ids without `'` or `\`. (https://github.com/Beyond-Finance/active_force/pull/TBD)
 
 ## 0.27.0
