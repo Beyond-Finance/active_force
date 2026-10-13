@@ -444,7 +444,7 @@ describe ActiveForce::ActiveQuery do
     it 'raises if record not found' do
       allow(client).to receive(:query).and_return(build_restforce_collection)
       expect { active_query.find_by!(field: 123) }
-        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with {:field=>123}")
+        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with #{{ field: 123 }}")
     end
 
     it 'should raise UnknownFieldError if given invalid field' do
@@ -632,6 +632,26 @@ describe ActiveForce::ActiveQuery do
     it "should return an array of id strings" do
       expect(active_query.ids).to be_a Array
       expect(active_query.ids).to eq api_result.map { |r| r['Id'] }
+    end
+  end
+
+  describe "#delete_all" do
+    before do
+      allow(client).to receive(:query).and_return(api_result)
+      api_result.each do |instance|
+        allow(active_query).to receive(:build).with(instance, {}).and_return(build_restforce_sobject(id: instance['Id']))
+      end
+    end
+
+    it "deletes the ids matched by the query and returns the count" do
+      expect(sobject).to receive(:delete).with(%w[0000000000AAAAABBB 0000000000CCCCCDDD]).and_return(2)
+      expect(active_query.where(field: 'x').delete_all).to eq 2
+    end
+
+    it "does not delete anything when nothing matches" do
+      allow(client).to receive(:query).and_return([])
+      expect(sobject).to receive(:delete).with([]).and_return(0)
+      expect(active_query.delete_all).to eq 0
     end
   end
 end

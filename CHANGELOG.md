@@ -1,6 +1,7 @@
 # Changelog
 
 ## Not released
+- Add `delete` / `delete_all` (class, relation and instance) using the Composite sObject Collections API. Ids are deleted in chunks of 200, each chunk all-or-none, and the first failing chunk raises `ActiveForce::DeleteFailed` with the Salesforce `errors` and the `deleted_count` from earlier chunks, which stay deleted. Nothing is retried, and ids that are already deleted or never existed are errors like any other. (https://github.com/Beyond-Finance/active_force/pull/119)
 
 ## 0.27.1
 - `find` and `find!` quote the id the same way `where` quotes string values. The SOQL does not change for ids without `'` or `\`. (https://github.com/Beyond-Finance/active_force/pull/TBD)

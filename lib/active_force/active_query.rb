@@ -92,13 +92,17 @@ module ActiveForce
         fields_collection = ActiveForce::SelectBuilder.new(selected_fields, self).parse
         nested_query_fields.concat(fields_collection[:nested_query_fields]) if fields_collection[:nested_query_fields]
         return self if fields_collection[:non_nested_query_fields].blank?
-  
+
         super *fields_collection[:non_nested_query_fields]
       end
     end
 
     def ids
       super.pluck(:id)
+    end
+
+    def delete_all
+      sobject.delete(ids)
     end
 
     def find!(id)
@@ -120,7 +124,7 @@ module ActiveForce
     end
 
     def includes(*relations)
-      includes_query = Association::EagerLoadBuilderForNestedIncludes.build(relations, sobject, nil, nested_query_fields) 
+      includes_query = Association::EagerLoadBuilderForNestedIncludes.build(relations, sobject, nil, nested_query_fields)
       fields includes_query[:fields]
       association_mapping.merge!(includes_query[:association_mapping])
       self
