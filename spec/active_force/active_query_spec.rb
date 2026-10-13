@@ -444,7 +444,7 @@ describe ActiveForce::ActiveQuery do
     it 'raises if record not found' do
       allow(client).to receive(:query).and_return(build_restforce_collection)
       expect { active_query.find_by!(field: 123) }
-        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with {:field=>123}")
+        .to raise_error(ActiveForce::RecordNotFound, "Couldn't find #{sobject.table_name} with #{{ field: 123 }}")
     end
 
     it 'should raise UnknownFieldError if given invalid field' do
