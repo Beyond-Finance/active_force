@@ -1,7 +1,7 @@
 # Changelog
 
 ## Not released
-- Add `delete` / `delete_all` (class, relation and instance) using the Composite sObject Collections API. Ids are deleted in chunks of 200, each chunk all-or-none, so a call spanning several chunks can partially succeed: a failed chunk raises `ActiveForce::DeleteFailed` with the Salesforce `errors` and the `deleted_count` from earlier chunks, which stay deleted. Ids that are already deleted or never existed count as 0. (https://github.com/Beyond-Finance/active_force/pull/119)
+- Add `delete` / `delete_all` (class, relation and instance) using the Composite sObject Collections API. Ids are deleted in chunks of 200 without `allOrNone`, so each record succeeds or fails on its own and a call can partially succeed: every chunk is attempted, then any failures are raised together as `ActiveForce::DeleteFailed` with the Salesforce `errors` and the `deleted_count`, which stay deleted. Ids that are already deleted or never existed count as 0. (https://github.com/Beyond-Finance/active_force/pull/119)
 
 ## 0.27.0
 - Emit `query.active_force` notifications for logical query executions, including aggregates and composite batch queries, with SOQL, model, client identity, transport, and standard exception payloads. Cache hits count as logical queries, not API calls. (https://github.com/Beyond-Finance/active_force/pull/117)

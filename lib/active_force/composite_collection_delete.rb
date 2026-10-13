@@ -1,9 +1,9 @@
 require 'active_support/all'
 
 module ActiveForce
-  # Raised when Salesforce rejects a delete. +errors+ holds the failing
-  # per-record results and +deleted_count+ the records removed by earlier
-  # chunks of the same call, which stay deleted.
+  # Raised when Salesforce rejects one or more records of a delete. +errors+
+  # holds the failing per-record results and +deleted_count+ the records that
+  # were removed anyway, which stay deleted.
   class DeleteFailed < StandardError
     attr_reader :errors, :deleted_count
 
@@ -11,94 +11,63 @@ module ActiveForce
       @errors = errors
       @deleted_count = deleted_count
 
-      super("Delete failed after deleting #{deleted_count} record(s): #{errors.to_json}")
+      super("Delete failed for #{errors.size} record(s) after deleting #{deleted_count}: #{errors.to_json}")
     end
   end
 
   # Deletes records through the Composite sObject Collections endpoint
   # (DELETE /composite/sobjects). Salesforce accepts at most 200 ids per request,
-  # so ids are sent in chunks of 200. Each chunk is all-or-none; chunks are
-  # independent of each other.
+  # so ids are sent in chunks of 200. Requests are sent without allOrNone, so
+  # every record succeeds or fails on its own and nothing is retried or rolled
+  # back. Every chunk is attempted, and any real failures are raised together
+  # once all chunks have run.
   class CompositeCollectionDelete
     CHUNK_SIZE = 200
     # Salesforce reports an id that was deleted as ENTITY_IS_DELETED and one that
     # never existed as INVALID_CROSS_REFERENCE_KEY.
     MISSING = %w[ENTITY_IS_DELETED INVALID_CROSS_REFERENCE_KEY].freeze
-    ROLLED_BACK = 'ALL_OR_NONE_OPERATION_ROLLED_BACK'.freeze
 
     def self.call(ids, sfdc_client = ActiveForce.sfdc_client)
       new(ids, sfdc_client).call
     end
 
-    attr_reader :ids, :sfdc_client, :deleted_count
+    attr_reader :ids, :sfdc_client, :deleted_count, :errors
 
     def initialize(ids, sfdc_client)
       @ids = Array(ids).flatten.reject(&:blank?).uniq
       @sfdc_client = sfdc_client
       @deleted_count = 0
+      @errors = []
     end
 
     # Returns the number of records deleted. Ids that no longer exist count as 0.
+    # Raises DeleteFailed after all chunks ran if any record failed for another reason.
     def call
-      ids.each_slice(CHUNK_SIZE) { |chunk| @deleted_count += delete_chunk(chunk) }
+      ids.each_slice(CHUNK_SIZE) { |chunk| delete_chunk(chunk) }
+      raise DeleteFailed.new(errors, deleted_count) if errors.any?
+
       deleted_count
     end
 
     private
 
-    # Under allOrNone a missing id rolls back the rest of the chunk, so retry
-    # without the ids that are already gone. Another record may disappear
-    # between attempts, so keep retrying; every pass drops at least one id, so
-    # this terminates.
     def delete_chunk(chunk)
-      loop do
-        results = request(chunk)
-        failures = failures_for(chunk, results)
-        return confirmed_count(chunk, results) if failures.empty?
-
-        raise DeleteFailed.new(real_errors(failures), deleted_count) unless failures.all? { |_, result| missing?(result) }
-
-        chunk -= failures.map(&:first)
-        return 0 if chunk.empty?
+      chunk.zip(request(chunk)).each do |id, result|
+        if result['success']
+          @deleted_count += 1
+        elsif !missing?(result)
+          errors.concat(result['errors'].map { |error| error.to_h.merge('id' => id) })
+        end
       end
     end
 
-    # Counts the results Salesforce reported as successful. When no record
-    # failed for a real reason, every one must have succeeded; a response that
-    # holds only rolled-back results is an error, not a full delete.
-    def confirmed_count(chunk, results)
-      succeeded = results.count { |result| result['success'] }
-      return succeeded if succeeded == chunk.size
-
-      unconfirmed = chunk.zip(results).reject { |_, result| result['success'] }
-      raise DeleteFailed.new(real_errors(unconfirmed), deleted_count)
-    end
-
     def request(chunk)
-      sfdc_client.api_delete('composite/sobjects', ids: chunk.join(','), allOrNone: true).body
-    end
-
-    # Pairs each failed result with its id, ignoring records that were only
-    # rolled back because another record in the chunk failed.
-    def failures_for(chunk, results)
-      chunk.zip(results).reject { |_, result| result['success'] || rolled_back?(result) }
-    end
-
-    def real_errors(failures)
-      failures.flat_map { |id, result| result['errors'].map { |error| error.to_h.merge('id' => id) } }
-    end
-
-    def rolled_back?(result)
-      error_codes(result) == [ROLLED_BACK]
+      sfdc_client.api_delete('composite/sobjects', ids: chunk.join(','), allOrNone: false).body
     end
 
     def missing?(result)
-      codes = error_codes(result)
+      codes = result['errors'].map { |error| error['statusCode'] }
       codes.any? && codes.all? { |code| MISSING.include?(code) }
-    end
-
-    def error_codes(result)
-      result['errors'].map { |error| error['statusCode'] }
     end
   end
 end

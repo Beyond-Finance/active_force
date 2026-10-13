@@ -11,10 +11,6 @@ describe ActiveForce::CompositeCollectionDelete do
     { 'id' => id, 'success' => false, 'errors' => [{ 'statusCode' => status_code, 'message' => message, 'fields' => [] }] }
   end
 
-  def rolled_back(id)
-    failure(id, 'ALL_OR_NONE_OPERATION_ROLLED_BACK', 'Record rolled back because not all records were valid.')
-  end
-
   def response(results)
     double('Response', body: results)
   end
@@ -31,9 +27,9 @@ describe ActiveForce::CompositeCollectionDelete do
   end
 
   describe '#call' do
-    it 'deletes a single id via the composite sobjects endpoint with allOrNone' do
+    it 'deletes a single id via the composite sobjects endpoint without allOrNone' do
       expect(sfdc_client).to receive(:api_delete)
-        .with('composite/sobjects', ids: '001', allOrNone: true)
+        .with('composite/sobjects', ids: '001', allOrNone: false)
         .and_return(response([success('001')]))
 
       expect(described_class.call(['001'], sfdc_client)).to eq 1
@@ -41,7 +37,7 @@ describe ActiveForce::CompositeCollectionDelete do
 
     it 'sends multiple ids comma separated and returns the count deleted' do
       expect(sfdc_client).to receive(:api_delete)
-        .with('composite/sobjects', ids: '001,002,003', allOrNone: true)
+        .with('composite/sobjects', ids: '001,002,003', allOrNone: false)
         .and_return(response(%w[001 002 003].map { |id| success(id) }))
 
       expect(described_class.call(%w[001 002 003], sfdc_client)).to eq 3
@@ -49,7 +45,7 @@ describe ActiveForce::CompositeCollectionDelete do
 
     it 'ignores blank and duplicate ids' do
       expect(sfdc_client).to receive(:api_delete)
-        .with('composite/sobjects', ids: '001,002', allOrNone: true)
+        .with('composite/sobjects', ids: '001,002', allOrNone: false)
         .and_return(response([success('001'), success('002')]))
 
       expect(described_class.call(['001', nil, '', '001', '002'], sfdc_client)).to eq 2
@@ -80,63 +76,21 @@ describe ActiveForce::CompositeCollectionDelete do
     end
 
     context 'when an id no longer exists' do
-      it 'counts it as 0 and still deletes the rest of the chunk' do
-        calls = []
-        allow(sfdc_client).to receive(:api_delete) do |_path, params|
-          calls << params[:ids]
-          if calls.size == 1
-            response([success('001'), failure('002', 'ENTITY_IS_DELETED', 'entity is deleted'), rolled_back('003')])
-          else
-            response([success('001'), success('003')])
-          end
-        end
+      it 'counts it as 0 in a single request and still deletes the rest' do
+        expect(sfdc_client).to receive(:api_delete).once
+          .and_return(response([success('001'), failure('002', 'ENTITY_IS_DELETED', 'entity is deleted'), success('003')]))
 
         expect(described_class.call(%w[001 002 003], sfdc_client)).to eq 2
-        expect(calls).to eq ['001,002,003', '001,003']
       end
 
       it 'treats an id that never existed (INVALID_CROSS_REFERENCE_KEY) as missing too' do
-        calls = []
-        allow(sfdc_client).to receive(:api_delete) do |_path, params|
-          calls << params[:ids]
-          if calls.size == 1
-            response([success('001'), failure('002', 'INVALID_CROSS_REFERENCE_KEY', 'invalid cross reference id'), rolled_back('003')])
-          else
-            response([success('001'), success('003')])
-          end
-        end
+        expect(sfdc_client).to receive(:api_delete).once
+          .and_return(response([success('001'), failure('002', 'INVALID_CROSS_REFERENCE_KEY'), success('003')]))
 
         expect(described_class.call(%w[001 002 003], sfdc_client)).to eq 2
-        expect(calls).to eq ['001,002,003', '001,003']
       end
 
-      it 'keeps retrying when another id disappears between attempts' do
-        calls = []
-        responses = [
-          response([success('001'), failure('002', 'ENTITY_IS_DELETED'), rolled_back('003'), rolled_back('004')]),
-          response([success('001'), failure('003', 'ENTITY_IS_DELETED'), rolled_back('004')]),
-          response([success('001'), success('004')])
-        ]
-        allow(sfdc_client).to receive(:api_delete) do |_path, params|
-          calls << params[:ids]
-          responses.shift
-        end
-
-        expect(described_class.call(%w[001 002 003 004], sfdc_client)).to eq 2
-        expect(calls).to eq ['001,002,003,004', '001,003,004', '001,004']
-      end
-
-      it 'raises if a retry hits a real failure' do
-        allow(sfdc_client).to receive(:api_delete).and_return(
-          response([failure('001', 'ENTITY_IS_DELETED'), rolled_back('002')]),
-          response([failure('002', 'DELETE_FAILED', 'has child records')])
-        )
-
-        expect { described_class.call(%w[001 002], sfdc_client) }
-          .to raise_error(ActiveForce::DeleteFailed, /has child records/)
-      end
-
-      it 'returns 0 without a retry when every id is gone' do
+      it 'returns 0 when every id is gone' do
         expect(sfdc_client).to receive(:api_delete).once
           .and_return(response([failure('001', 'ENTITY_IS_DELETED')]))
 
@@ -144,66 +98,45 @@ describe ActiveForce::CompositeCollectionDelete do
       end
     end
 
-    context 'when a chunk fails' do
-      it 'raises DeleteFailed with the error details' do
+    context 'when a record fails for another reason' do
+      it 'raises DeleteFailed with the error details, keeping the other deletes' do
         allow(sfdc_client).to receive(:api_delete)
-          .and_return(response([failure('001', 'DELETE_FAILED', 'has child records'), rolled_back('002')]))
+          .and_return(response([failure('001', 'DELETE_FAILED', 'has child records'), success('002')]))
 
         expect { described_class.call(%w[001 002], sfdc_client) }
           .to raise_error(ActiveForce::DeleteFailed) { |error|
-            expect(error.deleted_count).to eq 0
+            expect(error.deleted_count).to eq 1
             expect(error.errors).to eq [{ 'id' => '001', 'statusCode' => 'DELETE_FAILED', 'message' => 'has child records', 'fields' => [] }]
             expect(error.message).to include('DELETE_FAILED', 'has child records')
           }
       end
 
-      it 'raises rather than report success when every result was rolled back' do
+      it 'does not report a missing id as an error' do
         allow(sfdc_client).to receive(:api_delete)
-          .and_return(response([rolled_back('001'), rolled_back('002')]))
+          .and_return(response([failure('001', 'ENTITY_IS_DELETED'), failure('002', 'DELETE_FAILED'), success('003')]))
 
-        expect { described_class.call(%w[001 002], sfdc_client) }
+        expect { described_class.call(%w[001 002 003], sfdc_client) }
           .to raise_error(ActiveForce::DeleteFailed) { |error|
-            expect(error.deleted_count).to eq 0
-            expect(error.errors.map { |e| e['statusCode'] }).to eq %w[ALL_OR_NONE_OPERATION_ROLLED_BACK] * 2
+            expect(error.errors.map { |e| e['id'] }).to eq %w[002]
+            expect(error.deleted_count).to eq 1
           }
       end
 
-      it 'reports records deleted by earlier chunks, which stay deleted' do
-        ids = (1..250).map { |i| format('%018d', i) }
-        calls = 0
+      it 'attempts every chunk and collects errors across them' do
+        ids = (1..450).map { |i| format('%018d', i) }
+        sent = []
         allow(sfdc_client).to receive(:api_delete) do |_path, params|
-          calls += 1
           chunk = params[:ids].split(',')
-          if calls == 1
-            response(chunk.map { |id| success(id) })
-          else
-            response(chunk.map { |id| id == chunk.first ? failure(id, 'DELETE_FAILED') : rolled_back(id) })
-          end
+          sent << chunk
+          response(chunk.map { |id| id == chunk.first ? failure(id, 'DELETE_FAILED') : success(id) })
         end
 
         expect { described_class.call(ids, sfdc_client) }
-          .to raise_error(ActiveForce::DeleteFailed) { |error| expect(error.deleted_count).to eq 200 }
-      end
-
-      it 'raises if the retry after removing missing ids also fails' do
-        calls = 0
-        allow(sfdc_client).to receive(:api_delete) do
-          calls += 1
-          if calls == 1
-            response([failure('001', 'ENTITY_IS_DELETED'), rolled_back('002')])
-          else
-            response([failure('002', 'DELETE_FAILED')])
-          end
-        end
-
-        expect { described_class.call(%w[001 002], sfdc_client) }.to raise_error(ActiveForce::DeleteFailed)
-      end
-
-      it 'raises when a missing id comes with a real failure' do
-        allow(sfdc_client).to receive(:api_delete)
-          .and_return(response([failure('001', 'ENTITY_IS_DELETED'), failure('002', 'DELETE_FAILED'), rolled_back('003')]))
-
-        expect { described_class.call(%w[001 002 003], sfdc_client) }.to raise_error(ActiveForce::DeleteFailed)
+          .to raise_error(ActiveForce::DeleteFailed) { |error|
+            expect(sent.size).to eq 3
+            expect(error.deleted_count).to eq 447
+            expect(error.errors.map { |e| e['id'] }).to eq sent.map(&:first)
+          }
       end
     end
   end

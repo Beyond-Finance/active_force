@@ -290,14 +290,14 @@ The endpoint takes ids only, so it can't tell which object an id belongs to. Pas
 different object type deletes that record, unlike ActiveRecord, which scopes by table.
 
 They use the REST Composite sObject Collections endpoint, at most 200 ids per request, so
-`delete_all` on 1,000 records makes about 5 API calls. Each request is sent with `allOrNone`, so
-it deletes all of its records or none of them.
+`delete_all` on 1,000 records makes about 5 API calls. Requests are sent without `allOrNone`, so
+each record succeeds or fails on its own: a record that can't be deleted doesn't stop the others.
 
-ActiveRecord runs `delete_all` as a single atomic statement. Salesforce can only offer that within
-one request, so a call with more than 200 ids is not atomic as a whole. If a later request fails,
-the earlier ones stay deleted. In that case `ActiveForce::DeleteFailed` is raised, carrying
-`errors` (the Salesforce error details) and `deleted_count` (records removed before the failure).
-Calls with 200 ids or fewer are fully atomic.
+Unlike ActiveRecord's atomic `delete_all`, a call can therefore partially succeed. Every chunk is
+attempted, and if any record failed for a reason other than being missing,
+`ActiveForce::DeleteFailed` is raised afterwards, carrying `errors` (the Salesforce error details,
+each with its record `id`) and `deleted_count` (records removed anyway, which stay deleted). Nothing
+is retried. Re-running is safe because ids that are already gone count as 0.
 
 For large asynchronous deletes, see [Bulk Jobs](#bulk-jobs).
 
