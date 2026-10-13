@@ -284,20 +284,22 @@ Account.delete_all                    # deletes every record, like ActiveRecord
 ```
 
 `delete` and `delete_all` skip callbacks and return the number of records deleted. An id that no
-longer exists, or never existed, counts as 0 instead of raising.
+longer exists, or never existed, raises `ActiveForce::DeleteFailed`.
 
 The endpoint takes ids only, so it can't tell which object an id belongs to. Passing an id of a
 different object type deletes that record, unlike ActiveRecord, which scopes by table.
 
 They use the REST Composite sObject Collections endpoint, at most 200 ids per request, so
-`delete_all` on 1,000 records makes about 5 API calls. Requests are sent without `allOrNone`, so
-each record succeeds or fails on its own: a record that can't be deleted doesn't stop the others.
+`delete_all` on 1,000 records makes about 5 API calls. Each request is sent with `allOrNone`, so
+it deletes all of its records or none of them.
 
-Unlike ActiveRecord's atomic `delete_all`, a call can therefore partially succeed. Every chunk is
-attempted, and if any record failed for a reason other than being missing,
-`ActiveForce::DeleteFailed` is raised afterwards, carrying `errors` (the Salesforce error details,
-each with its record `id`) and `deleted_count` (records removed anyway, which stay deleted). Nothing
-is retried. Re-running is safe because ids that are already gone count as 0.
+ActiveRecord runs `delete_all` as a single atomic statement. Salesforce can only offer that within
+one request, so a call with more than 200 ids is not atomic as a whole. ActiveForce does not retry
+or work around failures: the first request that fails raises `ActiveForce::DeleteFailed` and the
+remaining requests are not sent. It carries `errors` (the Salesforce error details, each with its
+record `id`) and `deleted_count` (records removed by earlier requests, which stay deleted). Calls
+with 200 ids or fewer are fully atomic. That includes an id that no longer exists, which is an
+error like any other and rolls back its request, so the caller decides how to handle it.
 
 For large asynchronous deletes, see [Bulk Jobs](#bulk-jobs).
 
