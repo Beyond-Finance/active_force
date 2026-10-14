@@ -286,8 +286,12 @@ Account.delete_all                    # deletes every record, like ActiveRecord
 `delete` and `delete_all` skip callbacks and return the number of records deleted. An id that no
 longer exists, or never existed, raises `ActiveForce::DeleteFailed`.
 
-The endpoint takes ids only, so it can't tell which object an id belongs to. Passing an id of a
-different object type deletes that record, unlike ActiveRecord, which scopes by table.
+The endpoint takes ids only, so it can't tell which object an id belongs to. To guard against
+deleting the wrong record, `Model.delete` compares each id's 3-character key prefix with the
+model's (`Model.key_prefix`, read from Salesforce's describe once per class and cached) and
+raises `ArgumentError` before sending anything if one doesn't match. `Account.delete(a_contact_id)`
+raises. Objects with no key prefix, such as history objects, are not checked. A few objects share a
+prefix (`ContentDocument` and `ContentNote`), so ids of those can still be mixed up.
 
 They use the REST Composite sObject Collections endpoint, at most 200 ids per request, so
 `delete_all` on 1,000 records makes about 5 API calls. Each request is sent with `allOrNone`, so

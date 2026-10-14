@@ -37,8 +37,22 @@ module ActiveForce
       def_delegators :mapping, :table, :custom_table?, :mappings
       alias_method :table_name=, :table_name_store=
 
+      # Deletes records by id without running callbacks, returning the number
+      # deleted. The endpoint can't tell object types apart, so ids whose key
+      # prefix belongs to another object raise ArgumentError before any request.
       def delete(id_or_ids)
-        CompositeCollectionDelete.call(Array(id_or_ids), sfdc_client)
+        ids = Array(id_or_ids)
+        ensure_ids_belong_to_this_object!(ids)
+        CompositeCollectionDelete.call(ids, sfdc_client)
+      end
+
+      # The 3-character prefix Salesforce gives this object's ids, e.g. "001" for
+      # Account. Fetched once per class. nil for objects Salesforce gives no
+      # prefix, such as history and change event objects.
+      def key_prefix
+        return @key_prefix if defined?(@key_prefix)
+
+        @key_prefix = describe['keyPrefix'].presence
       end
 
       def update(id, attributes)
@@ -54,6 +68,19 @@ module ActiveForce
       end
 
       private
+
+      # Some objects share a prefix (ContentDocument and ContentNote), so this
+      # narrows the wrong-object mistake rather than ruling it out.
+      def ensure_ids_belong_to_this_object!(ids)
+        ids = ids.reject(&:blank?)
+        return if ids.empty? || key_prefix.nil?
+
+        foreign = ids.reject { |id| id.to_s.start_with?(key_prefix) }
+        return if foreign.empty?
+
+        raise ArgumentError, "Cannot delete #{foreign.first(5).join(', ')} through #{name}: " \
+                             "#{table_name} ids start with #{key_prefix}"
+      end
 
       def prepare_for_update(id, attributes)
         new(attributes.merge(id: id)).tap do |obj|
