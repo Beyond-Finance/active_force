@@ -280,11 +280,17 @@ Account.find('001...').delete         # no callbacks
 Account.delete('001...')              #=> 1
 Account.delete(['001...', '002...'])  #=> 2
 Account.where(web_enable: false).delete_all  #=> number of records deleted
-Account.delete_all                    # deletes every record, like ActiveRecord
+Account.delete_all                    # raises ActiveForce::UnscopedDelete
 ```
 
 `delete` and `delete_all` skip callbacks and return the number of records deleted. An id that no
 longer exists, or never existed, raises `ActiveForce::DeleteFailed`.
+
+Unlike ActiveRecord, `delete_all` needs a `where` condition: on an unfiltered query, including
+`Account.delete_all` and `Account.where(nil).delete_all`, it raises `ActiveForce::UnscopedDelete` before
+querying anything. `limit`, `order` and `offset` are not filters. This guards against deleting
+every record in an object by accident, but it can't tell that a condition such as `where("1=1")`
+matches everything. `Account.delete(ids)` takes an explicit list and is unaffected.
 
 The endpoint takes ids only, so it can't tell which object an id belongs to. To guard against
 deleting the wrong record, `Model.delete` compares each id's 3-character key prefix with the
