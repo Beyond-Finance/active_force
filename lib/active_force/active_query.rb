@@ -24,6 +24,9 @@ module ActiveForce
     end
   end
 
+  # Raised by delete_all on a query with no filter conditions.
+  class UnscopedDelete < ArgumentError; end
+
   class ActiveQuery < Query
     extend Forwardable
 
@@ -102,6 +105,8 @@ module ActiveForce
     end
 
     def delete_all
+      raise UnscopedDelete, "delete_all requires a where condition on #{table_name}" unless filtered?
+
       sobject.delete(ids)
     end
 

@@ -741,5 +741,12 @@ describe ActiveForce::SObject do
       expect(query).to receive(:delete_all).and_return(3)
       expect(Whizbang.delete_all).to eq 3
     end
+
+    it "refuses an unscoped delete before any request" do
+      expect(client).not_to receive(:query)
+      expect(client).not_to receive(:api_delete)
+      expect { Whizbang.delete_all }.to raise_error(ActiveForce::UnscopedDelete)
+      expect { Whizbang.where(nil).delete_all }.to raise_error(ActiveForce::UnscopedDelete)
+    end
   end
 end

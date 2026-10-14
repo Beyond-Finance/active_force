@@ -111,6 +111,10 @@ module ActiveForce
       clone_and_set_instance_variables(query_fields: ["Id"])
     end
 
+    def filtered?
+      @conditions.any?(&:present?)
+    end
+
     protected
       def quote_string(s)
         "'#{s.gsub(/(['\\])/, '\\\\\\1')}'"

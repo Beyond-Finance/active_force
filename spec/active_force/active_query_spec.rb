@@ -651,7 +651,27 @@ describe ActiveForce::ActiveQuery do
     it "does not delete anything when nothing matches" do
       allow(client).to receive(:query).and_return([])
       expect(sobject).to receive(:delete).with([]).and_return(0)
-      expect(active_query.delete_all).to eq 0
+      expect(active_query.where(field: 'x').delete_all).to eq 0
+    end
+
+    describe "without a where condition" do
+      before { expect(client).not_to receive(:query) }
+
+      it "raises before running any query" do
+        expect(sobject).not_to receive(:delete)
+        expect { active_query.delete_all }
+          .to raise_error(ActiveForce::UnscopedDelete, /delete_all requires a where condition on #{sobject.table_name}/)
+      end
+
+      it "raises for where(nil) and non-filtering modifiers" do
+        [active_query.where(nil), active_query.limit(10), active_query.order(:field)].each do |query|
+          expect { query.delete_all }.to raise_error(ActiveForce::UnscopedDelete)
+        end
+      end
+
+      it "is an ArgumentError" do
+        expect { active_query.delete_all }.to raise_error(ArgumentError)
+      end
     end
   end
 end

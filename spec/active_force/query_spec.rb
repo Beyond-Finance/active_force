@@ -269,4 +269,27 @@ describe ActiveForce::Query do
       expect(query.where("name = 'cool'").ids.to_s).to eq "SELECT Id FROM table_name WHERE (name = 'cool')"
     end
   end
+
+  describe ".filtered?" do
+    it "is false without conditions" do
+      expect(query.filtered?).to be false
+      expect(query.all.filtered?).to be false
+    end
+
+    it "is false for limit, order and offset" do
+      expect(query.limit(5).order('name').offset(2).filtered?).to be false
+    end
+
+    it "is false for a blank condition" do
+      expect(query.where('').filtered?).to be false
+    end
+
+    it "is true once a condition is added" do
+      expect(query.where("name = 'x'").filtered?).to be true
+    end
+
+    it "is true after or" do
+      expect(query.where("name = 'x'").or(query.where("name = 'y'")).filtered?).to be true
+    end
+  end
 end
