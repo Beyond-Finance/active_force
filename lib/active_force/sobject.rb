@@ -37,18 +37,12 @@ module ActiveForce
       def_delegators :mapping, :table, :custom_table?, :mappings
       alias_method :table_name=, :table_name_store=
 
-      # Deletes records by id without running callbacks, returning the number
-      # deleted. The endpoint can't tell object types apart, so ids whose key
-      # prefix belongs to another object raise ArgumentError before any request.
       def delete(id_or_ids)
         ids = Array(id_or_ids)
         ensure_ids_belong_to_this_object!(ids)
         CompositeCollectionDelete.call(ids, sfdc_client)
       end
 
-      # The 3-character prefix Salesforce gives this object's ids, e.g. "001" for
-      # Account. Fetched once per class. nil for objects Salesforce gives no
-      # prefix, such as history and change event objects.
       def key_prefix
         return @key_prefix if defined?(@key_prefix)
 
@@ -69,8 +63,6 @@ module ActiveForce
 
       private
 
-      # Some objects share a prefix (ContentDocument and ContentNote), so this
-      # narrows the wrong-object mistake rather than ruling it out.
       def ensure_ids_belong_to_this_object!(ids)
         ids = ids.reject(&:blank?)
         return if ids.empty? || key_prefix.nil?
