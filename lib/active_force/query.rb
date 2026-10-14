@@ -111,7 +111,6 @@ module ActiveForce
       clone_and_set_instance_variables(query_fields: ["Id"])
     end
 
-    # Whether any filter condition has been added. limit, order and offset don't count.
     def filtered?
       @conditions.any?(&:present?)
     end

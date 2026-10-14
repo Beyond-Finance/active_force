@@ -104,8 +104,6 @@ module ActiveForce
       super.pluck(:id)
     end
 
-    # Only a scoped query can be deleted from, so an unfiltered one raises
-    # before any query is made.
     def delete_all
       raise UnscopedDelete, "delete_all requires a where condition on #{table_name}" unless filtered?
 
