@@ -303,6 +303,8 @@ describe ActiveForce::SObject do
     end
 
     describe "#delete" do
+      before { allow(Whizbang).to receive(:key_prefix).and_return(nil) }
+
       it "deletes by id without running callbacks and returns itself" do
         expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(['1'], client).and_return(1)
         expect(instance).not_to receive(:run_callbacks)
@@ -675,15 +677,60 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe ".key_prefix" do
+    after { Whizbang.remove_instance_variable(:@key_prefix) if Whizbang.instance_variable_defined?(:@key_prefix) }
+
+    it "reads the keyPrefix from describe" do
+      allow(client).to receive(:describe).with('Whizbang__c').and_return('keyPrefix' => 'a0X')
+      expect(Whizbang.key_prefix).to eq 'a0X'
+    end
+
+    it "describes once per class" do
+      expect(client).to receive(:describe).once.and_return('keyPrefix' => 'a0X')
+      2.times { Whizbang.key_prefix }
+    end
+
+    it "caches a missing prefix as nil without describing again" do
+      expect(client).to receive(:describe).once.and_return('keyPrefix' => nil)
+      2.times { expect(Whizbang.key_prefix).to be_nil }
+    end
+  end
+
   describe ".delete" do
+    before { allow(Whizbang).to receive(:key_prefix).and_return('a0X') }
+
     it "deletes a single id and returns the count" do
-      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(['1'], client).and_return(1)
-      expect(Whizbang.delete('1')).to eq 1
+      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(['a0X1'], client).and_return(1)
+      expect(Whizbang.delete('a0X1')).to eq 1
     end
 
     it "deletes an array of ids" do
-      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(%w[1 2], client).and_return(2)
-      expect(Whizbang.delete(%w[1 2])).to eq 2
+      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(%w[a0X1 a0X2], client).and_return(2)
+      expect(Whizbang.delete(%w[a0X1 a0X2])).to eq 2
+    end
+
+    it "accepts 15 and 18 character ids with the right prefix" do
+      ids = %w[a0X000000000001 a0X000000000002AAA]
+      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(ids, client).and_return(2)
+      expect(Whizbang.delete(ids)).to eq 2
+    end
+
+    it "raises before any request when an id belongs to another object" do
+      expect(ActiveForce::CompositeCollectionDelete).not_to receive(:call)
+      expect { Whizbang.delete(%w[a0X000000000001AAA 003000000000001AAA]) }
+        .to raise_error(ArgumentError, /003000000000001AAA.*Whizbang__c ids start with a0X/)
+    end
+
+    it "does not describe when there are no ids" do
+      allow(Whizbang).to receive(:key_prefix).and_call_original
+      expect(client).not_to receive(:describe)
+      expect(Whizbang.delete([nil, ''])).to eq 0
+    end
+
+    it "skips the check when the object has no key prefix" do
+      allow(Whizbang).to receive(:key_prefix).and_return(nil)
+      expect(ActiveForce::CompositeCollectionDelete).to receive(:call).with(['003000000000001AAA'], client).and_return(1)
+      expect(Whizbang.delete('003000000000001AAA')).to eq 1
     end
   end
 
