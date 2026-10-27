@@ -1,6 +1,8 @@
 # Changelog
 
 ## Not released
+
+## 0.28.1
 - `modified_attributes` computes the changed attribute names once instead of once per attribute, making it linear in the number of fields. The result is unchanged. (https://github.com/Beyond-Finance/active_force/pull/126)
 
 ## 0.28.0
