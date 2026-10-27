@@ -547,6 +547,116 @@ describe ActiveForce::SObject do
     end
   end
 
+  describe '#modified_attributes' do
+    context 'with a new instance' do
+      it 'returns an empty hash when nothing has been assigned' do
+        expect(Whizbang.new.modified_attributes).to eq({})
+      end
+
+      it 'returns only the assigned attributes' do
+        instance = Whizbang.new(text: 'some text', boolean: false)
+
+        expect(instance.modified_attributes).to eq('text' => 'some text', 'boolean' => false)
+      end
+
+      it 'returns the cast values of the assigned attributes' do
+        instance = Whizbang.new(date: '2010-01-01', percent: '21')
+
+        expect(instance.modified_attributes).to eq('date' => Date.new(2010, 1, 1), 'percent' => 21.0)
+      end
+    end
+
+    context 'with a built instance' do
+      let(:instance) { Whizbang.build sobject_hash }
+
+      it 'returns an empty hash when nothing has changed' do
+        expect(instance.modified_attributes).to eq({})
+      end
+
+      it 'returns only the changed attributes with their new values' do
+        instance.text = 'changed text'
+        instance.checkbox = true
+
+        expect(instance.modified_attributes).to eq('checkbox' => true, 'text' => 'changed text')
+      end
+
+      it 'excludes attributes assigned their current value' do
+        instance.text = 'Hi there!'
+        instance.percent = 21
+
+        expect(instance.modified_attributes).to eq({})
+      end
+
+      it 'excludes attributes changed and then restored to their original value' do
+        instance.text = 'changed text'
+        instance.text = 'Hi there!'
+
+        expect(instance.modified_attributes).to eq({})
+      end
+
+      it 'includes attributes changed to nil' do
+        instance.text = nil
+
+        expect(instance.modified_attributes).to eq('text' => nil)
+      end
+
+      it 'includes attributes mutated in place' do
+        instance.text << ' Bye!'
+
+        expect(instance.modified_attributes).to eq('text' => 'Hi there! Bye!')
+      end
+
+      it 'excludes attributes that were not selected' do
+        expect(Whizbang.attribute_names).to include('estimated_close_date', 'updated_from')
+        expect(instance.modified_attributes.keys).not_to include('estimated_close_date', 'updated_from')
+      end
+
+      it 'includes an unselected attribute once it is assigned' do
+        instance.updated_from = 'Rails'
+
+        expect(instance.modified_attributes).to eq('updated_from' => 'Rails')
+      end
+
+      it 'returns string keys in attribute declaration order' do
+        instance.percent = 42
+        instance.text = 'changed text'
+        instance.checkbox = true
+
+        expect(instance.modified_attributes.keys).to eq(%w[checkbox text percent])
+      end
+    end
+
+    context 'after persisting changes' do
+      let(:instance) { Territory.new(id: '1') }
+
+      it 'returns an empty hash after create' do
+        new_instance = Territory.new(name: 'Walter')
+        allow(client).to receive(:create!).and_return('1')
+
+        new_instance.create!
+
+        expect(new_instance.modified_attributes).to eq({})
+      end
+
+      it 'returns an empty hash after update' do
+        allow(client).to receive(:update!).and_return(true)
+
+        instance.update!(name: 'Walter')
+
+        expect(instance.modified_attributes).to eq({})
+      end
+
+      it 'returns an empty hash after reload' do
+        allow(client).to receive(:query).and_return([Restforce::Mash.new(Id: '1', Name: 'Jeff')])
+        instance.name = 'Walter'
+
+        instance.reload
+
+        expect(instance.modified_attributes).to eq({})
+      end
+    end
+  end
+
   describe 'logger output' do
     let(:instance){ Whizbang.new }
 

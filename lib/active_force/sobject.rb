@@ -233,7 +233,7 @@ module ActiveForce
     end
 
     def modified_attributes
-      attributes.select{ |attr, key| changed.include? attr.to_s }
+      attributes.slice(*changed)
     end
 
     def reload
