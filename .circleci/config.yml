@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  beyond-coverage: beyond-finance/beyond-coverage@1.1.0
+
 references:
   default_docker_ruby_executor: &default_docker_ruby_executor
     image: cimg/ruby:2.7.7
@@ -56,6 +59,10 @@ jobs:
             mkdir /tmp/test-results
             TESTFILES=$(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
             bundle exec rspec $TESTFILES --profile 10 --format RspecJunitFormatter --out /tmp/test-results/rspec.xml --format progress
+      - persist_to_workspace:
+          root: .
+          paths:
+            - coverage/.resultset.json
       - store_artifacts:
           path: coverage
 
@@ -67,3 +74,11 @@ workflows:
       - rspec-test:
           requires:
             - build
+      - beyond-coverage/gate:
+          context:
+            - github
+            - beyond-coverage
+          ci_root: /home/circleci/active_force/active_force_index
+          pipeline_number: << pipeline.number >>
+          requires:
+            - rspec-test

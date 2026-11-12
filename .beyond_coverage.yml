@@ -1,0 +1,3 @@
+resultset: coverage/.resultset.json
+include:
+  - "lib/**/*.rb"
