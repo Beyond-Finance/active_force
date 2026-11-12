@@ -22,3 +22,4 @@ module ActiveForce
 
   self.sfdc_client = Restforce.new
 end
+require 'active_force/coverage_probe'
